@@ -1,0 +1,227 @@
+
+
+<!DOCTYPE html>
+<html>
+<head><title>
+	HomeAccess
+</title>
+    
+    <link href="/HomeAccess/Stylesheets/Themes/Base/css?v=ErOiUuOsVp6tquD2fInmzTQl3A3SlFxTXp8j5mZ8LI01" rel="Stylesheet" type="text/css" /> 
+
+    
+    <link rel="Stylesheet" href="/HomeAccess/eSchoolPLUSResource/GetEmbeddedStyle?file=CrossSite" />
+    <link rel="Stylesheet" href="/HomeAccess/eSchoolPLUSResource/GetEmbeddedStyle?file=ComboBox" />
+    <link rel="Stylesheet" href="/HomeAccess/Stylesheets/Common/font-awesome.css" />
+    
+    
+    <link rel="Stylesheet" href="/HomeAccess/Stylesheets/Site.css" />
+    <link rel="stylesheet" href="/HomeAccess/Stylesheets/Frame/Frame.css" /> 
+    <link rel="SHORTCUT ICON" href="/HomeAccess/Media/Themes/Base/Common/favicon.ico"/>
+    <style>
+        .sg-asp-table-header-row,
+        .ui-jqgrid-view .ui-jqgrid-hdiv, 
+        .ui-jqgrid tr.ui-jqgrid-labels th  {
+	        background-color: white   ;
+            color: #0a542e  ;
+        }
+    </style>
+
+    <script src="/HomeAccess/Scripts/libs/jquery?v=qIcuP3UP_aRnf7YSojJ0X96urcPMuU40OLTAhIFZUhU1" type="text/javascript"></script>   
+    <script src="/HomeAccess/Scripts/libs/modernizr-2.8.3.js" type="text/javascript"></script>   
+    <script src="/HomeAccess/Scripts/Trirand/ui.multiselect.js" type="text/javascript" ></script>
+    <script src="/HomeAccess/Scripts/Trirand/i18n/grid.locale-en.js" type="text/javascript"></script>
+    <script src="/HomeAccess/Scripts/Trirand/jquery.jqGrid.js" type="text/javascript"></script>
+    <script src="/HomeAccess/Scripts/libs/json2.js" type="text/javascript"></script>
+    <script src="/HomeAccess/eSchoolPLUSResource/GetEmbeddedScript?file=SungardCommon" type="text/javascript"></script>    
+    <script src="/HomeAccess/eSchoolPLUSResource/GetEmbeddedScript?file=Combobox" type="text/javascript"></script>
+    <script type="text/javascript">
+        $(function () {
+            parseForComboBoxes();
+        });
+    </script>    
+    
+
+    <script type="text/javascript">
+        $(SunGard.Common.Init('/HomeAccess/'));
+    </script>
+    
+    
+        
+    <script type="text/javascript" src="OpenClassPopUp.js"></script>
+    <script type="text/javascript" >
+        function PrintReportCard() {
+            
+            window.open("/HomeAccess/Grades/PrintReportCard/" + $("#plnMain_hdnSchoolYear").val() + "-" + $("#plnMain_hdnRCRun").val());
+            return false;
+        }
+    </script>
+    <script type="text/javascript" >
+        function PrintReportCardDetail() {
+            window.open("ReportCardDetailReport.aspx?rcrun=" +  $("#plnMain_hdnRCRun").val() + "&type=rc", null, "status=no,menubar=no,toolbar=no,top=50,left=50,width=600,height=450");
+                return false;
+        }
+    </script>
+    <script type="text/javascript" src="AssignmentsFromRCPopUp.js"></script>
+    <script type="text/javascript" src="/HomeAccess/Content/Common/Validation.js"></script>
+    <script type="text/javascript" src="ReportCards.js"></script>
+	</head>
+<body>
+    
+    <div id='MainContent' class='sg-main-content'>
+        <div class='sg-hac-content'>
+            <form method="post" action="./ReportCards.aspx" onsubmit="javascript:return WebForm_OnSubmit();" id="fmMain">
+<div class="aspNetHidden">
+<input type="hidden" name="__EVENTTARGET" id="__EVENTTARGET" value="" />
+<input type="hidden" name="__EVENTARGUMENT" id="__EVENTARGUMENT" value="" />
+<input type="hidden" name="__LASTFOCUS" id="__LASTFOCUS" value="" />
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="TYwwl7ewZSI/OcsFcdJo/G9SehrBT1mrD2TNFeJGmt25b8RXV165aRgVuW4gga4SyFbifEWbf+9hcN5BixX2Ua2HAvEuXjv4Hd7i0wdRWR7PVHUdln8sfV8k4WvFlTEVM5RwmJ3DSbZaZux3mDCXZeu6FTfPA5bsKmDFX6GvtWCDUHtYittut/OXWauFzepVF4SRSmRFCO+GaefRYO58ffAF3wJgESjPyTb7dY4R/l8s8Y0U6Qhi1DXYCUnrMN4K/QhTtcPiiM6UgF9W01Y5eT1wc/RUZ3lGRIBhB74LcHlDmeXz7tT10CxM3oi4AzRRIWizlPBNNDzSHIsQgqbPnXukeRSkb9akMPycsf6M8MyLH9Eoq9jSdSoCHe2PUByiUpyXlXL8LM8bblgBMTl1ZcSjcUcRpoMy+cvSnTSTn5CpCp3QTltIWnYYHkZ0OizEGU4kSpRpzTAXyhCyDEtCLyzB6yBjdTD3C93PCODgbBamtiCStSKHP+mmwU8TOCDA7tEXVapCZRZs9ne/WawDs4gdXD5nxfRASdNnnm2LP/wGEbuK8VvwN/56pb0Tyn2L5WLFuFHT/dq82icgglLPT7XptGSvn1g7Yb9GPaSdBd5N4feLEgC4rtLkkgw1TUQx9qkVboXk5yE+AjzBFyUTWtEMFgjnfxDIPf9lQQLD3SgoFsl8teeCGDCgspVo0qCCPZCrcj30xr6bYNRGdE9bMkv5ZEt40hTnQW0eJdDl2SH9pLtuMefYr9lXlNoBmc3US96SXeBJZcbOnFudKT6R+r1APPMlrTmOVo3Jrim/8I0kfSfq42hz3DSUVFhip/gh3WikcT92YRD7+5De1PKENFYj25mq5FP1BcvVBMMUj1DKgI1xa8IoIjgvTuBUK5xhjbpdiLLxc3g7P8peKBQocW+N9Cmb8v3T3hOo5licDl+f8aASnb+iJtCpiLExSaiSVBjGPbOf/HKwt5DD9TSGqrmdAgPMYrAoYY62GkWWOFNoW77JOjbSAJtZkXaMXao5XwJWpOJknPS2rQkj3VQihxnt18igcvv0rLZ5kjc8MJlPv3DVcXo3eKb5mEjpkJx+l81sGjcS3fAIiA3xTFoYOHwLoqZPiVdF3Vg4hhrUvdE4YyD+oFY16J00HFsD2tjWdntXsP/Nj1a7dsrmXeNmRTPl/ki1kBZ1SlwtKrhrST/sMbnXx8UcwJCICXPVolju" />
+</div>
+
+<script type="text/javascript">
+//<![CDATA[
+var theForm = document.forms['fmMain'];
+if (!theForm) {
+    theForm = document.fmMain;
+}
+function __doPostBack(eventTarget, eventArgument) {
+    if (!theForm.onsubmit || (theForm.onsubmit() != false)) {
+        theForm.__EVENTTARGET.value = eventTarget;
+        theForm.__EVENTARGUMENT.value = eventArgument;
+        theForm.submit();
+    }
+}
+//]]>
+</script>
+
+
+
+<script src="/HomeAccess/WebResource.axd?d=x2nkrMJGXkMELz33nwnakK0_vI8xs6eXB8mherc1jW_Egm8frAnsKmwzvFOHOFEh7lfqFRMsMNX6E86SKJj00rHbJKZcQhFT5yDw_1B25PY1&amp;t=639190664600000000" type="text/javascript"></script>
+<script type="text/javascript">
+//<![CDATA[
+function WebForm_OnSubmit() {
+if (typeof(ValidatorOnSubmit) == "function" && ValidatorOnSubmit() == false) return false;
+return true;
+}
+//]]>
+</script>
+
+<div class="aspNetHidden">
+
+	<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="DF83DEEA" />
+	<input type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" value="smiFt/XdkBloGpzC2bHQXaDO3z8m+YTHmZOgOoz9qk+5ZGYDNgLx2EyFhf4RfD0rdfh2GQg8gJjr/X03HRA8vt35nxsTFVgN2bHiBeRvqCHaqJV+n6n4DWhePXVBFJgmfMIq/eYrlvuFWL1AsZrPssjeeZNFpp7WJT292F/Rz+DEkLMxPbbmZQJvKD2YknJ/9QEYR6mq+983rzOkKoXZMo7B8UKGxDquQfTR+Rv5tGwHFatVO66K+fEZKFmb4PktQSLa0O1VM2nmpsjoNQXWL2j+k2PAuqD1K3MQOIyn6pHOeAl0rvdFYn6lTwIwCKNx3Jbr6R21mPlAiI9HISk0ie2dd91aMaAkWGaUYiVL+qsg7mWw23xT4d5AoB3Uy+mReHqmq1fdCFwaJIZlyF07zi+kzoKRGVaBoZ1KqW+DKa4H39OuEUsLJ8EpeGt9PYcP" />
+</div>
+                
+
+	<div class="sg-header">
+        <input name="ctl00$plnMain$hdnTitle" type="hidden" id="plnMain_hdnTitle" value="Report Card" />
+        <input name="ctl00$plnMain$hdnTitle2" type="hidden" id="plnMain_hdnTitle2" value="Report Card For Reporting Period" />
+        <input name="ctl00$plnMain$hdnRCRun" type="hidden" id="plnMain_hdnRCRun" />
+        <input name="ctl00$plnMain$hdnSchoolYear" type="hidden" id="plnMain_hdnSchoolYear" />
+		<input name="ctl00$plnMain$hdnAcknowledge" type="hidden" id="plnMain_hdnAcknowledge" value="Acknowledge" />
+		<input name="ctl00$plnMain$hdnAcknowledgeTitle" type="hidden" id="plnMain_hdnAcknowledgeTitle" value="Report Card Acknowledgement" />
+		<input name="ctl00$plnMain$hdnAcknowledgeAlert" type="hidden" id="plnMain_hdnAcknowledgeAlert" value="Alert: " />
+		<input name="ctl00$plnMain$hdnAcknowledgeAlertMsg" type="hidden" id="plnMain_hdnAcknowledgeAlertMsg" value="Acknowledge the report card. Type your name to confirm that you have reviewed your student&#39;s information and acknowledge (at the end of the page) viewing the report card." />
+        <input name="ctl00$plnMain$hdnAcknowledgePrefix" type="hidden" id="plnMain_hdnAcknowledgePrefix" value="I, " />
+		<input name="ctl00$plnMain$hdnAcknowledgeMsg" type="hidden" id="plnMain_hdnAcknowledgeMsg" value=", acknowledge that I have reviewed my student&#39;s grades." />
+
+		
+        
+
+    </div>
+
+    <div class="sg-content-grid">
+		
+
+        <div class="sg-content-grid-container sg-container-content">
+			
+                    
+
+						
+				 
+			 
+        </div>
+
+        <div id="plnMain_tblRCAlert" class="sg-content-alert-container sg-container-content">
+	
+            <input name="ctl00$plnMain$hdnValidMHACLicense" type="hidden" id="plnMain_hdnValidMHACLicense" value="Y" />
+            <input id="plnMain_chkRCAlert" type="checkbox" name="ctl00$plnMain$chkRCAlert" onclick="javascript:setTimeout(&#39;__doPostBack(\&#39;ctl00$plnMain$chkRCAlert\&#39;,\&#39;\&#39;)&#39;, 0)" />
+            <label for="plnMain_chkRCAlert" id="plnMain_lblEmail">Email</label><input id="plnMain_chkRCPushMobile" type="checkbox" name="ctl00$plnMain$chkRCPushMobile" onclick="javascript:setTimeout(&#39;__doPostBack(\&#39;ctl00$plnMain$chkRCPushMobile\&#39;,\&#39;\&#39;)&#39;, 0)" /><label for="plnMain_chkRCPushMobile" id="plnMain_lblRCPushMobile">Push Mobile - </label>
+		    <span id="plnMain_lblRCAlert">I would like to receive a Report Card alert when it becomes available.</span>  
+	    
+</div>
+        <div class="sg-content-grid">
+	        
+            <div class="sg-content-grid">
+			    
+			    
+	        </div>
+	        <div>
+		        <label id="plnMain_lblMessage">This student does not have any Report Cards for this school year.</label>
+                
+	        </div>
+        </div>
+        
+        <script>
+            $(function () {
+                if('False' == 'False')
+                    $('.tdCredit').hide();
+                if ('False' == 'False')
+                    $('.tdGPA').hide();
+            });
+        </script>
+		
+		<div id="plnMain_tbHonorMsg" class="sg-asp-table-group">
+			
+			
+		</div>
+    				
+        
+        
+
+        
+
+        
+	
+    </div>
+<input name="ctl00$plnMain$hdnddlRcRunsSelected" type="hidden" id="plnMain_hdnddlRcRunsSelected" />
+	<input name="ctl00$plnMain$blnDirty" type="hidden" id="plnMain_blnDirty" />
+	<input name="ctl00$plnMain$txtAction" type="hidden" id="plnMain_txtAction" />
+
+            
+
+<script type="text/javascript">
+//<![CDATA[
+
+var Page_ValidationActive = false;
+if (typeof(ValidatorOnLoad) == "function") {
+    ValidatorOnLoad();
+}
+
+function ValidatorOnSubmit() {
+    if (Page_ValidationActive) {
+        return ValidatorCommonOnSubmit();
+    }
+    else {
+        return true;
+    }
+}
+        //]]>
+</script>
+</form>
+        </div>
+    </div>
+    <script>
+        $(function () {
+            // Build the jQuery UI buttons
+            $('.sg-buttonset').controlgroup();
+            $('.sg-button').button();
+            window.parent.$('.sg-legacy-iframe').height($('.sg-main-content').height()); // set the init size
+            // Increase length of smaller content windows to reduce cutoffs in dropdowns. 
+            var iframeHeight = window.parent.$('.sg-legacy-iframe').height(); 
+            if (iframeHeight < 450)
+            { window.parent.$('.sg-legacy-iframe').height($('.sg-main-content').height() + 200); }
+           
+        })
+    </script>
+</body>
+</html>

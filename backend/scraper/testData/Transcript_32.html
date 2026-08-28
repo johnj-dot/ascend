@@ -1,0 +1,428 @@
+﻿/// <reference path="..\..\..\..\SunGard Shared Assemblies\Sungard.Common.Resources\Scripts\Common\Sungard.Common.js" />
+
+/*
+ * ------------------------------------------------------------------------------------------------
+ * © Copyright 2013 SunGard K-12 Education, All Rights Reserved.
+ * This program is PROPRIETARY and CONFIDENTIAL information of SunGard K-12 Education, and may not
+ * be disclosed or used except as expressly authorized in a license agreement controlling such use
+ * and disclosure.  Unauthorized use of this program will result in legal proceedings, civil
+ * damages, and possible criminal prosecution.
+ * ------------------------------------------------------------------------------------------------
+ * System Name: Teacher Access Center
+ * ------------------------------------------------------------------------------------------------
+ * File Name: Combobox.js
+ * ------------------------------------------------------------------------------------------------
+ * File Description:
+ *   jQuery script file that provides the method for converting a HTML SELECT tag
+ *   or a HTML INPUT tag into a combobox that uses jQuery UI's auto-complete.
+ * ------------------------------------------------------------------------------------------------
+ */
+
+function parseForComboBoxes() {
+    // Make all selects into comboboxes.
+    // The class was set by the dropdownListHelper function
+    $(".sg-combobox").each(function (index, domEle) {
+        // only process a combobox once.
+        var $combo = $(domEle);
+        if ($combo.data('ui-combobox') === undefined) $combo.combobox();
+    });
+}
+
+// Create the combobox function
+(function($, window, document, undefined) {
+    $.widget("ui.combobox", {
+        options: {
+            width: null,
+            categorizedList: null,
+            beforeFocus: null,
+            autoCompleteSource: [],
+            minBeforeFilter: 0,
+            moveMatchToTop: false,
+            onChange: function () { } // function to call when the autocomplete changes
+        },
+
+        _create: function () {
+            var isSelect = this.element.is('select');
+            var self = this;
+
+            // if width was not defined during the widget creation, check
+            // for the data-combo-width attribute and use that.
+            if (this.options.width === null || this.options.width === undefined) {
+                if (this.element.attr('data-combobox-width') !== undefined)
+                    this.options.width = this.element.attr('data-combobox-width');
+                else if (this.element.attr('combobox-width') !== undefined) // LEGACY!
+                    this.options.width = this.element.attr('combobox-width');
+                else this.options.width = "default";
+            }
+
+            // if categorizedList was not defined during the widget creation, check
+            // for the data-combo-categorizedList attribute and use that.
+            if (this.options.categorizedList === null || this.options.categorizedList === undefined) {
+                if (this.element.attr('data-combobox-categorized') !== undefined)
+                    this.options.width = (this.element.attr('data-combobox-categorized') === "true");
+                else if (this.element.attr('combobox-categorizedList') !== undefined) // LEGACY!
+                    this.options.width = (this.element.attr('combobox-categorized') === "true");
+                else this.options.categorizedList = false;
+            }
+
+            // If it is a select create the html elements first
+            var wrapper;
+            var input;
+            var button;
+            var wasOpen;
+
+            var selectWidth = 150;
+            if (isSelect) {
+                // How wide should this element be
+                switch (this.options.width) {
+                    case "auto": selectWidth = this.element.width(); break;
+                    case "default": selectWidth = 150; break;
+                    default: selectWidth = this.options.width; break;
+                }
+                this.element.hide(); // hide the select
+
+                // wrapper
+                wrapper = $('<span class="sg-combobox-wrapper" id="' + 'combobox_' + this.element.attr("id") + '"></span>')
+                    .insertAfter(this.element);
+                if (this.element.hasClass("sg-color-choice"))
+                    wrapper.addClass("sg-color-choice");
+
+                // input
+                var selected = this.element.children(":selected");
+                var value = "";
+                if (selected.val() !== undefined && selected.val() !== null && selected.text() !== undefined && selected.text() !== null)
+                    value = selected.text();
+                var newvalue = (value.replace(new RegExp("        "), "")).replace(new RegExp("        "), "");
+                var inputId = 'input_' + this.element.attr("id");
+                input = $('<input />')
+                    .addClass('sg-combobox-input')
+                    .attr('role', 'combobox')
+                    .attr('aria-expanded', 'false')
+                    .attr('aria-haspopup', 'listbox')
+                    .attr('aria-autocomplete', 'list')
+                    .attr('id', inputId)
+                    .attr('title', newvalue)
+                    .val(value)
+                    .css("width", selectWidth)
+                    .appendTo(wrapper);
+
+                var ariaLabel = this.element.attr("aria-label");
+                if (ariaLabel) {
+                    input.attr('aria-label', ariaLabel);
+                }
+
+                // Reassociate labels: update any <label> whose "for" matches the
+                // original select's id (with or without naming-container prefix)
+                // so it now points to the visible combobox input.
+                var selectId = this.element.attr("id");
+                $('label').each(function () {
+                    var labelFor = $(this).attr('for');
+                    var suffixIdx = selectId.indexOf('_' + labelFor);
+                    if (labelFor && (labelFor === selectId || (suffixIdx >= 0 && suffixIdx === selectId.length - labelFor.length - 1))) {
+                        $(this).attr('for', inputId);
+                    }
+                });
+
+                // button that opens the combobox
+                button = $('<a tabIndex=-1 title="Show All Items"/>').appendTo(wrapper);
+
+                // get the dropdown data if it is a select
+                this.options.autoCompleteSource = self._buildAutoCompleteSource(this.element.get(0)); // get the dom object
+            } else {
+                wrapper = this.element.parent();
+                input = this.element;
+                button = $(wrapper.children('a')[0]);
+            }
+
+            input.autocomplete({
+                minLength: self.options.minBeforeFilter,
+                categorized: self.options.categorizedList,
+                source: self.options.autoCompleteSource,
+
+                //This event is triggered after a search completes, but before the menu is shown
+                response: function (event, ui) {
+                    if (!self.options.moveMatchToTop)
+                        return;
+
+                    if (ui == null || ui.content == null)
+                        return;
+
+                    //If the suggested data is the complete source, don't do anything
+                    if (self.options.autoCompleteSource.length === ui.content.length || ui.content.length === 1)
+                        return;
+
+                    var value = $.trim(event.target.value);
+                    var content = ui.content;
+
+                    //Loop through the suggested options and check to see if one of them matches the current input value
+                    for (var i = 0, len = content.length; i < len; ++i) {
+
+                        //If there is a match, move the entry to the beginning of the array
+                        if (value.toLowerCase() === $.trim(content[i].value).toLowerCase())
+                        {
+                            var option = content[i];
+                            content.splice(i, 1);
+                            content.splice(0, 0, option);
+                            break;
+                        }
+                    }
+                    return content;
+                },
+                select: function(event, ui) {
+                    input.attr("title", ui.item.value);
+                    input.attr("value", ui.item.value);
+                    if (isSelect) {
+                        $('#' + $(ui.item.option).parent().attr('id')).find('option:selected').prop('selected', false);
+                        ui.item.option.selected = true;
+                        self._trigger("selected", event, { item: ui.item.option });
+                        self.element.trigger("change"); // trigger the select
+                    }
+                    input.trigger('change');
+                    self.options.onChange(input);
+                    input.trigger('focus');
+                },
+                change: function (event, ui) {
+                    if (ui.item) {
+                        return true;
+                    }
+                    if (input.val() === '') {
+                        input.attr("title", "");
+                    }
+                    if (self._removeIfInvalid(this, self.options.autoCompleteSource) === true) {
+                        return false;
+                    }
+                    if (isSelect) {
+                        if (input.val() !== '') {
+                            var selected = self.element.children('option[value="' + input.val() + '"]');
+                            selected.prop('selected', true);
+                        }
+                        self.element.trigger('change'); // input already will have kicked off its change
+                    }
+                    self.options.onChange(input);
+                    return true;
+                }
+            });
+            input.data("ui-autocomplete")._renderItem = function (ul, item) {
+                var anchor = $('<a></a>');
+                if (item.label === '') {
+                    anchor.html('&nbsp;');
+                } else {
+                    anchor.text(item.label);
+                }
+
+                return $("<li></li>")
+                    .data("item.autocomplete", item)
+                    .append(anchor)
+                    .appendTo(ul);
+            };
+            
+            // Scrolls to the selected item
+            function highlightSelected() {
+                // Find the currently selected item and highlight it in the list.
+                var opt = input.val();
+                input.data('ui-autocomplete').widget().children('li').each(function () {
+                    var $this = $(this);
+                    if ($this.data('item.autocomplete').label == opt) {
+                        // Remove previous selected item
+                        var hovered = input.data('ui-autocomplete').widget().find('.ui-state-hover');
+                        if (hovered)
+                            hovered.eq(0).removeClass("ui-state-hover");
+                        // Scroll the selected option into focus.
+                        input.data("ui-autocomplete").menu.focus(null, $this);
+                        $this.eq(0).children('a').addClass('ui-state-hover');
+                        return;
+                    }
+                });
+            }
+
+            input.on('keydown', function (e) {
+                // if user pressed down or up arrow, or Enter or Space, open the autocomplete.
+                if (e.keyCode === 40 || e.keyCode == 38 || e.keyCode === 13 || e.keyCode === 32) { $(this).autocomplete('search', ''); }
+
+                // allow tabs
+                if (e.keyCode != 9) { e.preventDefault(); }
+                
+            }).on('keypress', function (e) {
+                // allow tabs
+                if (e.keyCode != 9) { e.preventDefault(); }
+            });
+
+            // When combobox opens highlight the currently selected item.
+            input.on('autocompleteopen', function () {
+                input.attr('aria-expanded', 'true');
+                if (self.options.beforeFocus != null)
+                    self.options.beforeFocus();
+                highlightSelected();
+            });
+
+            // When combobox closes update aria-expanded.
+            input.on('autocompleteclose', function () {
+                input.attr('aria-expanded', 'false');
+            });
+
+            // if user clicks in the inputbox, show dropdown with all values.
+            input.click(function () {
+                $(this).autocomplete('search', '');
+            });
+
+            // Format the button
+            button
+                .button({ icon: 'ui-icon-triangle-1-s', showLabel: false })
+                .removeClass('ui-corner-all')
+                .addClass('ui-corner-right ui-combobox-toggle')
+                .mousedown(function () {
+                    wasOpen = input.autocomplete("widget").is(":visible");
+                })
+                .click(function () {
+                    // close if already visible
+                    if (wasOpen) {
+                        input.autocomplete("close");
+                        return;
+                    }
+                    // work around a bug (likely same cause as #5265)
+                    $(this).blur();
+
+                    // pass empty string as value to search for, displaying all results
+                    input.autocomplete("search", "");
+                    input.focus();
+                });
+
+
+            // check if the combo box should be disabled at start
+            if ($(this.element).prop("disabled")) {
+                input.autocomplete('option', 'disabled', true);
+                button.button("option", "disabled", true);
+                input.prop('disabled', true);
+                button.prop('disabled', true);
+            }
+
+            // Set the remembered elements of the widget. These are used in other widget functions.
+            this.wrapper = wrapper;
+            this.input = input;
+            this.button = button;
+            this.isSelect = isSelect;
+            this.destroyed = false;
+        },
+
+        _destroy: function () {
+            if (this.destroyed)
+                return;
+
+            this.element.removeData();
+            if (this.isSelect) {
+                this.wrapper.remove();
+                this.element.show();
+                this.input.remove();
+            }
+            this.destroyed = true;
+            $.ui.autocomplete.prototype.destroy.call(this);
+        },
+
+        // publically accessible functions
+
+        // disable or enable the combobox.
+        disabled: function (disableOrEnable) {
+            // disable or enable the autocomplete, button, and input
+            this.input.autocomplete('option', 'disabled', disableOrEnable);
+            this.button.button("option", "disabled", disableOrEnable);
+            if (disableOrEnable) {
+                this.input.prop('disabled', true);
+                this.button.prop('disabled', true);
+                if (this.isSelect) this.element.prop('disabled', true);
+            }
+            else {
+                this.input.prop('disabled', false);
+                this.button.prop('disabled', false);
+                if (this.isSelect) this.element.prop('disabled', false);
+            }
+        },
+
+        // Rebuild the source data
+        rebuild: function () {
+            var sourceData = this._buildAutoCompleteSource(this.element.get(0));
+            this.input.autocomplete("option", "source", sourceData);
+        },
+
+        setValue: function (value) {
+            var inputValue = value;
+            if (this.isSelect) {
+                var selected = this.element.children('option[value="' + value + '"]');
+                selected.prop('selected', true);
+                inputValue = selected.text();
+            }
+            this.input.val(inputValue);
+        },
+
+        hide: function () {
+            this.wrapper.hide();
+        },
+
+        show: function () {
+            this.wrapper.show();
+        },
+
+        // Private functions 
+
+        // Removes bad input from autocompletes
+        // RETURNS: true if it removed the value
+        _removeIfInvalid: function (input, options) {
+            // autocomplete when they click to unfocus the input
+            var hovered = input.data('ui-autocomplete').widget().find('.ui-state-hover');
+            if (hovered) {
+                // does the input
+                if (hovered.text().match(new RegExp(input.val(), 'i')))
+                    input.val(hovered.text());
+            }
+
+            var elementValue = input.val();
+            // empty strings are ok
+            if (elementValue == '')
+                return false;
+            var matcher = new RegExp('^' + $.ui.autocomplete.escapeRegex(elementValue) + '\\s*$', 'i');
+            var valid = false;
+            $.each(options, function () {
+                var optionValue;
+                if (this.value !== undefined)
+                    optionValue = this.value;
+                else
+                    optionValue = this;
+                if (optionValue.match(matcher)) {
+                    valid = true;
+                    return false;
+                }
+                return true;
+            });
+            if (valid)
+                return false; // was not invalid
+            // remove invalid value, as it didn't match anything
+            input.val('');
+            if (input.data('autocomplete') !== undefined) input.data('autocomplete').term = '';
+            input.attr('title', '');
+            input.attr('value', '');
+            return true;
+        },
+
+        // builds the source data for the autocomplete.
+        // also called when a 'rebuild' is fired.
+        _buildAutoCompleteSource: function (select) {
+            var sourceData = new Array(), option, text;
+            // simple loop for the options
+            for (var i = 0, len = select.length; i < len; ++i) {
+                option = select.options[i];
+                text = option.text;
+                // add element to result array
+                sourceData.push({
+                    label: text,
+                    value: text,
+                    option: option
+                });
+            }
+
+            return sourceData;
+        },
+        
+        _escapeRegexp: function (text) {
+            return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+        }
+    });
+})(jQuery, window, document);

@@ -1,0 +1,2048 @@
+/// <reference path="../libs/jquery-vsdoc.js" />
+
+/*
+ * ------------------------------------------------------------------------------------------------
+ * © Copyright 2012 SunGard K-12 Education, All Rights Reserved.
+ * This program is PROPRIETARY and CONFIDENTIAL information of SunGard K-12 Education, and may not
+ * be disclosed or used except as expressly authorized in a license agreement controlling such use
+ * and disclosure.  Unauthorized use of this program will result in legal proceedings, civil
+ * damages, and possible criminal prosecution.
+ * ------------------------------------------------------------------------------------------------
+ * System Name: Sungard Common
+ * ------------------------------------------------------------------------------------------------
+ * File Name: Sungard.Common.js
+ * ------------------------------------------------------------------------------------------------
+ * File Description:
+ *   jQuery script file for client-side processing that can be used by any application.
+ * ------------------------------------------------------------------------------------------------
+ */
+var SunGard = (SunGard || {});
+
+SunGard.Common = function () {
+
+    //#region Constants
+
+    var _antiForgeryRequestElementId = "__RequestVerificationToken";
+
+    //#endregion
+
+    //The resource string dictionary
+    var _resourceDictionary = {}, _activeAJaxCalls = [], _whenAjaxCallStartsCallback = [], _whenAjaxCallEndsCallback = [],
+        _suppressSpinner = false, resizeTimerSet = false, resizeTimer = 0,
+        _rootUrl = "", _arrowIndex = 0, _$spinner = null,
+
+    _apiUrl = "",
+
+    _allowedReadOnlyKeys = {
+        "37" : "arrow-left",
+        "38" : "arrow-up",
+        "39" : "arrow-right",
+        "40" : "arrow-down",
+        "9" : "tab"
+    },
+
+    // Initialize common
+    init = function (url) {
+        _$spinner = $('#AjaxSpinner');
+
+        // initalize common jquery extentions
+        initializeExtentions();
+
+        // add hotkeys to all datepickers
+        addDatePickerHotKeys();
+
+        _rootUrl = url;
+
+        //If there is a trailing slash, remove it
+        if (_rootUrl.lastIndexOf("\/") === (_rootUrl.length - 1))
+            _rootUrl = _rootUrl.substr(0, (_rootUrl.length - 1));
+
+        if (typeof apiUrl !== "undefined") {
+            // set the base url for the api layer.
+            _apiUrl = apiUrl;
+
+            //If there is a trailing slash, remove it
+            if (_apiUrl.lastIndexOf("\/") === (_apiUrl.length - 1)) {
+                _apiUrl = _apiUrl.substr(0, (_apiUrl.length - 1));
+            }
+        } else {
+            // otherwise, use the root url and add /api.
+            _apiUrl = _rootUrl + "/api";
+        }
+
+        $(document).off('keydown', '.sg-text-readonly');
+        $(document).on('keydown', '.sg-text-readonly', function (e) {
+            if (!_allowedReadOnlyKeys[e.which]) {
+                e.preventDefault();
+            }
+        });
+    },
+
+    getAntiForgeryToken = function () {
+        var antiForgeryTokenValue = null;
+        var $antiForgeryTokenElement = $("[name=" + _antiForgeryRequestElementId + "]").first();
+        if ($antiForgeryTokenElement.length > 0) {
+            antiForgeryTokenValue = $antiForgeryTokenElement.val();
+        }
+
+        return antiForgeryTokenValue;
+    },
+
+    versionCompare = function (v1, v2) {
+        /// <summary>Compares two version strings.</summary>
+        /// <param name="v1" type="string">The first version string to compare.</param>
+        /// <param name="v2" type="string">The second version string to compare.</param>
+        /// <returns type="number">Returns -1 if v1 is less than v2, 0 if they are equal, and 1 if v1 is greater than v2.</returns>
+
+        var v1parts = v1.split('.');
+        var v2parts = v2.split('.');
+
+        function isValidPart(x) {
+            return (/^\d+$/).test(x);
+        }
+
+        if (!v1parts.every(isValidPart) || !v2parts.every(isValidPart)) {
+            return NaN;
+        }
+
+        v1parts = v1parts.map(Number);
+        v2parts = v2parts.map(Number);
+
+        for (var i = 0; i < v1parts.length; ++i) {
+            if (v2parts.length == i) {
+                return 1;
+            }
+
+            if (v1parts[i] == v2parts[i]) {
+                continue;
+            }
+            else if (v1parts[i] > v2parts[i]) {
+                return 1;
+            }
+            else {
+                return -1;
+            }
+        }
+
+        if (v1parts.length != v2parts.length) {
+            return -1;
+        }
+
+        return 0;
+    },
+
+    // Method: RootURL
+    //      Function used to retrieve the root url of the application.
+    // Parameters: None
+    // Return Value: String representing the root url of the web application.
+    rootURL = function () {
+        return _rootUrl;
+    },
+
+    rootApiURL = function () {
+        /// <summary>
+        /// Returns the root application api URL that was provided during the Initialization functionality.
+        /// </summary>
+        /// <returns type="string">URL</returns>
+
+        return _apiUrl;
+    },
+
+    /////////////////////////////////////////////////////////////////////////////////
+    // Extensions
+    initializeExtentions = function () {
+        /////////////////////////////////////////////////////////////////////////////////
+        // Common Helper functions
+
+        /* add function to jquery that returns the scrollbar width. */
+        (function ($) {
+            var scrollbarWidth = 0;
+            $.fn.getScrollbarWidth = function () {
+                if (!scrollbarWidth) {
+                    var $div = $('<div />')
+                        .css({ width: 100, height: 100, overflow: 'auto', position: 'absolute', top: -1000, left: -1000 })
+                        .prependTo('body').append('<div />').find('div')
+                        .css({ width: '100%', height: 200 });
+                    scrollbarWidth = 100 - $div.width();
+                    $div.parent().remove();
+                }
+                return scrollbarWidth;
+            };
+            var scrollbarHeight = 0;
+            $.fn.getScrollbarHeight = function () {
+                if (!scrollbarHeight) {
+                    var $div = $('<div />')
+                        .css({ width: 100, height: 100, overflow: 'auto', position: 'absolute', top: -1000, left: -1000 })
+                        .prependTo('body').append('<div />').find('div')
+                        .css({ width: 200, height: '100%' });
+                    scrollbarHeight = 100 - $div.height();
+                    $div.parent().remove();
+                }
+            }
+
+            $.fn.hasHorizontalScrollBar = function() {
+                return this.get(0).scrollWidth > this.width();
+            };
+    
+            $.fn.hasVerticalScrollBar = function() {
+                return this.get(0).scrollHeight > this.height();
+            };    
+
+            $.fn.hasScrollBar = function() {
+                return this.hasHorizontalScrollBar() && this.hasVerticalScrollBar();
+            };
+        })(jQuery),
+        // FUNCTION removeClassRegEx
+        //      Like jQuery method removeClass but it uses regexes
+        //      Came from: http://www.websanova.com/tutorials/jquery/jquery-remove-class-by-regular-expression
+        //      To remove any class from body that begins with "sg-background-" use this:
+        //          $('body').removeClassRegEx(/^sg-background-/);
+        (function ($) {
+            $.fn.removeClassRegEx = function (regex) {
+                var classes = $(this).attr('class');
+                if (!classes || !regex)
+                    return false;
+                var classArray = [];
+                classes = classes.split(' ');
+                for (var i = 0, len = classes.length; i < len; i++)
+                    if (!classes[i].match(regex))
+                        classArray.push(classes[i]);
+                $(this).attr('class', classArray.join(' '));
+                return true;
+            };
+        })(jQuery),
+        // FUNCTION findClassRegEx
+        //      Finds a css class matching the regex
+        //      Find a class from body that begins with "sg-background-" use this:
+        //          $('body').findClassRegEx(/^sg-background-/);
+        (function ($) {
+            $.fn.findClassRegEx = function (regex) {
+                var classes = $(this).attr('class');
+                if (!classes || !regex)
+                    return "";
+                classes = classes.split(' ');
+                for (var i = 0, len = classes.length; i < len; i++)
+                    if (classes[i].match(regex))
+                        return classes[i];
+                return "";
+            };
+        })(jQuery),
+        // FUNCTION ellipsis
+        //  Adds css to allow ellipses
+        (function ($) {
+            $.fn.ellipsis = function () {
+                return this.each(function () {
+                    var el = $(this);
+                    if (el.css("overflow") == "hidden") {
+                        var text = el.html();
+                        var multiline = el.hasClass('multiline');
+                        var t = $(this.cloneNode(true))
+                            .hide()
+                            .css('position', 'absolute')
+                            .css('overflow', 'visible')
+                            .width(multiline ? el.width() : 'auto')
+                            .height(multiline ? 'auto' : el.height());
+                        el.after(t);
+
+                        height = function () { return t.height() > el.height(); };
+                        width = function width() { return t.width() > el.width(); };
+                        var func = multiline ? height : width;
+
+                        while (text.length > 0 && func()) {
+                            text = text.substr(0, text.length - 1);
+                            t.html(text + "...");
+                        }
+                        el.html(t.html());
+                        t.remove();
+                    }
+                });
+            };
+        })(jQuery);
+
+        // Set up default AJAX settings
+        (function ($) {
+            $.ajaxSetup({
+                beforeSend: SunGard.Common.AjaxBeforeSend
+            });
+        })(jQuery);
+
+        // Set jqGrid default options
+        (function ($) {
+            $.extend($.jgrid.defaults,
+                {
+                    autoencode: true,
+                    sg_loadBeforeSend: null,
+                    loadBeforeSend: function (xhr, settings) {
+                        SunGard.Common.AjaxBeforeSend(xhr, settings);
+                        var $grid = $(this);
+                        var pin = $grid.jqGrid("getGridParam");
+                        if (typeof pin.sg_loadBeforeSend === "function") {
+                            pin.sg_loadBeforeSend.call(this, xhr, settings);
+                        }
+                    },
+                //    loadBeforeSend: SunGard.Common.AjaxBeforeSend   // Make sure the page's anti-forgery token is sent on POST request headers
+                });
+        })(jQuery);
+
+        // Extensions to support forwarding calls that jquery has deprecated
+        (function ($) {
+            //Forward .attr/removeAttr to the appropriate .prop() calls.
+            //really should've been made to .prop in any third party libraries.
+            var originalAttr = $.fn.attr;
+            $.fn.attr = function (name, value) {
+                if (typeof (name) === "object") {
+                    chainable = true;
+                    var returnVal = this;
+                    for (i in name) {
+                        returnVal = returnVal.attr(i, name[i]);
+                    }
+                    return returnVal;
+                } else {
+                    switch (name.toUpperCase()) {
+                        case "DISABLED":
+                        case "READONLY":
+                        case "CHECKED":
+                        case "SELECTED":
+                        case "HIDDEN":
+                            //Handle the "Get" case - the only argument is the object name
+                            if (arguments.length === 1) {
+                                return (this.prop(name)) ? name : undefined;
+                            }
+
+                            //Handle the "Set" case - the second argument is the value.
+                            var propValue = !(/false/i).test(value);
+                            return this.prop(name, propValue);
+                            break;
+
+                        default:
+                            return originalAttr.apply(this, arguments);
+                    }
+                }
+            };
+
+            var originalRemoveAttr = $.fn.removeAttr;
+            $.fn.removeAttr = function (name) {
+                switch (name.toUpperCase()) {
+                    case "DISABLED":
+                    case "READONLY":
+                    case "CHECKED":
+                    case "SELECTED":
+                    case "HIDDEN":
+                        return this.prop(name, false);
+                        break;
+
+                    default:
+                        return originalRemoveAttr.apply(this, arguments);
+                }
+            };
+
+            //Forward size() to .length(). The .size() function that was deprecated in jQuery 1.8 and removed in 3.0
+            $.fn.size = function () {
+                return this.length;
+            };
+
+            //Override .hover() which is deprecated in jQuery 3.7
+            (function ($) {
+                $.fn.hover = function (fnOver, fnOut) {
+                    return this.on("mouseenter", null, fnOver).on("mouseleave", null, fnOut || fnOver);
+                };
+            })(jQuery);
+
+            //Override $.type() with was deprecated in jQuery 3.7
+            (function ($) {
+                $.extend({
+                    type: function (obj) {
+                        return typeof obj;
+                    }
+                });
+            })(jQuery);
+
+            //Override $.parseJSON() with was deprecated in jQuery 3.7
+            (function ($) {
+                $.extend({
+                    parseJSON: function (data) {
+                        return JSON.parse(data + "");
+                    }
+                });
+            })(jQuery);
+
+        })(jQuery);
+
+        // Extensions to support deprecated/removed jQuery functions so
+        // any third party libraries that still use them will continue to work.
+        (function ($) {
+            var elementSpecificHandlers = ["load"];
+            $.each(elementSpecificHandlers, function (index, handlerName) {
+                switch (handlerName) {
+                    case "load":
+                        if (versionCompare($.fn.jquery, "3.0") >= 0) {
+                            var ajaxPageLoad = $.fn.load;
+                            $.fn[handlerName] = function (data, fn) {
+                                return arguments.length === 0 ?     // If no arguments are passed, assume it's a trigger
+                                    this.trigger(handlerName) :     // Trigger the event
+                                    (typeof data === "string" ?     // If the first argument is a string, assume it's a URL
+                                        ajaxPageLoad.apply(this, arguments) :   // Load the HTML from the URL into the page
+                                        this.on(handlerName, null, data, fn));  // Otherwise, bind the event handler
+                            };
+                        }
+                        break;
+
+                    default:
+                        $.fn[handlerName] = function (data, fn) {
+                            return arguments.length > 0 ?
+                                this.on(handlerName, null, data, fn) :
+                                this.trigger(handlerName);
+                        };
+                        break;
+                }
+            });
+        })(jQuery);
+
+        // Extension for the jQuery UI Button widget that provides default values for the legacy options of icons and text 
+        // as well as provides an override for the _create method that converts the legacy options to the replacement options.
+        (function ($) {
+            $.widget("ui.droppable", $.ui.droppable, {
+                options: {
+                    hoverClass: false,
+                    activeClass: false
+                },
+                _create: function () {
+                    if (this.options.activeClass != false) {
+                        this.options.classes["ui-droppable-active"] = this.options.activeClass;
+                    }
+                    if (this.options.hoverClass != false) {
+                        this.options.classes["ui-droppable-hover"] = this.options.hoverClass;
+                    }
+                    this._super();
+                }
+            });
+        })(jQuery);
+
+        //the .unique method is replaced with the unique sort in jQuery 3.0.  Creating our own extension so no third-party 
+        //scripts are broken as a result.
+        (function ($) {
+            $.extend({
+                unique: function (array) {
+                    return $.uniqueSort(array);
+                }
+            });
+        })(jQuery);
+
+        //jQuery is deprecating $.trim() in 3.5, there is no method with equivalent behavior so using our own.
+        (function ($) {
+            $.extend({
+                trim: function (text) {
+                    var rtrim = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g;
+                    return text == null ?
+                        "" :
+                        (text + "").replace(rtrim, "");
+                }
+            });
+        })(jQuery);
+
+        //Override the .delegate() functions deprecated in jQuery 3.7
+        (function ($) {
+            $.fn.delegate = function (selector, types, data, fn) {
+                return this.on(types, selector, data, fn);
+            };
+
+            $.fn.delegate = function (selector, types, fn) {
+                return this.on(types, selector, fn);
+            };
+
+            $.fn.undelegate = function (type) {
+                return this.off(type);
+            }
+        })(jQuery);
+
+        //Override deprecated jQuery.isArray method
+        (function ($) {
+            $.extend({
+                isArray: Array.isArray
+            });
+        })(jQuery);
+
+        //Override deprecated jQuery.isFunction method
+        (function ($) {
+            $.extend({
+                isFunction: function (obj) {
+                    return typeof obj === "function";
+                }
+            });
+        })(jQuery);
+
+        //Override deprecated jQuery isNumeric and isWindow methods
+        (function ($) {
+            $.extend({
+                isNumeric: function (obj) {
+                    // parseFloat NaNs numeric-cast false positives (null|true|false|"")
+                    // ...but misinterprets leading-number strings, particularly hex literals ("0x...")
+                    // subtraction forces infinities to NaN
+                    return !Array.isArray(obj) && obj - parseFloat(obj) >= 0;
+                },
+                isWindow: function (obj) {
+                    return obj != null && obj === obj.window;
+                }
+            });
+        })(jQuery);
+
+        //Override deprecated jQuery-ui button options
+        (function ($) {
+            $.widget("ui.button", $.ui.button, {
+                options: {
+                    text: true,
+                    icons: {
+                        primary: null,
+                        secondary: null
+                    }
+                },
+                _create: function () {
+                    if (this.options.showLabel && !this.options.text) {
+                        this.options.showLabel = this.options.text;
+                    }
+                    if (!this.options.showLabel && this.options.text) {
+                        this.options.text = this.options.showLabel;
+                    }
+                    if (!this.options.icon && (this.options.icons.primary ||
+                        this.options.icons.secondary)) {
+                        if (this.options.icons.primary) {
+                            this.options.icon = this.options.icons.primary;
+                        } else {
+                            this.options.icon = this.options.icons.secondary;
+                            this.options.iconPosition = "end";
+                        }
+                    } else if (this.options.icon) {
+                        this.options.icons.primary = this.options.icon;
+                    }
+                    this._super();
+                }
+            });
+        })(jQuery);
+
+        //Override Deprecated .Unbind()
+        (function ($) {
+            $.fn.unbind = function (types, fn) {
+                return this.off(types, null, fn);
+            };
+        })(jQuery);
+
+        // Prevent title from being escaped
+        $.widget("ui.dialog", $.extend({}, $.ui.dialog.prototype, {
+            _title: function(title) {
+                if (!this.options.title ) {
+                    title.html("&#160;");
+                } else {
+                    title.html(this.options.title);
+                }
+            }
+        }));
+    },
+
+    addDatePickerHotKeys = function () {
+        /// <summary>Adds hot keys to all datepicker fields.</summary>
+
+        // throughout the whole document (because we can't be sure WHERE in the document
+        // the datepicker is, add a delegate that will affect the click event.  This will
+        // pick up any datepickers added through ajax loading after the page loads.
+        $(document).on('keydown', 'input.hasDatepicker', function (e) {           
+            var code = e.keyCode || e.which,
+                $this = $(this),               
+                today = new Date(),
+                currentValue = $this.val(),
+                currentDate = null;
+            
+            switch (code) {             
+                // 84: t or d (today)
+                case 68: case 84: currentDate = today; break;
+                
+                    // 77: m (this month)                        
+                case 77:  case 109: currentDate = new Date(today.getFullYear(), today.getMonth(), 1); break;
+                
+                    // 89: y (this year)
+                case 89: case 121: currentDate = new Date(today.getFullYear(), 0, 1); break;
+
+                    // 187: = (or +) take the current value and add a day.
+                case 187: 
+                    if (currentValue === "") currentValue = today;
+                    currentDate = new Date(currentValue);
+                    currentDate.setDate(currentDate.getDate() + 1);
+                    break;
+
+                    // 189: - (or _) take the current value and subtract a day.
+                case 189: 
+                    if (currentValue === "") currentValue = today;
+                    currentDate = new Date(currentValue);
+                    currentDate.setDate(currentDate.getDate() - 1);
+                    break;
+
+                    // 219:  [ (or {) take the current value and subtract a month.
+                case 219: 
+                    if (currentValue === "") currentValue = today;
+                    currentDate = new Date(currentValue);
+                    currentDate.setMonth(currentDate.getMonth() - 1);
+                    break;
+
+                    // 221:  ] (or }) take the current value and add a month.
+                case 221: 
+                    if (currentValue === "") currentValue = today;
+                    currentDate = new Date(currentValue);
+                    currentDate.setMonth(currentDate.getMonth() + 1);
+                    break;
+
+            }
+
+            if (currentDate != null) {
+                e.preventDefault();
+
+                $this.datepicker("setDate", currentDate);
+
+                // this is SUCH a hack.  We need to call onselect to call any
+                // specific validation on this input.  I stole this from the datepicker source code.
+                var inst = $.datepicker._getInst(this),
+                    onSelect = $.datepicker._get(inst, "onSelect");
+                if (onSelect) {
+                    dateStr = $.datepicker._formatDate(inst);
+                    onSelect.apply((inst.input ? inst.input[0] : null), [dateStr, inst]);
+                }
+
+            }
+        });
+    },
+
+    addTimeHotKeys = function (element) {
+        /// <summary>Adds hot key processing for fields that contain time data.</summary>
+        /// <param name="element" type="DOMEement or jQuery object">The element on which the hot keys should be attached.</param>
+        
+        // create a jquery object out of the element if it's not a jquery object already.
+        var $this = element instanceof jQuery ? element : $(element);
+        
+        $this.keydown(_timeKeyDown);
+    },
+
+    delegateTimeHotKeys = function (selector) {
+        /// <summary>Delegates hot key processing for fields that contain time data.</summary>
+        /// <param name="selector" type="jQuery selector">The DOM selector for elements on which the hot keys should be attached.</param>
+
+        $(document).on("keydown", selector, _timeKeyDown);
+    },
+
+
+    _timeKeyDown = function (e) {      
+        /// <summary>Implements hot key processing for fields that contain time data.</summary>
+
+        var $this = $(this),
+            code = e.keyCode || e.which;
+
+        // only process if one of the hotkeys is pressed.  So... remember to update this if there are extra hotkeys added
+        if (code === 68 || code === 84 || code === 72 || code === 187 || code === 189 || code === 219 || code === 221) {
+            var today = new Date(),
+                currentValue = this.value,
+                currentTime = null;
+
+            // parse the current value as a date.  If it's blank, use right now.
+            if (currentValue === "")  
+                currentTime = today;
+            else {
+                temp = Date.parse ("1/13/2002 " + currentValue);
+                if( !isNaN(temp)) currentTime = new Date(temp);
+            }
+
+            switch (code) {
+                // 84: t or d (now)
+                case 68: case 84: currentTime = today; break;
+                
+                    // 72: h (hour), round to the nearest hour.
+                case 72: 
+                    if (currentTime !== null) currentTime.setMinutes(currentTime.getMinutes() >= 30 ? 60 : 0); 
+                    break;
+
+                    // 187: = (or +) take the current value and move up to the nearest 5 minute interval
+                case 187: 
+                    if (currentTime !== null) currentTime.setMinutes (currentTime.getMinutes() + (5 - (currentTime.getMinutes() % 5)));
+                    break;
+
+                    // 189: - (or _) take the current value and move down to the nearest 5 minute interval
+                case 189: 
+                    if (currentTime !== null) currentTime.setMinutes (currentTime.getMinutes() - (((currentTime.getMinutes() + 4) % 5) + 1));
+                    break;
+
+                    // 219:  [ (or {) take the current value and subtract an hour
+                case 219: 
+                    if (currentTime !== null) currentTime.setHours(currentTime.getHours() - 1);
+                    break;
+
+                    // 221:  ] (or }) take the current value and add  an hour
+                case 221: 
+                    if (currentTime !== null) currentTime.setHours(currentTime.getHours() + 1);
+                    break;
+            }
+
+            if (currentTime != null) {
+                e.preventDefault();
+                $this.val(formatTime("1/13/2002 " + currentTime.getHours() + ":" + currentTime.getMinutes()));
+                $this.trigger('change');
+            }
+        }
+    },
+
+    formatTime = function (value) {
+        /// <summary>Formats text as a time.</summary>
+        /// <param name="value" type="string">The text to format.</param>
+
+        var formattedTime = value;
+        var valueAsDate;
+        var hour;
+        var minute;
+        var amOrPm;
+
+        // Determine if a value was passed in to format
+        if (value !== "") {
+            // We have a value, store it as a new Date
+            valueAsDate = new Date(value);
+
+            // Load the individual parts of the time from the Date object
+            hour = valueAsDate.getHours();
+            minute = valueAsDate.getMinutes();
+            amOrPm = 'AM';
+
+            // If the hour is greater than 12 toggle to PM and treat as military
+            if (hour >= 12) amOrPm = 'PM';
+            if (hour > 12) hour -= 12;
+
+            // Determine if the minute is 09 or less 
+            if (parseInt(minute) < 10) {
+                // Append a leading zero to the display string
+                minute = "0" + minute;
+            }
+
+            // Format the processed time for display
+            formattedTime = hour + ':' + minute + ' ' + amOrPm;
+        }
+
+        // Return the processed value
+        return formattedTime;
+    },
+    
+    parseTime = function (time) {
+        /// <summary>Parses text as a time.</summary>
+        /// <param name="value" type="string">The text to parse.</param>
+
+
+        var dateTime;
+        var year = 2002;                                          
+        var month = 0;
+        var date = 13;
+        var hour = -1;
+        var tempDate;
+
+        if (time == "")
+            return "";
+
+        // Check for three or four digit entry, no punctuation (e.g. 0945, 142, or
+        // 1300.  These times may be ambiguous - assume hours on or before 5 are PM.
+        if (time.match(/^ *(1[012]|0?\d)([0-5]\d) *$/)) {
+            // Assume hours between 1 and 5 are PM
+            hour = parseInt(RegExp.$1, 10);
+
+            if (hour >= 1 && hour <= 5) hour += 12;
+        }
+        else {
+            // Check for 12-hour [H]H:[M]M with AM specifier (e.g. 10:00AM or 9a).
+            // These times are never ambiguous.
+            if (time.match(/^ *([0-9]|[0-1][0-9]|[2][0-3])[ :\.]*([0-5]?\d?) *(a)m? *$/i)) {
+                hour = parseInt(RegExp.$1, 10) % 12;
+            }
+            else {
+                // Check for 12-hour [H]H:[M]M with PM specifier (e.g. 4:32 PM or 9p).
+                // These times are never ambiguous.
+                if (time.match(/^ *([0-9]|[0-1][0-9]|[2][0-3])[ :\.]*([0-5]?\d?) *([ap]m?) *$/i)) {
+                    hour = (parseInt(RegExp.$1, 10) % 12) + 12;
+                }
+                else {
+                    // Check for 12- or 24-hour format without AM/PM specifier
+                    // (e.g. 10:05, 12.42 or 8).  These times may be ambiguous - assume
+                    // hours on or before 5 are PM.
+                    if (time.match(/^ *(2[0-3]|[01]?\d)[ :\.]*([0-5]?\d?)? *$/)) {
+                        hour = parseInt(RegExp.$1, 10);
+
+                        if (hour >= 1 && hour <= 5) hour += 12;
+                    }
+                    else
+                        // Not a valid time entry.
+                        dateTime = NaN;
+                }
+            }
+        }
+
+        if (hour > -1) {
+            // We have a valid entry.
+            tempDate = new Date(year, month, date, hour, RegExp.$2);
+            dateTime = Date.parse(tempDate);
+        }
+        else {
+            // Not a valid time entry.
+            dateTime = NaN;
+        }                                                          
+
+        return dateTime;
+    },
+
+    /////////////////////////////////////////////////////////////////////////////////
+    // Common Dialogs
+
+    addResource = function (resourceKey, resourceValue) {
+        /// <summary>Adds a resource to the resource dictionary.</summary>
+        /// <param name="resourceKey" type="string">The resource key used to look up the string</param>
+        /// <returns type="string">The resrouce string associated with the key.</returns>
+        _resourceDictionary[resourceKey] = resourceValue;
+    },
+
+    getResourceString = function (resourceKey) {
+        /// <summary>Gets a resource string from the library.</summary>
+        /// <param name="resourceKey" type="string">The resource key to look up in the resource dictionary</param>
+        /// <returns type="string">The resrouce string associated with the key.</returns>
+        if (!_resourceDictionary[resourceKey])
+            return "x - " + resourceKey;
+
+        return _resourceDictionary[resourceKey];
+    },
+
+    showCorruptDataAlert = function () {
+        var title = "<div> Corrupt Data Detected </div>";
+        var content = "An attempt to save invalid information has been detected, your changes will not be saved";
+        var innerHTML = "<p><span style='margin-left:10px; height:20px; display:block'>"  + content, title;       
+        SunGard.Common.ShowAlert("<p><span style='margin-left:10px; height:20px; display:block'>" + content, title);
+    },
+
+    showAlert = function (innerHTML, title, dialogWidth, onClose) {
+        var buttons = [{
+            text: 'Close', click: function () {
+                var $this = $(this); 
+                if ($this.data('ui-dialog')) $this.dialog('close');
+
+                if (typeof(onClose) === "function") {
+                    onClose();
+                }
+            }
+        }];
+        showDialog(innerHTML, title, buttons, dialogWidth);
+    },
+
+    //Dynamic Modal Popup
+    showDialog = function (innerHtml, dialogTitle, buttonArray, dialogWidth, dialogIcon, dialogId, dialogClass, onOpen, onClose, dialogToolbar, position, dialogAutoOpen, resizable, dialogHeight) {
+        //innerHtml: the wording that should be displayed INSIDE the dialog
+        //dialogTitle: title that displays at top of dialog box
+        //buttonArray: an array of button objects, with at least button text and onClick callbacks defined. 
+
+        var errorLabel = "";
+
+        if (dialogId === null || dialogId === undefined) {
+            dialogId = "ErrorDiv";
+            errorLabel = "<label id=\"ErrorMessage\"></label>";
+        }
+
+        if (dialogAutoOpen === null || dialogAutoOpen === undefined)
+            dialogAutoOpen = true;
+
+        if (onOpen === null || onOpen === undefined) {
+            onOpen = function() {
+                $('.ui-dialog .ui-dialog-buttonpane ').css('text-align', 'center');
+                $('.ui-dialog .ui-dialog-buttonpane .ui-dialog-buttonset').css('float', 'right');
+                $(this).css('white-space', 'normal');
+            };
+        }
+
+        if (onClose === null || onClose === undefined) {
+            if (dialogAutoOpen)
+                onClose = function (event, ui) {
+                    try {
+                        $dialog.dialog("destroy").remove();
+                    } catch (ex) {
+
+                    }                    
+                };
+            else
+                onClose = null;
+        }
+
+        if (dialogClass === undefined) dialogClass = "sg-dialog";
+
+        if (buttonArray === undefined) {
+            var buttonArray = [{
+                text: 'Close', click: function () {
+                    var $this = $(this); 
+                    if ($this.data('ui-dialog')) $this.dialog('close');
+                }
+            }];
+
+        }
+        var $dialog = $('<div id="' + dialogId + '" class="' + dialogClass + '">' + errorLabel + '</div>');
+
+        transformIntoDialog($dialog, dialogTitle, buttonArray, dialogWidth, dialogIcon, innerHtml, dialogToolbar, position, onOpen, onClose, dialogAutoOpen, resizable, dialogHeight);
+    },
+
+    //Dynamic Modal Popup
+    transformIntoDialog = function ($element, dialogTitle, buttonArray, dialogWidth, dialogIcon, innerHtml, dialogToolbar, position, onOpen, onClose, dialogAutoOpen, resizable, dialogHeight) {
+        //innerHtml: the wording that should be displayed INSIDE the dialog
+        //dialogTitle:   title that displays at top of dialog box
+        //buttonArray: an array of button objects, with at least button text and onClick callbacks defined. 
+
+        if (dialogWidth === null || dialogWidth === undefined)
+            dialogWidth = 'auto';
+        if (dialogHeight === null || dialogHeight === undefined)
+            dialogHeight = 'auto';
+
+        dialogTitle = "<div class=\"sg-header-heading\">" + dialogTitle + "</div>";
+
+        if (dialogIcon !== null && dialogIcon !== undefined)
+            dialogTitle = "<img class=\"sg-header-image\" src=\"" + dialogIcon + "\"/>" + dialogTitle;
+        if (dialogToolbar !== null && dialogToolbar !== undefined)
+            dialogTitle += dialogToolbar;
+        if (dialogAutoOpen === null || dialogAutoOpen === undefined)
+            dialogAutoOpen = true;
+        if (resizable === null || resizable === undefined) resizable = false;
+
+        if ((position == null || position == undefined) && $("#MainContent").length > 0) {
+            position = { my: "center center", at: "center center", of: "#MainContent" };
+        } 
+        
+        $element.dialog({
+            autoOpen: dialogAutoOpen,
+            modal: true,
+            title: dialogTitle,
+            show: 'fade',
+            hide: 'fade',
+            buttons: buttonArray,
+            resizable: resizable,
+            classes: {
+                "ui-dialog": "sg-form-dialog"
+            },
+            width: dialogWidth,
+            height: dialogHeight,
+            open: onOpen,
+            close: onClose,
+            position: position
+        });
+
+        if (innerHtml !== null)
+            $element.html(innerHtml);
+
+        // set the header class for the title
+        $($element).parent().find('div.ui-dialog-titlebar').addClass('sg-header');
+
+    },
+
+    /////////////////////////////////////////////////////////////////////////////////
+    // Ajax Methods
+
+
+    // Method: __makeAjaxCall
+    //      Makes the ajax call with the passed in ajax settings.  Makes use
+    //      of a promise object in order to get an authentication token from a third party.
+    // Paramters
+    //      ajaxSettings:   The settings for making the ajax call.
+    __makeAjaxCall = function (ajaxSettings) {
+        if (SunGard.Common.UseTokenForAjaxCalls()) {
+
+            // if there is a function to create an authentication token, wait until
+            // the promise object returned by the function is done and then create the ajax call.
+            SunGard.Common.GetAuthenticationToken().done( function (token) {
+                if (ajaxSettings.data === null || ajaxSettings.data === undefined) ajaxSettings.data = {};
+
+                // set the token in the data being sent to the ajax request
+                ajaxSettings.data.token = token;
+
+                // format the ajax request according to the format of the data
+                if (ajaxSettings.type === "POST" && jQuery.isPlainObject(ajaxSettings.data)) { 
+                    ajaxSettings.data = JSON.stringify(ajaxSettings.data);
+                    ajaxSettings.contentType = "application/json; charset=utf8";
+                }
+                
+                // Issue the ajax call based on the provided parameters
+                var jqXHR = $.ajax(ajaxSettings);
+                addToCurrentAjaxCalls(jqXHR);
+            });
+        } else {
+            
+            // format the ajax request according to the format of the data
+            if (ajaxSettings.type === "POST" && (ajaxSettings.data === undefined || ajaxSettings.data === null || jQuery.isPlainObject(ajaxSettings.data))) { 
+                ajaxSettings.data = JSON.stringify(ajaxSettings.data);
+                ajaxSettings.contentType = "application/json; charset=utf8";
+            }
+
+            // Issue the ajax call based on the provided parameters
+            var jqXHR = $.ajax(ajaxSettings);
+            addToCurrentAjaxCalls(jqXHR);
+        }
+    },
+
+    // Method: ajaxPost
+    //      Function used to handle basic Ajax POST calls.
+    // Paramters
+    //      url:                the path to the controller and action
+    //      postData:           the data to be posted to the server
+    //      successCallback:    the method to call if the ajax call is successful
+    //      errorCallback:      the method to call if the ajax call is not successful
+    //                          if no method is provided, a default method is used.
+    //      context:            The object that represents the contexxt for any refeences
+    //                          to "this" within the successCallback and errorCallback.
+    //      crossDomain:        whether the POST call is cross domain or not
+    //      suppressAjaxSpinner set to true to suppress the ajax spinner for this call
+    //      additionalSettings  an object with additional options to include in the .ajax method
+    ajaxPost = function (url, postData, successCallback, errorCallback, context, crossDomain, suppressAjaxSpinner, additionalSettings) {
+        var ajaxSettings = (additionalSettings || {});
+
+        // Determine the success callback method
+        var success = (successCallback == null ? null : successCallback);
+        // Determine the error callback method
+        var error = (errorCallback == null ? function (jqXHR, textStatus, errorThrown) {
+            if (jqXHR.statusText !== "abort") SunGard.Common.ShowAjaxLoadError(jqXHR.responseText);
+        } : errorCallback);
+
+        if (suppressAjaxSpinner != null && suppressAjaxSpinner === true)
+            suppressSpinner();
+
+        // Set the cross domain as false if not passed
+        if (crossDomain == null) crossDomain = false;
+
+        ajaxSettings.url = url;
+        ajaxSettings.type = "POST";
+        ajaxSettings.data = postData;
+        ajaxSettings.success = success;
+        ajaxSettings.error = error;        
+        ajaxSettings.contentType = "application/x-www-form-urlencoded; charset=UTF-8";        
+        ajaxSettings.crossDomain = crossDomain;
+
+        if (context != null)
+            ajaxSettings.context = context;
+
+        __makeAjaxCall(ajaxSettings);
+    },
+
+    // Method: ajaxGet
+    //      Function used to handle basic Ajax GET calls.
+    // Paramters
+    //      url:                the path to the controller and action
+    //      getData:            the data to be used in the get method on the server
+    //      successCallback:    the method to call if the ajax call is successful
+    //      errorCallback:      the method to call if the ajax call is not successful
+    //                          if no method is provided, a default method is used.
+    //      suppressAjaxSpinner set to true to suppress the ajax spinner for this call
+    //      additionalSettings  an object with additional options to include in the .ajax method
+    ajaxGet = function (url, getData, successCallback, errorCallback, suppressAjaxSpinner, additionalSettings) {
+        // Determine the success callback method
+        var success = (successCallback == null ? null : successCallback);
+        var ajaxSettings = (additionalSettings || {});
+
+        // Determine the error callback method
+        var error = (errorCallback == null ? function (jqXHR, textStatus, errorThrown) {
+            if (jqXHR.statusText !== "abort") SunGard.Common.ShowAjaxLoadError(jqXHR.responseText);
+        } : errorCallback);
+
+        ajaxSettings.url = url;
+        ajaxSettings.data = getData;
+        ajaxSettings.type = 'GET';
+        ajaxSettings.success = success;
+        ajaxSettings.error = error;
+
+        if (suppressAjaxSpinner != null && suppressAjaxSpinner === true)
+            suppressSpinner();
+        
+        __makeAjaxCall(ajaxSettings);
+    },
+
+    addToCurrentAjaxCalls = function (jqXHR) {
+        /// <summary>Adds a jqXHR object to an array of active ajax calls.</summary>
+        /// <param name="studentId" type="jqXHR">The jqXHR object.</param>
+
+
+        // add to the array
+        _activeAJaxCalls.push(jqXHR);
+        
+        // when the call is done, remove it from the array.
+        jqXHR.always(function () { removeFromCurrentAjaxCalls(jqXHR); } );
+
+        _whenAjaxCallStartsCallback.forEach(function (func, index, array) { func(); });
+    },
+
+    removeFromCurrentAjaxCalls = function (jqXHR) {
+        /// <summary>Removes the jqXHR object from the array of active ajax calls.</summary>
+        /// <param name="studentId" type="jqXHR">The jqXHR object.</param>
+
+        _activeAJaxCalls.pop(jqXHR);
+
+        _whenAjaxCallEndsCallback.forEach(function (func, index, array) { func(); });
+    },
+
+    abortActiveAjaxCalls = function () {
+        /// <summary>Aborts all of the currently active AJAX calls on the page.</summary>
+
+        $.each(_activeAJaxCalls, function (index, jqXHR) {
+            if (jqXHR !== undefined) try { jqXHR.abort(); } catch (ex) { }
+        });
+
+        // empty the array
+        _activeAJaxCalls = [];        
+    },
+
+    activeAjaxCallCount = function () {
+        /// <summary>Returns the count of active AJAX calls on the current page.</summary>
+
+        return _activeAJaxCalls.length;
+    },
+
+    onAjaxCallStarts = function (func) {
+        /// <summary>Calls the passed in function when an ajax request starts.</summary>
+        /// <param name="resourceKeyfunc" type="Function">The function to call.</param>
+
+        if (func === null) _whenAjaxCallStartsCallback = [];
+        else if (typeof func === "function") _whenAjaxCallStartsCallback.push(func);
+    },
+
+    onAjaxCallStops = function (func) {
+        /// <summary>Calls the passed in function when an ajax request stops.</summary>
+        /// <param name="resourceKeyfunc" type="Function">The function to call.</param>
+
+        if (func === null) _whenAjaxCallEndsCallback = [];
+        else if (typeof func === "function") _whenAjaxCallEndsCallback.push(func);
+    },
+
+    ajaxBeforeSend = function (xhr, settings) {
+        var antiForgeryTokenValue = SunGard.Common.GetAntiForgeryToken();
+        if (settings.type === "POST" && antiForgeryTokenValue !== null) {
+            xhr.setRequestHeader(_antiForgeryRequestElementId, antiForgeryTokenValue);
+        }
+    },
+
+
+    /////////////////////////////////////////////////////////////////////////////////
+    // Array searching
+
+    //  returns the index of the item in the passed in array, but
+    //  is case insenstive.  If the value is not found, -1 is returned, just
+    //  like jQuery.inArray().
+    // http://stackoverflow.com/questions/143847/best-way-to-find-an-item-in-a-javascript-array
+    caseInsensitiveInArray = function (matchString, array) {
+        var result = -1;
+        $.each(array, function (index, value) {
+            if (value.toLowerCase() === matchString.toLowerCase()) {
+                result = index;
+                return false; // returns from the each
+            }
+        });
+        return result;
+    },
+
+    /////////////////////////////////////////////////////////////////////////////////
+    // Common Callback methods
+
+    // Callback definition for adding "Save Success" 
+    serverPostFeedbackToast = function (displayMessage) {
+        var message = (displayMessage == null) ? 'Action Complete' : displayMessage;
+        $('#ServerFeedbackToast').text(message).fadeIn(1500, function () {
+            $(this).fadeOut(3500);
+        });
+    },
+
+    showAjaxLoadError = function (errorHTML) {
+        if (errorHTML !== '') {
+            var errorWindow = window.open("", "_blank", "toolbar=yes,resizable=yes,scrollbars=yes,location=yes");
+            errorWindow.document.open();
+            errorWindow.document.write(errorHTML);
+            errorWindow.document.close();
+        }
+    },
+
+    /////////////////////////////////////////////////////////////////////////////////
+    // Common Validation
+
+    validateNumericInput = function (key) {
+        var charCode = (key.which) ? key.which : event.keyCode;
+        if (charCode > 31 && (charCode < 48 || charCode > 57))
+            return false;
+        return true;
+    },
+
+    /////////////////////////////////////////////////////////////////////////////////
+    // Common URL Handling
+
+    //Method: GetUrlParameterVal
+    //Parameters: 
+    //          - Url: url of current page
+    //          - ParamValue: name of parameter for retrieval
+    //Description: Retrieves selective parameter from a url
+    getUrlParameterVal = function (Url, ParamValue) {
+        if (Url.indexOf(ParamValue) == -1)
+            return "";
+
+        var x;
+        for (x = 0; x < Url.split('&').length; x++) {
+            if (Url.split('&')[x].indexOf(ParamValue) != -1) {
+                x = Url.split('&')[x].split("=")[1];
+                break;
+            }
+        }
+        return x;
+    },
+
+    // Method: disableSpinner
+    //      method to disable the display of the spinner
+    // Parameters: None.
+    // Return Value: None.
+    disableSpinner = function () {
+        //AJAX Spinner functionality 
+        $(document)
+            .off("ajaxSend.sg.spinner")
+            .off("ajaxStop.sg.spinner");
+    },
+
+    showSpinnerOnAjaxSend = function () {
+        
+        // if the spinner is surpressed
+        if (_suppressSpinner) {
+            // hide it in case it's already showing.
+            hideSpinner();
+
+            // show the spinner next time by using the
+            // ajaxSend event (which is called for every request)
+            _suppressSpinner = false;
+        
+        } else {            
+            // we only need to show it once per batch,
+            // so we can unbind ajaxStart since now
+            // we are showing the spinner.
+            
+            _$spinner.fadeIn('fast');
+        }
+    },
+
+    hideSpinner = function () {
+        if (_$spinner.is(":visible"))
+            _$spinner.fadeOut('slow');
+    },
+
+    // Method: enableSpinner
+    //      method to enable the display of the spinner
+    // Parameters: None.
+    // Return Value: None.
+    enableSpinner = function () {
+        //AJAX Spinner functionality
+        $(document)
+            .off("ajaxSend.sg.spinner")
+            .off("ajaxStop.sg.spinner")
+            .on("ajaxSend.sg.spinner", showSpinnerOnAjaxSend)
+            .on("ajaxStop.sg.spinner", hideSpinner);
+    },
+
+    // Method: suppressSpinner
+    //      method to disable the display of the spinner for a single ajax call
+    // Parameters: None.
+    // Return Value: None.
+    suppressSpinner = function () {
+        _suppressSpinner = true;
+    },
+
+    htmlEncode = function (str) {
+    /// <summary>Replaces ', ", <, >, and & with html encoded equivalents</summary>
+    /// <param name="str" type="string">The string to encode</param>
+    /// <returns type="string">The encoded string.</returns>
+
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&apos;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+    },
+
+    htmlDecode = function (str) {
+        /// <summary>Replaces &am;, &quot, &gt, &lt, and &apos with their decoded equivalents</summary>
+        /// <param name="str" type="string">The string to decode</param>
+        /// <returns type="string">The decoded string.</returns>
+        return $('<div />').html(str).text();
+    },
+
+    /////////////////////////////////////////////////////////////////////////////////
+    // Common Button Template
+
+    //Method: SungardButton
+    //Parameters: 
+    //Description: Retrieves selective parameter from a url
+    sunGardButton = function (action, text, toolTip, cssClass, id, name, style) {
+        var btn = $('<button></button>');
+        var txt = $('<span></span>');
+
+        btn.addClass('ui-button ui-widget ui-state-default ui-corner-all');
+        txt.addClass('ui-button-text');
+
+        if (name !== undefined && name !== null && name !== '')
+            btn.attr('name', name);
+        if (id !== undefined && id !== null && id != '')
+            btn.attr('id', id);
+        if (cssClass !== undefined && cssClass !== null && cssClass !== '')
+            btn.addClass(cssClass);
+        if (action !== undefined && action !== null)
+            btn.click(action);
+        if (style !== undefined && style !== null && style !== '')
+            btn.attr('style', style);
+        if (toolTip !== undefined && toolTip !== null && toolTip !== '')
+            btn.attr('title', toolTip);
+        if (text !== undefined && text !== null) {
+            txt.text(text);
+            btn.append(txt);
+        }
+
+        return btn;
+    };
+
+    var consoleLog = function (message) {
+        if (typeof console !== 'undefined')
+            console.log(message);
+    };
+
+    if (window.console && typeof (window.console.time) == "undefined") {
+        console.time = function (tname, treset) {
+            if (!tname) { return; }
+            var time = new Date().getTime();
+            if (!console.timeCounters) { console.timeCounters = {}; }
+            var key = "KEY" + tname.toString();
+            if (!treset && console.timeCounters[key]) { return; }
+            console.timeCounters[key] = time;
+        };
+        console.timeEnd = function (tname) {
+            var time = new Date().getTime();
+            if (!console.timeCounters) { return; }
+            var key = "KEY" + tname.toString();
+            var timeCounter = console.timeCounters[key];
+            var diff;
+            if (timeCounter) {
+                diff = time - timeCounter;
+                var label = tname + ": " + diff + "ms";
+                console.info(label);
+                delete console.timeCounters[key];
+            }
+            return diff;
+        };
+    }
+
+    var time = function (name, reset) {
+
+        if (window.console) {
+            console.time(name, reset)
+        }
+    };
+
+    var timeEnd = function (name) {
+        if (window.console) {
+            console.timeEnd(name);
+        }
+    }
+
+    ParseDate = function (value) {
+        var parsedDate = "";
+        try {
+            parsedDate = $.datepicker.parseDate('mm/dd/yy', value);
+            return new Date(parsedDate);
+        } catch (err) {
+        }
+        try {
+            parsedDate = $.datepicker.parseDate('mm/dd/y', value);
+            return new Date(parsedDate);
+        } catch (err) {
+        }
+        try {
+            parsedDate = $.datepicker.parseDate('mm.dd.yy', value);
+            return new Date(parsedDate);
+        } catch (err) {
+        }
+        try {
+            parsedDate = $.datepicker.parseDate('mm.dd.y', value);
+            return new Date(parsedDate);
+        } catch (err) {
+        }
+        try {
+            parsedDate = $.datepicker.parseDate('mm-dd-yy', value);
+            return new Date(parsedDate);
+        } catch (err) {
+        }
+        try {
+            parsedDate = $.datepicker.parseDate('mm-dd-y', value);
+            return new Date(parsedDate);
+        } catch (err) {
+        }
+        try {
+            parsedDate = $.datepicker.parseDate('mmddyy', value);
+            return new Date(parsedDate);
+        } catch (err) {
+        }
+        try {
+            parsedDate = $.datepicker.parseDate('mmddy', value);
+            return new Date(parsedDate);
+        } catch (err) {
+        }
+        return "";
+    };
+
+    FormatDate = function (value) {
+        value = ParseDate(value);
+        if (value === "") return "";
+        return $.datepicker.formatDate('mm/dd/yy', value);
+    };
+    
+    //////////////////////////////////////////////////////////////////////////
+    // Combobox functions
+    // Creates the combobox html 
+    //      inputCssClasses should be space seperated
+    //      inputAttributes holds the extra attributes the input should have 
+    //      maybe validation error should just be fed in with inputAttributes
+    function createComboBoxHtml(inputId, inputValue, inputTitle, inputCssClasses, validationError, inputAttributes) {
+        inputValue = (inputValue != null) ? inputValue : '';
+        inputTitle = (inputTitle != null) ? inputTitle : inputValue;
+        // If they gave us a css class add it with a space after it to concatonate
+        var inputClass = (inputCssClasses != null ? inputCssClasses + ' ' : '') + 'ui-state-default ui-combobox-input ui-widget ui-widget-content ui-corner-left';
+        inputAttributes = (inputAttributes != null) ? inputAttributes : '';
+        return '<span class="sg-combobox-wrapper">' +
+            '<input type="text" ' +
+            'id="' + inputId + '" ' +
+            'class="' + inputClass + '" ' +
+            'value="' + inputValue + '" ' +
+            'title="' + inputTitle + '" ' +
+            'oldvalue="' + inputValue + '" ' + // Oldvalue is used for remembering the previous value
+            'validationError="' + validationError + '" ' +  //error message to show when something doesnt match
+            inputAttributes + '"/>' +
+            '<a tabIndex="-1" title="Show All Items"/>' +
+            '</span>';
+    }
+
+    function createTableHelpHtml(inputId, inputValue, inputTitle, inputCssClasses, validationError, inputAttributes) {       
+        inputValue = (inputValue != null) ? inputValue : '';
+        inputTitle = (inputTitle != null) ? inputTitle : inputValue;
+        // If they gave us a css class add it with a space after it to concatonate
+        var inputClass = (inputCssClasses != null ? inputCssClasses + ' ' : '') + 'sg-tablehelp-textbox';
+        inputAttributes = (inputAttributes != null) ? inputAttributes : '';
+        
+        // create an input and turn into a table help widget, but don't but the table.
+        var $input = $('<input type="text" id="' + inputId + '" class="' + inputClass + '" value="' + inputValue + '" ' +
+                    'title="' + inputTitle + '" oldvalue="' + inputValue + '" validationError="' + validationError + '" ' +
+                    inputAttributes + '"/>');
+        $input.tablehelp({buildTable: false, createHTMLOnly: true});
+
+        // return the html
+        return $input.parent()[0].outerHTML;
+    }
+
+    function SetPlaceholder (element) {
+        if (!placeholderIsSupported()) {
+            element.focus(function () {
+                var input = $(this);
+                if (input.val() == input.attr('placeholder')) {
+                    input.val('');
+                    input.removeClass('sg-placeholder');
+                }
+            }).blur(function () {
+                var input = $(this);
+                if (input.val() == '' || input.val() == input.attr('placeholder')) {
+                    input.addClass('sg-placeholder');
+                    input.val(input.attr('placeholder'));
+                }
+            }).keyup(function () {
+                var input = $(this);
+                if (input.val() == '' || input.val() == input.attr('placeholder')) {
+                    input.addClass('sg-placeholder');
+                    input.val(input.attr('placeholder'));
+                }
+            }).blur();
+        }
+    }
+
+    function placeholderIsSupported () {
+        test = document.createElement('input');
+        return ('placeholder' in test);
+    }
+
+    function ResizeGridHeight(additionalOffset) {
+        /// <summary>
+        /// Set a timer to resize the grid height to fit on the page.
+        /// </summary>
+        /// <param name="additionalOffset" type="integer">Number of additional pixels to offset the grid height by</param>
+
+        if (!resizeTimerSet) {
+            resizeTimerSet = true;
+
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(function () {
+                ResizeGridHeightCallBack(additionalOffset)
+            }, 60);
+        }
+        
+    }
+    // Resizes a single grid's height on a page to fill the available space and have a vertical scroll bar
+    // on the grid itself, not the page, so the headers are frozen.
+    // Assumes several classes are used:
+    // sg-resizable-grid - for the actual table
+    // sg-content-grid-container - for the div containing the grid
+    function ResizeGridHeightCallBack(additionalOffset) {
+        /// <summary>
+        /// Resizes the grid height to fit on the page.
+        /// </summary>
+        /// <param name="additionalOffset" type="integer">Number of additional pixels to offset the grid height by</param>
+
+        // If an additional offset is not provided, default it to 0.
+        if (additionalOffset === null || additionalOffset === undefined || isNaN(additionalOffset)) {
+            additionalOffset = 0;
+        }
+
+        // There should only be one sg-resizable-grid per page for this function to work
+        $('.sg-resizable-grid').each(function () {
+
+            // Id given to the table in the cshtml
+            var gridId = $(this).attr('id');          
+            var grid = $('#' + gridId);
+            // This is the actual grid, including the header
+            var gbox = $('#gbox_' + gridId);
+            // This is the actual grid, minus the header
+            var gboxBDiv = $('#gbox_' + gridId + ' .ui-jqgrid-bdiv');
+
+            // This is needed so when the page binding of window.resize happens this will be skipped
+            if (gbox.length) {
+
+                if (gbox.position().top != 0)
+                {
+                    // Gets the border for the page size to be correct, default to zero if not found
+                    var gridBorderHeightBottom = parseInt($('.sg-content-grid-container').css("border-bottom-width"));
+                    if (isNaN(gridBorderHeightBottom)) {
+                        gridBorderHeightBottom = 0;
+                    };
+
+                    // Gets the margin for the page size to be correct, default to zero if not found
+                    var contentMarginBottom = parseInt($('.sg-content-margin-bottom').css("marginBottom"));
+                    if (isNaN(contentMarginBottom)) {
+                        contentMarginBottom = 0;
+                    };
+
+                    //tabs panel?
+                    var tabsPanelPaddingBottom = parseFloat($('.ui-tabs-panel').css("paddingBottom"));
+                    if (isNaN(tabsPanelPaddingBottom)) {
+                        tabsPanelPaddingBottom = 0;
+                    };
+
+                    var tabsPanelBorderBottom = parseInt($('.ui-tabs-panel').css("border-bottom-width"));
+                    if (isNaN(tabsPanelBorderBottom)) {
+                        tabsPanelBorderBottom = 0;
+                    };
+
+                    // overall grid height is the height of the MainContent section subtracting the top position of the MainContent
+                    // from the top position of the actual grid box
+                    //var gridHeight = $('#MainContent').height() - (gbox.position().top - $('#MainContent').position().top);
+                    var gridHeight = $('#MainContent').height() - (gbox.offset().top - $('#MainContent').position().top);
+
+                    // The offset is used to remove the header section in the calculation below
+                    var gridHeaderOffset = gbox.height() - gboxBDiv.height();
+
+                    // Resizes the actual grid
+                    grid.jqGrid("setGridHeight", (gridHeight - gridBorderHeightBottom - gridHeaderOffset - contentMarginBottom - tabsPanelBorderBottom - tabsPanelPaddingBottom - additionalOffset));
+                }
+            }
+
+            SunGard.Common.AdjustFrozenColumnGridColumnWidths(grid);
+            SunGard.Common.AdjustGridForScrollbars(gridId);
+
+            resizeTimerSet = false;
+            // object cleanup
+            delete grid;
+            delete gbox;
+            delete gboxBDiv;
+        });
+    }
+
+    // Resizes a grid's width on a page to fill the available space 
+    // Assumes several classes/ids are used:
+    // sg-resizable-grid - for the actual table
+    // PageContent - Id for the page's content to get the width
+    // Optional classes:
+    // sg-content-grid-container - for the div containing the grid
+    // sg-content-margin-left-right - needed for the margins to be calculated into the width
+    function ResizeGridWidth() {
+        // Gets the margin for the page size to be correct, default to zero if not found
+        var marginWidthLeft = parseInt($('.sg-content-margin-left-right').css("marginLeft"));
+        if (isNaN(marginWidthLeft)) {
+            marginWidthLeft = 0;
+        };
+
+        // Gets the margin for the page size to be correct, default to zero if not found
+        var marginWidthRight = parseInt($('.sg-content-margin-left-right').css("marginRight"));
+        if (isNaN(marginWidthRight)) {
+            marginWidthRight = 0;
+        };
+
+        // Gets the border for the page size to be correct, default to zero if not found
+        var gridBorderWidthLeft = parseInt($('.sg-content-grid-container').css("border-left-width"));
+        if (isNaN(gridBorderWidthLeft)) {
+            gridBorderWidthLeft = 0;
+        };
+
+        // Gets the border for the page size to be correct, default to zero if not found
+        var gridBorderWidthRight = parseInt($('.sg-content-grid-container').css("border-right-width"));
+        if (isNaN(gridBorderWidthRight)) {
+            gridBorderWidthRight = 0;
+        };
+
+        // Resets the PageContent width prior to resizing the grid 
+        var pageWidth = $(document).outerWidth() - marginWidthLeft - marginWidthRight;
+        $("#PageContent").width(pageWidth);
+
+        // Sets the resizable grids width to the PageContent it's in, subtracting the border width of the grid container
+        $(".sg-resizable-grid").setGridWidth($("#PageContent").width() - gridBorderWidthLeft - gridBorderWidthRight);
+    }
+
+    var adjustFrozenColumnGridColumnWidths = function (grid) {
+        /// <summary>Adjusts the row height of frozen columns to match the row height of the underlying grid.</summary>
+        /// <param name="grid">The grid object</param>
+
+        if (grid === null)
+            throw "The grid parameter cannot be null or undefined";
+
+        if (grid instanceof jQuery)
+            grid = grid[0];
+
+        if (!grid || !grid.grid || !grid.grid.fbDiv)
+            return;
+
+        var $grid = $(grid);
+
+        if (typeof grid.grid.fbDiv !== "undefined") {
+            var $columns = $(">div>table.ui-jqgrid-btable>tbody>tr.jqgfirstrow>td", grid.grid.bDiv);
+            var $frozenColumns = $(">table.ui-jqgrid-btable>tbody>tr.jqgfirstrow>td", grid.grid.fbDiv);
+
+            $frozenColumns.each(function (fIndex, fColumn) {
+                var $frozenColumn = $(fColumn);
+                var $column = $($columns[fIndex]);
+
+                $frozenColumn.css("width", "");
+
+                var frozenColumnWidth = parseFloat(window.getComputedStyle($frozenColumn.get(0)).width);
+                var columnWidth = parseFloat(window.getComputedStyle($column.get(0)).width);
+
+                $frozenColumn.width(columnWidth);
+
+                frozenColumnWidth = parseFloat(window.getComputedStyle($frozenColumn.get(0)).width);
+
+                if (frozenColumnWidth !== columnWidth) {
+                    var newWidth = columnWidth + (columnWidth - frozenColumnWidth);
+                    $frozenColumn.width(newWidth);
+                }
+            });
+        }
+
+        if (typeof grid.grid.fhDiv !== "undefined") {
+            var $frozenColumns = $(">table.ui-jqgrid-btable>tbody>tr.jqgfirstrow>td", grid.grid.fbDiv);
+            var $headerColumns = $(">div>table.ui-jqgrid-htable>thead>tr>th", grid.grid.hDiv);
+            var $frozenHeaderColumns = $(">table.ui-jqgrid-htable>thead>tr:first>th", grid.grid.fhDiv);
+
+            if ($frozenColumns.length === 0 || $frozenHeaderColumns.length === 0) {
+                return;
+            }
+
+            $frozenHeaderColumns.each(function (fIndex, fColumn) {
+                var $frozenColumn = $($frozenColumns[fIndex]);
+                var $headerColumn = $($headerColumns[fIndex]);
+                var $frozenHeaderColumn = $(fColumn);
+
+                var frozenColumnWidth = parseFloat(window.getComputedStyle($frozenColumn.get(0)).width);
+                var headerColumnWidth = parseFloat(window.getComputedStyle($headerColumn.get(0)).width);
+                var frozenHeaderColumnWidth = parseFloat(window.getComputedStyle($frozenHeaderColumn.get(0)).width);
+
+                if (headerColumnWidth !== frozenColumnWidth) {
+                    $headerColumn.width(frozenColumnWidth);
+                    headerColumnWidth = parseFloat(window.getComputedStyle($headerColumn.get(0)).width);
+                    if (headerColumnWidth !== frozenColumnWidth) {
+                        var newWidth = frozenColumnWidth + (frozenColumnWidth - headerColumnWidth);
+                        $headerColumn.width(newWidth);
+                    }
+                }
+
+                if (frozenHeaderColumnWidth !== frozenColumnWidth) {
+                    $frozenHeaderColumn.width(frozenColumnWidth);
+                    frozenHeaderColumnWidth = parseFloat(window.getComputedStyle($frozenHeaderColumn.get(0)).width);
+                    if (frozenHeaderColumnWidth !== frozenColumnWidth) {
+                        var newWidth = frozenColumnWidth + (frozenColumnWidth - frozenHeaderColumnWidth);
+                        $frozenHeaderColumn.width(newWidth);
+                    }
+                }
+
+                var headerColumnWidth = parseFloat(window.getComputedStyle($headerColumn.get(0)).width);
+                var frozenHeaderColumnWidth = parseFloat(window.getComputedStyle($frozenHeaderColumn.get(0)).width);
+
+                if (frozenHeaderColumnWidth !== headerColumnWidth) {
+                    $frozenHeaderColumn.width(headerColumnWidth);
+                }
+            });
+        }
+    };
+
+    function adjustFrozenColumnRowHeight(grid) {
+        /// <summary>Adjusts the row height of frozen columns to match the row height of the underlying grid.</summary>
+        /// <param name="grid">The grid object</param>
+        if (grid === null)
+            throw "The grid parameter cannot be null or undefined";
+
+        if (grid instanceof jQuery)
+            grid = grid[0];
+
+        if (!grid || !grid.grid || !grid.grid.fbDiv)
+            return;
+
+        var $grid = $(grid);
+
+        adjustFrozenColumnGridColumnWidths(grid);
+
+        var $rows;
+        if (typeof grid.grid.fbDiv !== "undefined") {
+            $rows = $('>div>table.ui-jqgrid-btable>tbody>tr.jqgrow', grid.grid.bDiv);
+            $('>table.ui-jqgrid-btable>tbody>tr.jqgrow', grid.grid.fbDiv).each(function (i) {
+                var $row = $($rows[i]);
+                var $this = $(this);
+
+                // Remove any specific inline height styles applied to the cells and rows to make sure
+                // we're adjusting the row and cells to the height they need to be
+                $(">td", this).css("height", "");
+                $(">td", $row).css("height", "");
+                $this.css("height", "");
+                $row.css("height", "");
+
+                var rowHeight = $row.height();
+                var rowHeightFrozen = $this.height();
+
+                // Get border heights
+                var borderHeights = 0;
+                var temp = parseInt($row.css("border-top-width"), 10);
+                if (!isNaN(temp)) {
+                    borderHeights += temp;
+                }
+                temp = parseInt($row.css("border-bottom-width"), 10);
+                if (!isNaN(temp)) {
+                    borderHeights += temp;
+                }
+
+                // Set the frozen grid and the main grid's cell height to the main grid's row height
+                $(">td", this).height(rowHeight);
+                $(">td", $row).height(rowHeight);
+
+                // Set the frozen grid and the main grid's row height to the main grid's row height plus the
+                // top/bottom border heights.
+                $(this).height(rowHeight + borderHeights);
+                $row.height(rowHeight + borderHeights);
+
+                // Recheck the height of the frozen grid and If the heights were too big, then scale them back down.
+                rowHeightFrozen = $this.height();
+                if (rowHeight !== rowHeightFrozen) {
+                    var newHeight = rowHeight + (rowHeight - rowHeightFrozen);
+                    $(">td", this).height(newHeight);
+                    $(">td", $row).height(newHeight);
+                    $(this).height(newHeight + borderHeights);
+                    $row.height(newHeight + borderHeights);
+                }
+            });
+
+            SunGard.Common.AdjustGridForScrollbars($(grid).attr("id"));
+        }
+
+        if (typeof grid.grid.fhDiv !== "undefined") {
+            $rows = $('>div>table.ui-jqgrid-htable>thead>tr', grid.grid.hDiv);
+            $('>table.ui-jqgrid-htable>thead>tr', grid.grid.fhDiv).each(function (i) {
+                var $row = $($rows[i]);
+                var $this = $(this);
+                var rowHeight = $row.height();
+                var rowHeightFrozen = $this.height();
+
+                $this.height(rowHeight);
+                $row.height(rowHeight);
+                rowHeightFrozen = $this.height();
+                if (rowHeight !== rowHeightFrozen) {
+                    $this.height(rowHeight + (rowHeight - rowHeightFrozen));
+                    $row.height(rowHeight + (rowHeight - rowHeightFrozen));
+                }
+            });
+            $(grid.grid.fhDiv).css('height', 'auto');
+            $(grid.grid.fhDiv).css($(grid.grid.hDiv).position());
+        }
+    }
+
+    function adjustGridForScrollbars(gridId) {
+        /// <summary>
+        /// Adjusts the height of the grid and takes the existence of scrollbars into account.
+        /// </summary>
+        /// <param name="gridId" type="string">The ID of the grid to process</param>
+
+        // Make sure a grid ID was provided.
+        if (gridId === null || gridId === undefined || $.trim(gridId) === "") {
+            throw "adjustGridForScrollbars requires a gridId";
+        }
+
+        // If there is a frozen grid, process the grid
+        if ($("#" + gridId + "_frozen").length > 0) {
+            var $grid = $("#" + gridId);
+            var grid = $grid[0];
+
+            // Determine if there is a horizontal scrollbar and get its height if there is one.
+            var scrollbarHeight = 0;
+            if ($grid.hasHorizontalScrollBar()) {
+                scrollbarHeight = $grid.getScrollbarHeight();
+            }
+
+            // Update the height of the frozen grid to the main grid's height minus the height of any
+            // horizontal scrollbar.
+            $(grid.grid.fbDiv).height(grid.grid.bDiv.clientHeight - scrollbarHeight);
+            $(grid.grid.fbDiv).css($(grid.grid.bDiv).position());
+        }
+    }
+
+    function ResizeResizableContent()
+    {
+        $('.sg-content-resizable').each(function () {
+            var element = $(this);
+            ResizeResizeableElement(element);
+        });
+
+    }
+    function ResizeResizeableElement(element)
+    {
+        var newHeight = $('#MainContent').height() - (element.offset().top - $('#MainContent').position().top);
+        element.height(newHeight);
+    }
+
+    var isBrowserIE = function () {
+        ///<summary>Determines if the browser is IE using the comment hack.</summary>  
+
+        <!--[if IE]>
+        return true;
+        //<![endif]-->
+        return false;
+    },
+
+    moveViaArrow = function (e) {
+        ///<summary>Event handler that moves focus in a grid when a user presses an arrow key or the enter key.</summary>  
+        ///<param name="e">The event.</param>
+
+        var currentRow = null,
+            currentCell = null,
+            newRow = null,
+            newCell = null,
+            newInput = null,
+            $self = $(this);
+
+        switch (e.keyCode) {            
+            //case 37: // left arrow
+            //    var nextIndex = $self.attr('data-arrow-index');
+            //    if (!isNaN(nextIndex) && nextIndex > 0) {
+            //        nextIndex--;
+            //        var newInput = $("input[data-arrow-index='" + nextIndex + "']");
+            //        while (nextIndex > 0 && (newInput.length === 0 || newInput.prop('disabled'))) {
+            //            newInput = $("input[data-arrow-index='" + --nextIndex + "']");
+            //        }
+            //        if (newInput.length !== 0 || !newInput.prop('disabled')) setTimeout(function(){ newInput.focus(); }, 10);
+            //    }
+            //    break;
+            //case 39: // right arrow
+            //    var nextIndex = $self.attr('data-arrow-index');
+            //    if (!isNaN(nextIndex) && nextIndex > 0) {
+            //        nextIndex++;
+            //        var newInput = $("input[data-arrow-index='" + nextIndex + "']");
+            //        while (nextIndex < _arrowIndex && (newInput.length === 0 || newInput.prop('disabled'))) {
+            //            newInput = $("input[data-arrow-index='" + ++nextIndex + "']");
+            //        }
+            //        if (newInput.length !== 0 || !newInput.prop('disabled')) setTimeout(function(){ newInput.focus(); }, 10);
+            //    }
+            //    break;     
+                // enter, up, and down arrows
+            case 13: // enter
+                e.preventDefault();
+            case 38: // up arrow                
+            case 40: // down arrow
+                // cancel moving down if the table help is open
+                try { if ($self.tablehelp('isOpen')) return; } catch (ex) { }
+
+                currentCell = $self.closest("td");
+                currentRow = currentCell.parent("tr");
+                
+                var cellFound = false,
+                    cellIndex = currentCell.index();
+                while(!cellFound) {
+                    // get the row above (for up), or below (for down or enter)
+                    if(e.keyCode == 38) newRow = currentRow.prev();
+                    else newRow = currentRow.next();
+                    
+                    // if we are out of rows, just stop.
+                    if (newRow.length === 0)  cellFound = true;
+                    else {
+                        // get the cell at the current position
+                        newCell = newRow.children("td").eq(cellIndex);
+                        if (newCell.length > 0) {                            
+                            newInput = newCell.find("input").eq(0);
+
+                            // if we found the input and it's enabled, set focus and marked the
+                            // cell as found.  Stop processing.
+                            if (newInput.length > 0 && !newInput.prop('disabled')) {
+                                setTimeout(function(){ newInput.focus(); }, 10);
+                                cellFound = true;
+                            }
+                        }
+                    }
+                    currentRow = newRow;
+                }
+
+                break;
+        }
+    },
+
+    selectOnFocus = function (e) {
+        ///<summary>Returns the next available index value for marking an input for use with the arrow keys.</summary>  
+        ///<param name="e">An event object.</param>
+
+        // don't do anything when the input is a checkbox.
+        // otherwise, what will happen is that when clicked the
+        // checkbox will not change state.
+        if (this.type === "checkbox")  return;
+
+        e.preventDefault();
+        this.select();
+    },
+    
+    getNextArrowIndex = function () {
+        ///<summary>Returns the next available index value for marking an input for use with the arrow keys.</summary>  
+
+        return ++_arrowIndex;
+    },
+
+    saveCellBeforeSort = function ($grid) {
+        var p = $grid[0].p, savedRow = p.savedRow, j, len = savedRow.length;
+        if (len > 0) {
+            // there are rows in cell editing or inline editing
+            if (p.cellEdit) {
+                // savedRow has the form {id:iRow, ic:iCol, name:nm, v:value}
+                // we can call restoreCell or saveCell
+                //$grid.jqGrid("restoreCell", savedRow[0].id, savedRow[0].ic);
+                $grid.jqGrid("saveCell", savedRow[0].id, savedRow[0].ic);
+            } else {
+                // inline editing
+                for (j = len - 1; j >= 0; j--) {
+                    // call restoreRow or saveRow
+                    //$grid.jqGrid("restoreRow", savedRow[j].id);
+                    $grid.jqGrid("saveRow", savedRow[j].id);
+                }
+            }
+        }
+    },
+
+    // stole this from stack overflow and tweaked it a little due to bugs that
+    // exist post jquery 1.8
+    enableSortOnEdit = function ($grid) {
+        ///<summary>Modifies a jqgrid to enable sorting while in edit mode.</summary>  
+        ///<param name="$grid">A jqgrid.</param>
+
+        $.each($grid[0].grid.headers, function () {
+
+            // save the click handlers for each header because we want to them to continue
+            // to fire, but we want to fire ours first.
+            var $th = $(this.el), i, l, clickHandler, clickHandlers = [],
+                currentHandlers = $._data($th[0], "events");
+
+            if (Array.isArray(currentHandlers.click)) {
+                clickBinding = currentHandlers.click.slice(0);
+                for (var i = 0, l = clickBinding.length; i < l; ++i) {
+                    clickHandler = clickBinding[i].handler;
+                    if (clickHandler !== undefined) {
+                        clickHandlers.push(clickHandler);
+                        $th.off('click', clickHandler);
+                    }
+                }
+            }
+
+            // add the click event to save the cell
+            $th.click(function () { saveCellBeforeSort($grid); });
+
+            // add the old click handlers back.
+            l = clickHandlers.length;
+            if (l > 0) {
+                for (var i = 0; i < l; ++i) {
+                    $th.on('click', clickHandlers[i]);
+                }
+            }
+        });
+    },
+
+    UseTokenWhenTypes = {
+        NONE: 0,
+        AJAX:  1,
+        LEGACY:  2,
+        BOTH: 3
+    };
+
+    return {
+        Init: init,
+        GetAntiForgeryToken: getAntiForgeryToken,
+        RootURL: rootURL,
+        RootApiURL: rootApiURL,
+        ShowAlert: showAlert,
+        ShowCorruptDataAlert: showCorruptDataAlert,
+        ShowDialog: showDialog,
+        AjaxPost: ajaxPost,
+        AjaxGet: ajaxGet,
+        AjaxBeforeSend: ajaxBeforeSend,
+        CaseInsensitiveInArray: caseInsensitiveInArray,
+        ConsoleLog: consoleLog,
+        Time: time,
+        TimeEnd: timeEnd,
+        CreateComboboxHtml: createComboBoxHtml,
+        CreateTableHelpHtml: createTableHelpHtml,
+        ServerPostFeedbackToast: serverPostFeedbackToast,
+        ShowAjaxLoadError: showAjaxLoadError,
+        ValidateNumericInput: validateNumericInput,
+        GetUrlParameterVal: getUrlParameterVal,
+        SunGardButton: sunGardButton,
+        TransformIntoDialog: transformIntoDialog,
+        AddResource: addResource,
+        GetResourceString: getResourceString,
+        AddToCurrentAjaxCalls: addToCurrentAjaxCalls,
+        RemoveFromCurrentAjaxCalls: removeFromCurrentAjaxCalls,
+        DisableSpinner: disableSpinner,
+        SuppressSpinner: suppressSpinner,
+        EnableSpinner: enableSpinner,
+        HtmlEncode: htmlEncode,
+        HtmlDecode: htmlDecode,
+        AbortActiveAjaxCalls: abortActiveAjaxCalls,
+        ActiveAjaxCallCount: activeAjaxCallCount,
+        OnAjaxCallStarts: onAjaxCallStarts,
+        OnAjaxCallStops: onAjaxCallStops,
+        ParseDate: ParseDate,
+        FormatDate: FormatDate,
+        SetPlaceholder: SetPlaceholder,
+        ResizeGridHeight: ResizeGridHeight,
+        ResizeGridWidth: ResizeGridWidth,
+        AdjustFrozenColumnGridColumnWidths: adjustFrozenColumnGridColumnWidths,
+        AdjustFrozenColumnRowHeight: adjustFrozenColumnRowHeight,
+        AdjustGridForScrollbars: adjustGridForScrollbars,
+        ResizeResizableContent: ResizeResizableContent,
+        ResizeResizableElement: ResizeResizeableElement,
+        IsBrowserIE: isBrowserIE,
+        GetAuthenticationToken: null,
+        UseTokenWhenTypes: UseTokenWhenTypes,
+        UseTokenWhen: UseTokenWhenTypes.BOTH,
+        UseTokenForAjaxCalls: function () {
+            return this.GetAuthenticationToken !== undefined && this.GetAuthenticationToken !== null &&
+                    (this.UseTokenWhen == UseTokenWhenTypes.AJAX || this.UseTokenWhen == UseTokenWhenTypes.BOTH)
+        },
+        UseTokenForLegacyCalls: function () {
+            return this.GetAuthenticationToken !== undefined && this.GetAuthenticationToken !== null &&
+                    (this.UseTokenWhen == UseTokenWhenTypes.LEGACY || this.UseTokenWhen == UseTokenWhenTypes.BOTH)
+        },
+        MoveViaArrow: moveViaArrow,
+        GetNextArrowIndex: getNextArrowIndex,
+        SelectOnFocus: selectOnFocus,
+        AddTimeHotKeys: addTimeHotKeys,
+        DelegateTimeHotKeys: delegateTimeHotKeys,
+        FormatTime:  formatTime,
+        ParseTime: parseTime,
+        EnableSortOnEdit: enableSortOnEdit
+    };
+}();

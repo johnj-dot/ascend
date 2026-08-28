@@ -1,0 +1,256 @@
+//----------------------------------------------------------------------------
+// � Copyright 2011 SunGard Pentamation, Inc., All Rights Reserved.
+// This program is PROPRIETARY and CONFIDENTIAL information of SunGard
+// Pentamation, Inc., and may not be disclosed or used except as expressly
+// authorized in a license agreement controlling such use and disclosure.
+// Unauthorized use of this program will result in legal proceedings, civil
+// damages, and possible criminal prosecution.
+//----------------------------------------------------------------------------
+// System Name: Web SMS
+//----------------------------------------------------------------------------
+// Page Name: Functional.js
+//----------------------------------------------------------------------------
+// Page Description:
+//----------------------------------------------------------------------------
+//  REV #      DATE        BY       CASE    COMMENTS
+// 2.4.001   10/07/2011    KumarSar   -     Initial write.
+//----------------------------------------------------------------------------
+
+/*
+'************************************************************************
+' Method: slice
+' Description:
+'	 Slices sequences, including non-array sequences like `arguments`
+'    takes an array and returns a sub-array from the start index to the end index
+' Parameters: (seq, sindex)
+' Return Type: output_array
+'************************************************************************
+*/
+var FUNCTIONAL = {
+    slice: function (seq, sindex)
+    {
+        var eindex = seq.length;
+        if(arguments.length > 2)
+        {
+            eindex = arguments[2];
+        }
+        try 
+        {
+            return seq.slice(sindex, eindex);
+        }
+        catch(ex)
+        {
+            //No-op.
+        }
+        var output_array = new Array();
+        if(sindex > seq.length)
+        {
+            return output_array;
+        }
+        for(var i=sindex; i < eindex; ++i)
+        {
+            output_array.push(seq[i]);
+        }
+        return output_array;
+    },
+
+    /*
+    '************************************************************************
+    ' Method: map_values
+    ' Description:
+    '    Maps values from item_array to the output array by applying `map_func`
+    '    to each item in the input array and placing the results in the
+    '    output array.
+    ' Parameters: (item_array, map_func)
+    ' Return Type: None
+    '************************************************************************
+    */
+    map_values: function (item_array, map_func)
+    {
+        var extra_args = null;
+        if(arguments.length > 2)
+        {
+            extra_args = FUNCTIONAL.slice(arguments, 2);
+        }
+        var output_array = new Array();
+        for(var i=0; i < item_array.length; ++i)
+        {
+            var item = item_array[i];
+            var args = new Array();
+            args.push(item);
+            if(extra_args)
+            {
+                args.concat(extra_args);
+                output_array.push(map_func.apply(null, args));
+            }
+            else
+            {
+                output_array.push(map_func.apply(null, args));
+            }
+        }
+        return output_array;
+    },
+
+    /*
+    '************************************************************************
+    ' Method: apply_over
+    ' Description:
+    ' Executes func(item) for each item in item_array.
+    ' If extra arguments are provided, these arguments are provided to each    ' 
+    ' Parameters: Array
+    '	None
+    ' Return Type: None
+    '************************************************************************
+    */
+    apply_over: function (item_array, func)
+    {
+        var extra_args = null;
+        if(arguments.length > 2)
+        {
+            extra_args = FUNCTIONAL.slice(arguments, 2);
+        }
+        for(var i=0; i < item_array.length; ++i)
+        {
+            var args = new Array();
+            var item = item_array[i];
+            args.push(item);
+            
+            if(extra_args)
+            {
+                args = args.concat(extra_args);
+                func.apply(null, args);
+            }
+            else
+            {
+                func.apply(null, args);
+            }
+        }
+    },
+
+    /*
+    '************************************************************************
+    ' Method: filter_array
+    ' Description:
+    ' Filter an array by applying the predicate, `filter_func` to each item.
+    ' If the predicate returns true, the item is included in the output.
+    ' If the predicate returns false, the item is not included in the output.
+    ' Any extra arguments are passed to the predicate.
+    ' The value of `this` within the predicate is the item to be tested.   ' 
+    ' Parameters: Array
+    '	None
+    ' Return Type: None
+    '************************************************************************
+    */
+    filter_array: function (an_array, filter_func)
+    {
+        var output_array = new Array();
+        var call_args = null;
+        if(arguments.length > 2)
+        {
+            call_args = FUNCTIONAL.slice(arguments, 2);
+        }
+        
+        for(var i=0; i < an_array.length; ++i)
+        {
+            var item = an_array[i];
+            if(call_args)
+            {
+                if(filter_func.apply(item, call_args))
+                {
+                    output_array.push(item);
+                }
+            }
+            else
+            {
+                if(filter_func.apply(item))
+                {
+                    output_array.push(item);
+                }
+            }
+        }
+        return output_array;
+    },
+    
+
+    /*
+    '************************************************************************
+    ' Method: zip
+    ' Description:
+    ' Combines multiple arrays into a single array where the elements are
+    ' arrays of elements from the corresponding positions of the source
+    ' arrays.
+    '
+    ' E.g.
+    ' a = [1, 2, 3, 4, 5]
+    ' b = ['one', 'two', 'three', 'four', 'five']
+    ' c = ['uno', 'dos', 'tres', 'cuatro', 'cinco']
+    '
+    ' zip(a, b, c) => [[1,'one','uno'],
+    '                  [2,'two','dos'],
+    '                  [3,'three','tres'],
+    '                  [4,'four','cuatro'],
+    '                  [5,'five','cinco']]' 
+    ' Parameters: Array
+    '	None
+    ' Return Type: None
+    '************************************************************************
+    */
+    zip: function()
+    {
+        if(arguments.length < 2)
+        {
+            throw new Error("FUNCTIONAL.zip(...) requires at least 2 arrays as arguments.");
+        }
+        
+        var array_count = arguments.length;
+        var lengths = FUNCTIONAL.map_values(arguments, function(item){ 
+            return item.length;
+        })
+        ;
+        var max_length = Math.max.apply(null, lengths);
+        var result_list = new Array();
+        for(var i=0; i < max_length; ++i)
+        {
+            var tuple = new Array();
+            for(var j=0; j < array_count; ++j)
+            {
+                if(arguments[j].length > i)
+                {
+                    tuple.push(arguments[j][i]);
+                }
+                else
+                {
+                    tuple.push(null);
+                }
+            }
+            result_list.push(tuple);
+        }
+        return result_list;
+    },
+
+    /*
+    '************************************************************************
+    ' Method: filter_array
+    ' Description:
+    ' Search an array to determine if an item exists in it.  
+    ' Parameters: (an_array, search_item)
+    '	None
+    ' Return Type: None
+    '************************************************************************
+    */
+    search_array: function(an_array, search_item)
+    {
+        for(var i=0; i < an_array.length; ++i)
+        {
+            var item = an_array[i];
+            if(item === search_item) return true;
+        }
+        return false;
+    }
+};
+
+
+
+
+
+

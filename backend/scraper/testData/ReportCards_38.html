@@ -1,0 +1,33 @@
+/*
+* ------------------------------------------------------------------------------------------------
+* © Copyright 2026 PowerSchool Group LLC, All Rights Reserved.
+* This program is PROPRIETARY and CONFIDENTIAL information of PowerSchool Group LLC, and may not
+* be disclosed or used except as expressly authorized in a license agreement controlling such use
+* and disclosure.  Unauthorized use of this program will result in legal proceedings, civil
+* damages, and possible criminal prosecution.
+* ------------------------------------------------------------------------------------------------
+* System Name: Home Access Center
+* ------------------------------------------------------------------------------------------------
+* File Name: ReportCards.js
+* ------------------------------------------------------------------------------------------------
+* File Description:
+*   jQuery script file for client-side processing on the Report Cards page.
+* ------------------------------------------------------------------------------------------------
+*/
+
+/// <summary>
+/// Replace non-functional anchor tags with spans for screen reader accessibility.
+/// Anchors with no href, or href="#" with no visible text, are replaced with span elements
+/// to prevent screen readers from announcing them as links.
+/// </summary>
+$(function () {
+    $('.sg-asp-table a').each(function () {
+        var $a = $(this);
+        var hasHref = $a.attr('href');
+        var text = $.trim($a.text());
+        if (!hasHref || (hasHref === '#' && text === '')) {
+            var $span = $('<span>').html($a.html());
+            $a.replaceWith($span);
+        }
+    });
+});

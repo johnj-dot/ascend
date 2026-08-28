@@ -1,0 +1,36 @@
+//<script language="javascript">
+//----------------------------------------------------------------------------
+// � Copyright 2006 SunGard Pentamation Inc..  All Rights Reserved.
+// This program is PROPRIETARY and CONFIDENTIAL information of SunGard
+// Pentamation Inc., and may not be disclosed or used except as expressly
+// authorized in a license agreement controlling such use and disclosure.
+// Unauthorized use of this program will result in legal proceedings, civil
+// damages, and possible criminal prosecution.
+//----------------------------------------------------------------------------
+// System Name: Home Access Center
+//----------------------------------------------------------------------------
+// Page Name: AssignmentsFromRCPopUp.js
+//----------------------------------------------------------------------------
+// Page Description:
+//   Javascript for AssignmentsFromRCPopUp.aspx
+//----------------------------------------------------------------------------
+
+
+function OpenAssingmentsFromRC(plngSectionKey, plngCourseSession, pintRCRun, pstrMarkTitle, pstrMarkType, pintIndex) {
+
+    window.open(SunGard.Common.RootURL() + "/Grades/_AssignmentsFromRCPopUp?sectionKey=" + plngSectionKey + "&session=" + plngCourseSession + "&rcRun=" + pintRCRun + "&markTitle=" + pstrMarkTitle + "&markType=" + pstrMarkType + "&slot=" + pintIndex, null, "status=no,menubar=no,toolbar=no,resizable=yes, scrollbars=yes,top=50,left=50,width=900,height650");
+	
+    return false;
+}
+
+function btnShowAveragesFromRC_onclick(pintSectionKey, pintCourseSession, pintRCRun) {
+
+        window.open("ClassworkAverages.aspx?section_key=" + pintSectionKey +
+
+						"&course_session=" + pintCourseSession +
+
+						"&rc_run=" + pintRCRun,
+
+						"_blank", "status=no,menubar=no,toolbar=no,  scrollbars=yes, width=500, height=300");
+       
+}

@@ -1,0 +1,221 @@
+/*
+'----------------------------------------------------------------------------
+' © Copyright 2013 SunGard Pentamation, Inc., All Rights Reserved.
+' This program is PROPRIETARY and CONFIDENTIAL information of SunGard
+' Pentamation, Inc., and may not be disclosed or used except as expressly
+' authorized in a license agreement controlling such use and disclosure.
+' Unauthorized use of this program will result in legal proceedings, civil
+' damages, and possible criminal prosecution.
+'----------------------------------------------------------------------------
+' System Name: Home Access Center
+'----------------------------------------------------------------------------
+' Page Name: Validation.js
+'----------------------------------------------------------------------------
+' Page Description:
+'	Validates the page
+'----------------------------------------------------------------------------
+*/
+
+var QuestionIcon = 0;
+var WarningIcon = 1;
+var CriticalIcon = 2;
+var InformationIcon = 3;
+var YesNoCancel = 0;
+var YesNo = 1;
+var OKCancel = 2;
+var OKOnly = 3;
+var YesResponse = 1;
+var OKResponse = 1;
+var NoResponse = 0;
+var CancelResponse = -1;
+var OKButton = 0;
+var YesButton = 1;
+var NoButton = 2;
+var CancelButton = 3;
+
+//TODO: add a callback function to enable the returns to work
+function LegacyValidationPopup(innerHtmlOfPopup) {
+    SPIConfirm(innerHtmlOfPopup);
+}
+
+/* -------------------------------------------------------------------------
+ Method:       SPIConfirm
+ Description:  Displays a message in a pop-up box with the selected
+				icon and buttons.
+ Parameters:   pstrMessage		- Required - Message to be displayed in
+								  the pop-up window
+				lngPromptType	- Optional - What type of prompt icon
+								  should be displayed.  Valid values
+								  and their respective constants include:
+									0 - Question	- QuestionIcon
+									1 - Warning		- WarningIcon
+									2 - Critical	- CriticalIcon (Default)
+									3 - Information	- InformationIcon
+				lngButtons		- Optional - Which buttons display in the
+								  pop-up window.  Valid values and their
+								  respective constants include:
+									0 - Yes/No/Cancel - YesNoCancel
+									1 - Yes/No		  - YesNo
+									2 - OK/Cancel	  - OKCancel
+									3 - OK			  - OKOnly (Default)
+				strTitle		- Optional - Title for the message window.
+				blnShowPrintAndCopy	- Optional - Boolean which indicates if
+									print and copy buttons should display.
+									Should only be set to TRUE for messages
+									regarding application errors.
+				strButton1Title		- Name to use for the 1st button
+				strButton2Title		- Name to use for the 2nd button
+				strButton3Title		- Name to use for the 3rd button
+				intDefaultResponse  - The response button that will be set
+				                      as the default
+				                    1  - Yes	- YesResponse
+									1  - OK		- OKResponse
+									0  - No		- NoResponse
+									-1 - Cancel - CancelResponse 	
+ Return Value: Response from the user.  Valid values and their respective
+				constants include:
+	1  - Yes	- YesResponse
+	1  - OK		- OKResponse
+	0  - No		- NoResponse
+	-1 - Cancel - CancelResponse
+-------------------------------------------------------------------------*/
+function SPIConfirm(pstrMessage) {
+	var undefined;
+	var lngPromptType = CriticalIcon;
+	var lngButtons = OKOnly;
+	var lngRetVal;
+	//var regContent = /.*\/common/i;
+	//var strWindowURL;
+	var strTitle;
+	var strShowPrintAndCopy = "N";
+	var strButton1Title = "";
+	var strButton2Title = "";
+	var strButton3Title = "";
+	var intDefaultResponse = "";
+	
+	// Retrieve the current URL
+	//strWindowURL = location.href;	
+	// Strip off anything after /content
+    //strWindowURL = strWindowURL.replace("/Student", "/Common");
+	//strWindowURL = strWindowURL.match(regContent);
+
+	//strWindowURL += "/PromptWindow.aspx";
+	//strWindowURL = "http://localhost/Hac2.1/Student/PromptWindow.aspx";
+
+	// Add to the URL any of the optional parameters that were passed to the function
+	if (SPIConfirm.arguments.length > 2) {
+		lngPromptType = arguments[1];
+		lngButtons = arguments[2];
+	} else if (SPIConfirm.arguments.length > 1)
+	    lngPromptType = arguments[1];
+    
+	if (SPIConfirm.arguments.length > 4)
+		strShowPrintAndCopy = (arguments[4]==true) ? "Y" : "N";
+	if (SPIConfirm.arguments.length > 5)
+		strButton1Title = arguments[5];
+	if (lngButtons != OKOnly && SPIConfirm.arguments.length > 6)
+		strButton2Title = arguments[6];
+	if (lngButtons == YesNoCancel && SPIConfirm.arguments.length > 7)
+		strButton3Title = arguments[7];
+	if (SPIConfirm.arguments.length > 8)
+		intDefaultResponse = arguments[8];	
+	//strWindowURL += "?prompt_type=" + lngPromptType + "&buttons=" + lngButtons +
+	//					"&show_print_copy=" + strShowPrintAndCopy + "&btn1title=" + 
+	//					strButton1Title + "&btn2title=" + strButton2Title +
+	//					"&btn3title=" + strButton3Title + "&DefaultResponse=" + intDefaultResponse;
+
+	// add a title for the message window.
+	if(SPIConfirm.arguments.length > 3) {
+		strTitle = arguments[3];
+	}   
+	if(strTitle == "" || strTitle == null) {
+		switch(lngPromptType) {
+			case CriticalIcon:
+			    strTitle = "Error Message"; 
+			    break;
+			case QuestionIcon:
+			    strTitle = "Question"; 
+			    break;
+			case InformationIcon:
+			    strTitle = "Informational Message"; 
+			    break;
+			case WarningIcon:
+			    strTitle = "Warning Message";
+				break;
+			default:
+				strTitle = "Error Message";
+				break;
+		}
+	}
+	//strWindowURL += "&title=" + strTitle;
+    
+    // Set the image for the header
+	var headerImageSource = "../../Media/Themes/Base/Common/message-error.png";
+	switch (lngPromptType) {
+	    case CriticalIcon:
+	        headerImageSource = "../../Media/Themes/Base/Common/message-error.png";
+	        break;
+	    case QuestionIcon:  // TODO: change to questionmark
+	        headerImageSource = "../../Media/Themes/Base/Common/Images/message-info.png"; 
+	        break;
+	    case InformationIcon:
+	        headerImageSource = "../../Media/Themes/Base/Common/Images/message-info.png";
+	        break;
+	    case WarningIcon:
+	        headerImageSource = "../../Media/Themes/Base/Common/message-warning.png";
+	        break;
+	    default:
+	        headerImageSource = "../../Media/Themes/Base/Common/message-error.png";
+	        break;
+	}
+
+	// Open the window and get the user's response
+    try {
+        //TODO: make the other buttons work. Perhaps provide a callback function
+        var buttons = [{
+            text: 'Ok', click: function () {
+                $(this).dialog('close');
+                return OKOnly;
+            }
+        }];
+        //showDialog = function (innerHtml, dialogTitle, buttonArray, dialogWidth, dialogIcon, dialogId, dialogClass, onOpen, onClose, dialogToolbar, position, dialogAutoOpen, resizable, dialogHeight) {
+        lngRetVal = SunGard.Common.ShowDialog(pstrMessage, strTitle, buttons, 500, headerImageSource, null, null, function () { }); //TODO: ret value doesnt work as expected. Use callback function to get the return value.
+        //lngRetVal = window.showModalDialog(strWindowURL, pstrMessage, "status:no;scroll:no");
+    } catch (e) {
+        // TODO: add this to ShowDialog?
+		// if an error is caught, and the number is -2147024891, that means access was defined for opening the window.  The user is blocking popups.
+		// Display a message saying so.
+		if(e.number == -2147024891) {
+			// strip common HTML from the message
+			pstrMessage = pstrMessage.replace("<ul>", "\n");
+			pstrMessage = pstrMessage.replace("</ul>", "\n");
+			pstrMessage = pstrMessage.replace("<li>", "\t");
+			pstrMessage = pstrMessage.replace("</li>", "");
+			pstrMessage = pstrMessage.replace("Do you wish to continue?", "");
+			alert("The HAC system attempted to display a message, but the configuration of your web " +
+						"browser prevents popup windows from displaying.  Please enable popup windows for this " +
+						"website.  The original message was:\n\n" + pstrMessage + "");
+			lngRetVal = undefined;
+		}
+	}
+	
+	// If the user clicked on the X to close the window instead of clicking on a button,
+	// we are assuming the following:  YesNoCancel or OKCancel: Cancel / YesNo: No /
+	// OKOnly: OK
+	if (lngRetVal == undefined)
+		switch (lngButtons) {
+			case YesNoCancel:
+			case OKCancel:
+				lngRetVal = CancelResponse;
+				break;
+			case YesNo:
+				lngRetVal = NoResponse;
+				break;
+			case OKOnly:
+				lngRetVal = OKResponse;
+				break;
+		}
+
+	return lngRetVal;
+}
+

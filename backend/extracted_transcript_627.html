@@ -1,0 +1,121 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+
+        
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+            <title>Error</title>
+        
+
+        <!-- 3rd party CSS our globals override -->
+<link  href="/HomeAccess/Stylesheets/Themes/Base/css?v=ErOiUuOsVp6tquD2fInmzTQl3A3SlFxTXp8j5mZ8LI01" type="text/css" rel="stylesheet" />
+<link  href="/HomeAccess/Stylesheets/SunGard/sungard-font-awesome.css" type="text/css" rel="stylesheet" />
+
+        <link  href="/HomeAccess/Stylesheets/Trirand/ui.jqgrid.css" type="text/css" rel="stylesheet" />
+
+    
+        <!-- Our globals -->
+        <link  href="/HomeAccess/eSchoolPLUSResource/GetEmbeddedStyle?file=CrossSite" type="text/css" rel="stylesheet" />
+
+        <link  href="/HomeAccess/Stylesheets/Site.css" type="text/css" rel="stylesheet" />
+
+        <link href="/HomeAccess/Media/Themes/Base/Common/favicon.ico" rel="shortcut icon" type="image/x-icon" />
+
+        <!-- Our shared -->
+        <link  href="/HomeAccess/eSchoolPLUSResource/GetEmbeddedStyle?file=ComboBox" type="text/css" rel="stylesheet" />
+
+        <link  href="/HomeAccess/Stylesheets/Common/Navigation.css" type="text/css" rel="stylesheet" />
+
+        <link  href="/HomeAccess/Stylesheets/Common/font-awesome.css" type="text/css" rel="stylesheet" />
+
+    
+        <!-- JS -->
+        
+
+        <script type="text/javascript" nonce="U2S7raBUW9h2s1EQ01zlij3g" src="/HomeAccess/Scripts/libs/modernizr-2.8.3.js"></script>
+
+        <script type="text/javascript" nonce="U2S7raBUW9h2s1EQ01zlij3g" src="/HomeAccess/Scripts/Common/BrowserTest.js"></script>
+
+        <script nonce="U2S7raBUW9h2s1EQ01zlij3g" type="text/javascript">
+            if (!BrowserTest()) {
+                document.location = '/HomeAccess/' + 'BrowserReject'; // Done because browsers that vail won't support jQuery
+            }
+        </script>
+            
+        <script type="text/javascript" nonce="U2S7raBUW9h2s1EQ01zlij3g" src="/HomeAccess/Scripts/libs/jquery?v=qIcuP3UP_aRnf7YSojJ0X96urcPMuU40OLTAhIFZUhU1"></script>
+
+
+        <script type="text/javascript" nonce="U2S7raBUW9h2s1EQ01zlij3g" src="/HomeAccess/Scripts/Trirand/ui.multiselect.js"></script>
+
+        <script type="text/javascript" nonce="U2S7raBUW9h2s1EQ01zlij3g" src="/HomeAccess/Scripts/Trirand/i18n/grid.locale-en.js"></script>
+
+        <script type="text/javascript" nonce="U2S7raBUW9h2s1EQ01zlij3g" src="/HomeAccess/Scripts/Trirand/jquery.jqGrid.js"></script>
+
+
+
+        <script nonce="U2S7raBUW9h2s1EQ01zlij3g" src="/HomeAccess/eSchoolPLUSResource/GetEmbeddedScript?file=SungardCommon" type="text/javascript"></script>
+        <script nonce="U2S7raBUW9h2s1EQ01zlij3g" src="/HomeAccess/eSchoolPLUSResource/GetEmbeddedScript?file=Combobox" type="text/javascript"></script>
+
+        <script type="text/javascript" nonce="U2S7raBUW9h2s1EQ01zlij3g" src="/HomeAccess/Scripts/Common/HAC.js"></script>
+
+        <script nonce="U2S7raBUW9h2s1EQ01zlij3g" type="text/javascript">
+            $(function () {
+                    parseForComboBoxes();
+
+                SunGard.Hac.Area('');
+                SunGard.Hac.Controller('Grades');
+                SunGard.Hac.Action('Transcript');
+
+                SunGard.Common.Init('/HomeAccess/');
+                SunGard.Hac.Init('/HomeAccess/');
+            });
+        </script>
+   
+        <!-- Gainsights Logic -->
+
+        <!-- This should be at the bottom of this section -->
+        
+    </head>
+    <!-- add webkit-overflow to fix scrolling on IOS Devices-->
+    <body style="-webkit-overflow-scrolling: touch;">
+        <a href="#MainContent" class="sg-skip-link">Skip to main content</a>
+        <main role="main">
+            
+
+
+<div class="sg-container">
+    <div class="sg-header">
+        <!-- img class="sg-header-image" alt="Account Information" src="/Media/Themes/Base/Headers/header-logon-logout.png" -->
+        <span class="sg-header-heading">Error</span>
+    </div>
+    <div class="sg-container-content">
+        <div class="caption">
+An error occurred while processing your request.            <br /> <br />
+
+        </div>
+    </div>
+</div>
+        </main>
+        
+        <script nonce="U2S7raBUW9h2s1EQ01zlij3g">
+            $(function() {
+                // Build the jQuery UI buttons
+                $('.sg-buttonset').controlgroup();
+                $('.sg-button').button();
+
+                // Move focus to main content when skip link is activated
+                $('.sg-skip-link').on('click', function (e) {
+                    var target = document.getElementById('MainContent');
+                    if (target) {
+                        e.preventDefault();
+                        target.focus();
+                    }
+                });
+            })
+        </script>
+    </body>
+    
+</html>

@@ -1,0 +1,343 @@
+.sg-table-cell { display: table-cell; width: 2%; } /* 2% formats them automatically to the size of the table */
+.sg-table-row { display: table-row; }
+.sg-table { display: table; table-layout: fixed;}
+.sg-table > * { display: table-cell; border: 1px solid #aaaaaa; border-collapse: collapse; }
+.sg-5px-margin { margin: 5px; }
+.sg-5px-margin-top { margin-top: 5px; }
+.sg-2px-margin { margin: 2px; }
+.sg-cursor-pointer { cursor: pointer; }
+.sg-width-full { width: 100%; }
+.sg-20px-margin-top { margin-top: 20px; }
+.sg-header-square { border-top-left-radius: 0px; }
+
+/* Margins main page content for data table */
+.sg-hac-content { margin: 27px; }
+
+a:link { color: #006699; }
+a:visited { color: #663399; }
+
+/* Iframe */
+body.sg-iframe-body { min-width: 0; }
+iframe.sg-legacy-iframe { width: 100%; }
+
+.sg-content-grid + .sg-header { margin-top: 20px; } /* seperate multiple grids */
+
+button.sg-auto-margin-x {
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+}
+
+div.sg-auto-margin-x
+{
+    width: 30em;
+    display: table-cell;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.sg-relative-table {
+    width: 100%;
+    display: table;
+    position: relative;
+}
+
+.sg-relative-left {
+    position: absolute;
+    display: table-cell;
+    left: 10px;
+}
+
+.sg-relative-right {
+    position: absolute;
+    display: table-cell;
+    right: 10px;
+}
+
+.sg-content-grid { border: 1px solid #aaaaaa; border-collapse: collapse; }
+
+/************************************************************************/
+/* table formating. Was DetailList */
+.sg-asp-table {
+    border: 1px solid #aaaaaa;
+    border-collapse: collapse;
+    border-top: none;
+    width: 100%;
+}
+/* table cell formating. Was DetailList td */
+.sg-asp-table td,
+.sg-asp-table th {
+	border: 1px solid #aaaaaa;
+    border-bottom: none;
+    border-top: none;
+    padding: 4px;
+    text-align: left;
+}
+.sg-asp-table-header-row th, .sg-asp-table-header-row td, .ui-jqgrid-view .ui-jqgrid-hdiv, .ui-jqgrid tr.ui-jqgrid-labels th { background-image: url("../Media/images/Menu/sub-nav-gradient.png"); background-size: contain;}
+.sg-att-table-cell .sg-asp-table-no-top-padding { margin-top: -5px; }
+.sg-att-table-cell + .sg-att-table-cell .sg-asp-table-no-top-padding { margin-top: -1px; }
+.sg-asp-table-no-left-padding { margin-left: -5px; }
+/* Make anchors inside headers white text */
+.sg-asp-table th a,
+.sg-asp-table-header-row a {
+    color: white;
+    font-size: 1.5em;
+}
+
+.sg-asp-table-header-selected {
+    background-color: white;
+    color: black;
+}
+.sg-asp-table-header-selected a { color: blue; }
+
+/************************************************************************/
+/* sub-tables seperate the tables from each other */
+.sg-asp-table-group { margin: 6px; }
+
+.sg-header-group {
+    color: #333333;
+    border: 1px solid #aaaaaa;
+    -moz-border-top-left-radius: 5px;
+    -webkit-border-top-left-radius: 5px;
+    border-top-left-radius: 5px;
+    margin:0;
+    padding:0;
+    height: 20px;
+    background-image: url(../Media/Themes/Base/Headers/header-fill.png);
+    background-size: contain;
+    text-align: left;
+}
+.sg-header-group label { margin-left: 5px; font-size: 1.2em; line-height: 20px; }
+.sg-header-group .sg-button .ui-button-text { font-size: 1em; padding-top: 0; padding-bottom: 0;}
+
+.sg-table-horizontal-border td {
+    border-top: 1px solid #aaaaaa;
+    border-bottom: 1px solid #aaaaaa;
+}
+
+.sg-content-alert-container {
+    background-color: #FFFFCC; /*#FFFFE0;*/
+    white-space:normal;
+}
+.sg-content-alert-container input[type='checkbox'] { margin-right: 10px; }
+
+/* format the sg-labeled-info section*/
+.sg-labeled-info { clear: both; height:100%; overflow: auto; display: block;}
+.sg-labeled-info > *:nth-child(odd) {
+    float:left; 
+    clear: left; /* prevents next line from being on top of this*/
+    width:10em;
+    font-weight: bold;
+}
+.sg-labeled-info > *:nth-child(even) {
+    float:left;
+}
+
+.sg-legacy-datepicker {
+    vertical-align: top; /* align with image */
+}
+
+.sg-transcript-group 
+{
+	border-bottom: #006699 0.2em solid;
+    vertical-align:top;
+    padding-right: 50px
+}
+
+.sg-button.sg-button-show-hide
+{
+    line-height:1em;
+    border-radius:5px;
+    color:#666666;
+    padding-top:5px;
+}
+
+/* Turns a div into a right isosolese triangle pointing northwest (aka topleft) */
+.sg-topleft-triangle {
+    border-style: hidden hidden solid solid ;
+    border-width: 0 0 1.5em 1.5em;
+    border-bottom-color: transparent;
+    height: 0;
+    width: 0;
+    position: absolute;
+    z-index: -1;
+    opacity: 0.5;
+}
+
+/************************************************************************/
+/* ADA/WCAG 2.1 AA Accessibility Utilities */
+/************************************************************************/
+
+/* Screen reader only - visually hidden but accessible to assistive technology */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Screen reader only but focusable (for skip links) */
+.sr-only-focusable:focus,
+.sr-only-focusable:active {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+}
+
+/* Skip navigation link */
+.sg-skip-link,
+.sg-skip-link:link,
+.sg-skip-link:visited {
+    position: absolute;
+    left: -10000px;
+    top: auto;
+    width: auto;
+    height: auto;
+    overflow: hidden;
+    color: #fff;
+    text-decoration: none;
+    font-size: 14px;
+    padding: 8px 16px;
+}
+
+.sg-skip-link:focus {
+    position: fixed;
+    top: 0;
+    left: 0;
+    overflow: visible;
+    background: #005fcc;
+    color: #fff;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 8px 16px;
+    z-index: 10000;
+    border-radius: 0 0 4px 4px;
+    outline: 2px solid #fff;
+    outline-offset: -2px;
+}
+
+/* Focus indicators for keyboard navigation (WCAG 2.4.7) */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+    outline: 3px solid #005fcc;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(0, 95, 204, 0.3);
+}
+
+/* Menu focus styles */
+.sg-hac-menu-option:focus-visible,
+.sg-hac-submenu-option:focus-visible,
+.sg-banner-menu-element:focus-visible,
+.sg-banner-menu-element a:focus-visible,
+.sg-banner-menu-element button:focus-visible {
+    outline: 2px solid #005fcc;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(0, 95, 204, 0.25);
+}
+
+/* Remove focus outline for mouse users */
+a:focus:not(:focus-visible),
+button:focus:not(:focus-visible),
+[tabindex]:focus:not(:focus-visible),
+.sg-button:focus:not(:focus-visible),
+.sg-hac-menu-option:focus:not(:focus-visible),
+.sg-hac-submenu-option:focus:not(:focus-visible) {
+    outline: none;
+    box-shadow: none;
+}
+
+/* Hide focus on skip link target */
+#MainContent:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+/* Keep focus visible for form inputs */
+input:focus,
+select:focus,
+textarea:focus {
+    outline: 1px solid #005fcc;
+    outline-offset: 0;
+    box-shadow: none;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    a:focus,
+    button:focus,
+    input:focus,
+    select:focus,
+    textarea:focus,
+    [tabindex]:focus {
+        outline: 3px solid currentColor;
+        outline-offset: 2px;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Ensure clickable elements have pointer cursor */
+[role="button"],
+[role="link"],
+[role="menuitem"] {
+    cursor: pointer;
+}
+
+/* Ensure disabled elements are visually distinct */
+[aria-disabled="true"],
+[disabled] {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/************************************************************************/
+/* Close icon contrast fix for modals (WCAG 1.4.11) */
+/************************************************************************/
+.ui-dialog .ui-dialog-titlebar-close .ui-icon {
+    filter: brightness(0);
+}
+
+/************************************************************************/
+/* Reflow at 200% zoom (WCAG 1.4.4) */
+/************************************************************************/
+@media screen and (max-width: 960px) {
+    body {
+        min-width: 0;
+        overflow-x: auto;
+    }
+}
+
+/************************************************************************/
+/* Text spacing support (WCAG 1.4.12) */
+/************************************************************************/
+.sg-header,
+.sg-header-group,
+.sg-asp-table td,
+.sg-asp-table th,
+.sg-hac-menu-option,
+.sg-hac-submenu-option,
+.sg-button,
+.sg-combobox-wrapper {
+    overflow: visible;
+}

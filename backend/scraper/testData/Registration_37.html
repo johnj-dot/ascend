@@ -1,0 +1,30 @@
+/// <reference path="../../Scripts/Common/SunGard.Hac.SharedClasswork.js" />
+
+/*
+* ------------------------------------------------------------------------------------------------
+* � Copyright 1990-2018 PowerSchool Group LLC, All Rights Reserved.
+* This program is PROPRIETARY and CONFIDENTIAL information of PowerSchool Group LLC, and may not
+* be disclosed or used except as expressly authorized in a license agreement controlling such use
+* and disclosure.  Unauthorized use of this program will result in legal proceedings, civil
+* damages, and possible criminal prosecution.
+* ------------------------------------------------------------------------------------------------
+* System Name: Home Access Center
+* ------------------------------------------------------------------------------------------------
+* File Name: Registration_SCHDS016.js
+* ------------------------------------------------------------------------------------------------
+* File Description:
+*   Javascript for Registration.aspx
+* ------------------------------------------------------------------------------------------------
+*/
+
+function DeleteOtherContact(ContactId, ContactType)
+{
+    var left = (window.screen.width / 2) - (750 / 2);
+    var top = (window.screen.height / 2) - (300 / 2);
+
+    //alert("HERE" + pintContactId); 
+    window.open("SCHDS016_DeleteOtherContact.aspx?contact_id=" + ContactId + "&contact_type=" + ContactType, +
+						null, "status=no,menubar=no,toolbar=no,scrollbars=yes,resizable=yes,width=750,height=300, top=" + top + ", left=" + left);
+                       
+}
+ 

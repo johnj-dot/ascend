@@ -1,0 +1,249 @@
+/// <reference path="../../Scripts/Common/SunGard.Hac.SharedClasswork.js" />
+
+
+
+//----------------------------------------------------------------------------
+// � Copyright 2013 SunGard K-12 Education.  All Rights Reserved.
+// This program is PROPRIETARY and CONFIDENTIAL information of SunGard
+// K-12 Education, and may not be disclosed or used except as expressly
+// authorized in a license agreement controlling such use and disclosure.
+// Unauthorized use of this program will result in legal proceedings, civil
+// damages, and possible criminal prosecution.
+//----------------------------------------------------------------------------
+// System Name: Home Access Center
+//----------------------------------------------------------------------------
+// Page Name: Assignments.js
+//----------------------------------------------------------------------------
+// Page Description:
+//   Javascript for Assignments.aspx
+//----------------------------------------------------------------------------
+
+function btnShowAverages_onclick(pintSectionKey, pintCourseSession) {
+    var objRCRun
+    var strSelectedRun
+
+    objRCRun = document.getElementById("plnMain_ddlReportCardRuns");
+    strSelectedRun = objRCRun.options[objRCRun.selectedIndex].text;
+    
+    var objMessage = document.getElementById("plnMain_hdnJsAlert");
+
+    if (objRCRun.options[objRCRun.selectedIndex].value != "ALL") {
+
+        window.open("ClassworkAverages.aspx?section_key=" + pintSectionKey +
+
+                    "&course_session=" + pintCourseSession +
+
+                    "&rc_run=" + strSelectedRun,
+
+                    null, "status=no,menubar=no,toolbar=no,scrollbars=yes,width=500,height=400");
+
+    } else {
+
+        alert(objMessage.value);
+    }
+
+}
+
+function OpenAssignmentPopUp(sectionKey, courseSession, assignmentNumber) {
+    if (window.parent.SunGard.Hac.SharedClasswork !== undefined) {
+        window.parent.SunGard.Hac.SharedClasswork.OpenAssignmentDialog(assignmentNumber, null, null, null, sectionKey, courseSession);
+    } else {
+        SunGard.Hac.SharedClasswork.OpenAssignmentDialog(assignmentNumber, null, null, null, sectionKey, courseSession);
+    }
+
+    return false;
+}
+
+function OpenAssignmentPopUpForStuComp(building, competencyGroup, staffId, assignmentNumber) {
+    if (window.parent.SunGard.Hac.SharedClasswork !== undefined) {
+        window.parent.SunGard.Hac.SharedClasswork.OpenAssignmentDialog(assignmentNumber, building, competencyGroup, staffId, null, null);
+    } else {
+        SunGard.Hac.SharedClasswork.OpenAssignmentDialog(assignmentNumber, building, competencyGroup, staffId, null, null);
+    }
+}
+
+function rdoViewFor_onclick() {
+    $('.asmt-course').toggle();
+    $('.asmt-competency').toggle();
+    if ($('#plnMain_rdoViewForCourse').prop('checked')) {
+        $('[id="plnMain_ddlOrderBy"]').combobox('disabled', false);
+        $('[id="plnMain_ddlOrderBy"]').combobox('setValue', 'Class');
+    }
+
+    else {
+        $('[id="plnMain_ddlOrderBy"]').combobox('setValue', 'Date');
+        $('[id="plnMain_ddlOrderBy"]').combobox('disabled', true);
+    }
+}
+
+
+//*****************************************************************************
+//function btnHideShow_onclick()
+//*****************************************************************************
+function btnCollapseExpand_onclick(evt) {
+    var objSource = evt.srcElement || evt.target;
+    var buttonSpan = $('.btnCollapseExpand');
+
+    var tables = document.getElementsByTagName("table");
+    tables = FUNCTIONAL.filter_array(tables, function () {
+        return (this.className == "sg-asp-table");
+    });
+
+    var categories = document.getElementsByTagName("span");
+    categories = FUNCTIONAL.filter_array(categories, function () {
+        return (this.className == "LabelCatogery");
+    });
+
+    var itemsToHide = tables.concat(categories);
+    FUNCTIONAL.apply_over(itemsToHide, function (elm) {
+        elm.style.display = (buttonSpan.text() == $('input[id$="hdnExpand"]').val()) ? "" : "none";
+    });
+
+    var buttons = $(".sg-button-show-hide");
+    buttons.each(function () {
+        if (($(this).attr('class').indexOf('icon-plus') > 0 && buttonSpan.text() == $('input[id$="hdnExpand"]').val()) || ($(this).attr('class').indexOf('icon-minus') > 0 && buttonSpan.text() == $('input[id$="hdnCollapse"]').val())) {
+            $(this).toggleClass("icon-plus icon-minus");
+        }
+    });
+
+    //Toggle the text of the button 
+    if (buttonSpan.text() == $('input[id$="hdnExpand"]').val()) {
+        buttonSpan.text($('input[id$="hdnCollapse"]').val());
+        buttonSpan.attr("title", $('input[id$="hdnCollapseToolTip"]').val());
+    }
+    else {
+        buttonSpan.text($('input[id$="hdnExpand"]').val());
+        buttonSpan.attr("title", $('input[id$="hdnExpandToolTip"]').val());
+    }
+
+    resize();
+    return false;
+}
+
+//*****************************************************************************
+//function btnShowHide_onclick()
+//*****************************************************************************
+function btnShowHide_onclick(evt) {
+
+    var objSource = evt.srcElement || evt.target;  //window.event.srcElement; evt.target used for Firefox
+    var containers = objSource.parentNode.parentNode || objSource.parentElement.parentElement // objSource.parentNode used for Firefox
+
+    var Array1 = new Array();
+
+    Array1.push(containers);
+
+    Array1 = FUNCTIONAL.filter_array(Array1, function () {
+        return (this.className == "AssignmentClass");
+    });
+
+    FUNCTIONAL.apply_over(Array1, function (item) {
+
+        var tables = item.getElementsByTagName("table");
+
+        tables = FUNCTIONAL.filter_array(tables, function () {
+            return (this.className == "sg-asp-table");
+        });
+
+        FUNCTIONAL.apply_over(tables, function (elm) {
+            $(elm).toggle();
+        });
+    });
+
+    var Array2 = new Array();
+    Array2.push(containers);
+
+    FUNCTIONAL.apply_over(Array2, function (item) {
+        var span = item.getElementsByTagName("span");
+
+        span = FUNCTIONAL.filter_array(span, function () {
+            return (this.className == "LabelCatogery");
+        });
+
+        FUNCTIONAL.apply_over(span, function (elm) {
+            $(elm).toggle();
+        });
+    });
+
+    var btnId = $('#' + objSource.id);
+    btnId.toggleClass("icon-plus icon-minus");
+
+    var allshown = ($('[class~=icon-plus]').length > 0) ? false : true;
+    var allhidden = ($('[class~=icon-minus]').length > 0) ? false : true;
+
+    var buttonSpan = $('.btnCollapseExpand span');
+
+    if (allshown) {
+        buttonSpan.text($('input[id$="hdnCollapse"]').val());
+        buttonSpan.attr("title", $('input[id$="hdnCollapseToolTip"]').val());
+    }
+    else if (allhidden) {
+        buttonSpan.text($('input[id$="hdnExpand"]').val());
+        buttonSpan.attr("title", $('input[id$="hdnExpandToolTip"]').val());
+    }
+    else { }
+
+    resize();
+    return false;
+}
+
+function search_values(an_array, search_item) {
+    {
+        for (var i = 0; i < an_array.length; ++i) {
+            var item = an_array[i];
+            if (item.value == search_item) return false;
+        }
+        return true;
+    }
+}
+
+function btnView_onclick() {
+    var buttonSpan = $('.btnView');
+    var fullText = $('input[id$="hdnViewFull"]').val();
+    var quickText = $('input[id$="hdnViewQuick"]').val();
+
+    $('.sg-view-quick').toggle();
+
+    if (buttonSpan.text() == fullText) {
+        buttonSpan.text(quickText);
+        buttonSpan.attr("title", $('input[id$="hdnQuickToolTip"]').val());
+    }
+    else {
+        buttonSpan.text(fullText);
+        buttonSpan.attr("title", $('input[id$="hdnFullToolTip"]').val());
+    }
+    resize();
+}
+
+function btnPrintClasswork_onclick() {
+    var frm = $('#sg-legacy-iframe', window.parent.document)[0].contentWindow;
+    frm.focus();// focus on contentWindow is needed on some ie versions
+    frm.print();
+}
+
+function resize() {
+    $('#sg-legacy-iframe', window.parent.document).height($('.sg-main-content').height());
+}
+
+
+function OpenAverageDetailsDialog(building, competencyGroup, competencyNumber, staffId, sectionKey, courseSession) {
+    /// <summary>Opens a dialog to display competency average detail information.</summary>
+    /// <param name="building" type="Object"></param>
+    /// <param name="competencyGroup" type="Object"></param>
+    /// <param name="competencyNumber" type="Object"></param>
+    /// <param name="staffId" type="Object"></param>
+    /// <param name="sectionKey" type="Object"></param>
+    /// <param name="courseSession" type="Object"></param>
+    /// <param name="viewFor" type="Object"></param>
+    /// <param name="showUnpublished" type="Object"></param>
+
+    var objRCRun = document.getElementById("plnMain_ddlReportCardRuns");
+    var rcRun = objRCRun.options[objRCRun.selectedIndex].value.split('-')[0];
+    var dialogTitle = document.getElementById("plnMain_hdnAverageDetailsDialogTitle").value;
+    if (rcRun === "ALL") rcRun = -1;
+
+    if (window.parent.SunGard.Hac.SharedClasswork !== undefined) {
+        window.parent.SunGard.Hac.SharedClasswork.OpenAverageDetailsDialog(building, competencyGroup, competencyNumber, staffId, sectionKey, courseSession, rcRun, dialogTitle);
+    } else {
+        SunGard.Hac.SharedClasswork.OpenAverageDetailsDialog(building, competencyGroup, competencyNumber, staffId, sectionKey, courseSession, rcRun, dialogTitle);
+    }
+}

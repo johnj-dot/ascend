@@ -1,0 +1,57 @@
+/*
+* ------------------------------------------------------------------------------------------------
+* � Copyright 1990-2017 PowerSchool Group LLC, All Rights Reserved.
+* This program is PROPRIETARY and CONFIDENTIAL information of PowerSchool Group LLC, and may not
+* be disclosed or used except as expressly authorized in a license agreement controlling such use
+* and disclosure.  Unauthorized use of this program will result in legal proceedings, civil
+* damages, and possible criminal prosecution.
+* ------------------------------------------------------------------------------------------------
+* System Name: Home Access Center
+* ------------------------------------------------------------------------------------------------
+* File Name: OpenClassPopUp.js
+* ------------------------------------------------------------------------------------------------
+* File Description:
+*   jQuery script file for client-side processing that is needed for processing the Open Class Pop
+* Up Dialog
+* ------------------------------------------------------------------------------------------------
+*/
+
+
+function OpenClassPopUp(plngSectionKey) {
+    /// <summary>
+    /// Opens the class pop up.
+    /// </summary>
+    /// <param name="plngSectionKey">The PLNG section key.</param>
+    /// <returns></returns>
+    window.open("ClassPopUp.aspx?section_key=" + plngSectionKey, null, "status=no,menubar=no,toolbar=no,top=50,left=50,width=800,height=450");
+    return false;
+}
+
+function OpenClassPopUpWithMarkingPeriod(plngSectionKey, pRCRun) {
+    /// <summary>
+    /// Opens the class pop up with marking period.
+    /// </summary>
+    /// <param name="plngSectionKey">The PLNG section key.</param>
+    /// <param name="pRCRun">The p rc run.</param>
+    /// <returns></returns>
+    window.open("ClassPopUp.aspx?section_key=" + plngSectionKey + "&rcrun=" + pRCRun, null, "status=no,menubar=no,toolbar=no,top=50,left=50,width=800,height=450");
+    return false;
+}
+
+function OpenCodeSelectionPopUp(pstrAlertType, pstrStudentId) {
+    /// <summary>
+    /// Opens the alert code selection pop-up.
+    /// </summary>
+    /// <param name="plngSectionKey">The Alert Type</param>
+    /// <param name="pRCRun">The student id</param>
+    /// <returns></returns>
+
+    if (pstrAlertType.toUpperCase() == "A") {
+        var relativeUrl = $("#relativeUrl").val()
+        window.open(relativeUrl + "Content/Attendance/SetAttendanceAlertPopUp.aspx?student_id=" + pstrStudentId, null, "status=no,menubar=no,toolbar=no,scrollbars=yes,top=50,left=50,width=600,height=450,modal=yes");
+    }
+    else
+        window.open("SetDiscAlertPopUp.aspx?student_id=" + pstrStudentId, null, "status=no,menubar=no,toolbar=no,scrollbars=yes,top=50,left=50,width=1000,height=600,modal=yes");
+
+    return false;
+}

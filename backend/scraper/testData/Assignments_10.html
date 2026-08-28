@@ -1,0 +1,154 @@
+﻿/*
+ * ------------------------------------------------------------------------------------------------
+ * © Copyright 2012 SunGard K-12 Education, All Rights Reserved.
+ * This program is PROPRIETARY and CONFIDENTIAL information of SunGard K-12 Education, and may not
+ * be disclosed or used except as expressly authorized in a license agreement controlling such use
+ * and disclosure.  Unauthorized use of this program will result in legal proceedings, civil
+ * damages, and possible criminal prosecution.
+ * ------------------------------------------------------------------------------------------------
+ * System Name: Teacher Access Center
+ * ------------------------------------------------------------------------------------------------
+ * File Name: Combobox.css
+ * ------------------------------------------------------------------------------------------------
+ * File Description:
+ *   CSS settings that make the jQuery combobox display properly.
+ * ------------------------------------------------------------------------------------------------
+ */ 
+
+@-moz-document url-prefix() {
+    .dialogfix .ui-button
+    {
+        top:-20px !important;
+    }
+ }
+.dialogfix .ui-button
+{
+    border: 2px solid #BCBDC0;
+}
+
+.sg-combobox-wrapper
+{
+    position: relative;
+    display: inline-block;
+    white-space: normal;
+    vertical-align: baseline;
+}
+
+.sg-combobox-wrapper .ui-button
+{
+    position: relative;
+    height: 16px;
+    margin-left: 0px;
+    margin-right: 0px;
+    background-color: #FFF;
+    background-image: none;
+    border-radius: 0px;
+    border-color: #999999;
+}
+
+.sg-combobox-wrapper .ui-state-default .ui-icon,
+.sg-combobox-wrapper .ui-state-hover .ui-icon, 
+.sg-combobox-wrapper .ui-state-focus .ui-icon
+{
+    background-image: url(../eSchoolPLUSResource/GetEmbeddedImage?file=UIIcons000000);
+}
+
+.sg-combobox-wrapper .ui-button .ui-button-text
+{
+    display: none;
+}
+
+.sg-combobox-input
+{
+    height: 14px;
+}
+
+/* set the size and overflow for fixed size
+    autocomplete */
+.sg-autocomplete-fixed
+{
+    max-height: 200px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.sg-combobox-wrapper .ui-autocomplete-input
+{
+    margin: 0;
+    /*padding: 0.3em;*/
+    padding: 2px;
+    border: 2px solid #bcbdc0; /*#727375;*/
+    border-right: none;
+    height: 12px; /* 4px of border = 18px total */
+}
+
+a.ui-button-icon-only, .ui-widget-content a.ui-button-icon-only, .ui-widget-header a.ui-button-icon-only
+{ 
+    width: 1.5em;
+    float: right;
+    border: 2px solid #bcbdc0; /*#727375;*/
+}
+
+.ui-button-icon-only .ui-icon 
+{
+    /*position: relative;*/
+    margin-top: -8px;
+}
+
+/* set the border-bottom to have 1 less px
+   due to the ui-menu-item border-bottom */
+.ui-autocomplete
+{
+    background: #000000;
+    border: 2px solid #999999;
+    border-bottom: 1px solid #999999;
+    border-radius: 0px;
+    -moz-border-radius: 0px;
+    -webkit-border-radius: 0px;
+    padding: 0px;
+    box-shadow: 4px 4px 10px #999999;
+}
+
+/* Only use border-bottom so there isn't double
+   borders between rows */
+.ui-menu .ui-menu-item
+{
+    border-bottom: 1px solid #999999;
+    font-size:11px;
+    height: 100%;
+    width: 100%;
+    padding: 0;
+}
+
+.ui-menu .ui-menu-item a
+{
+    display: block;
+    background: #FFFFFF;
+    color: #000000;
+    height: 100%;
+    width: 100%;
+    padding: 3px 11px 3px 4.4px;
+}
+
+
+    .ui-menu .ui-menu-item a:hover,
+    .ui-menu .ui-menu-item a.ui-state-hover
+    {
+        background-color: #00427C;
+        color: #FFFFFF;
+        height: 100%;
+        width: 100%;
+    }
+
+.ui-autocomplete .ui-menu-item a.ui-corner-all
+{
+    -moz-border-radius: 0px;
+    -webkit-border-radius: 0px;
+    border-radius: 0px;
+}
+
+.sg-combobox-wrapper .ui-autocomplete-input,
+.ui-menu .ui-menu-item a, .sg-combobox
+{
+    font-size: .917em;
+}

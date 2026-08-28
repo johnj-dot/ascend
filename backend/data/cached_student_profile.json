@@ -1,0 +1,197 @@
+{
+  "studentName": "Student",
+  "studentId": null,
+  "counselor": null,
+  "grade": null,
+  "building": null,
+  "school": "Home Access Center",
+  "registration": null,
+  "overallAverage": 100,
+  "classes": [
+    {
+      "id": "3929A - 3",
+      "name": "AP Comp Sci Principles",
+      "period": "01",
+      "teacher": "Vudayagiri, Madhavi",
+      "average": null,
+      "letterGrade": null,
+      "assignments": []
+    },
+    {
+      "id": "6026A - 9",
+      "name": "Lifetime Fitness & Wellness",
+      "period": "02",
+      "teacher": "Steele, Levi",
+      "average": null,
+      "letterGrade": null,
+      "assignments": []
+    },
+    {
+      "id": "3225A - 5",
+      "name": "TAG/Advanced Alg II",
+      "period": "03",
+      "teacher": "Sheen, Amy",
+      "average": 100,
+      "letterGrade": "A",
+      "assignments": [
+        {
+          "name": "M1T1L1 Homework",
+          "category": "Formative",
+          "dateDue": "08/25/2026",
+          "score": 100,
+          "totalPoints": 100,
+          "weight": 0.2,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "M1T1L2 Homework",
+          "category": "Formative",
+          "dateDue": "08/27/2026",
+          "score": 100,
+          "totalPoints": 100,
+          "weight": 0.2,
+          "missing": false,
+          "exempt": false
+        }
+      ]
+    },
+    {
+      "id": "4315A - 4",
+      "name": "TAG/Advanced Biology",
+      "period": "04",
+      "teacher": "Ortega, Jacob",
+      "average": null,
+      "letterGrade": null,
+      "assignments": []
+    },
+    {
+      "id": "5839A - 1",
+      "name": "Intro Engineering Design",
+      "period": "05",
+      "teacher": "Lowe, Michael",
+      "average": null,
+      "letterGrade": null,
+      "assignments": []
+    },
+    {
+      "id": "1115A - 6",
+      "name": "TAG/Advanced English I",
+      "period": "06",
+      "teacher": "Sitran, Susan",
+      "average": null,
+      "letterGrade": null,
+      "assignments": [
+        {
+          "name": "\"Fish Cheeks\" Analysis",
+          "category": "Formative",
+          "dateDue": "08/25/2026",
+          "score": null,
+          "totalPoints": 100,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        }
+      ]
+    },
+    {
+      "id": "2212A - 6",
+      "name": "TAG/AP Human Geography",
+      "period": "07",
+      "teacher": "Ferguson, Jennifer",
+      "average": null,
+      "letterGrade": null,
+      "assignments": [
+        {
+          "name": "Syllabus",
+          "category": "Formative",
+          "dateDue": "08/26/2026",
+          "score": 100,
+          "totalPoints": 100,
+          "weight": 0,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "Spatial Concepts Activity",
+          "category": "Formative",
+          "dateDue": "08/26/2026",
+          "score": null,
+          "totalPoints": 100,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "Region's Map Quiz",
+          "category": "Formative",
+          "dateDue": "08/28/2026",
+          "score": null,
+          "totalPoints": 100,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        }
+      ]
+    },
+    {
+      "id": "8432A - 9",
+      "name": "Advanced Spanish III",
+      "period": "08",
+      "teacher": "Tijerina, Yakeline",
+      "average": null,
+      "letterGrade": null,
+      "assignments": []
+    }
+  ],
+  "upcoming": [
+    {
+      "name": "\"Fish Cheeks\" Analysis",
+      "category": "Formative",
+      "dateDue": "08/25/2026",
+      "score": null,
+      "totalPoints": 100,
+      "weight": 1,
+      "missing": false,
+      "exempt": false,
+      "class": "TAG/Advanced English I",
+      "courseId": "1115A - 6"
+    },
+    {
+      "name": "Spatial Concepts Activity",
+      "category": "Formative",
+      "dateDue": "08/26/2026",
+      "score": null,
+      "totalPoints": 100,
+      "weight": 1,
+      "missing": false,
+      "exempt": false,
+      "class": "TAG/AP Human Geography",
+      "courseId": "2212A - 6"
+    },
+    {
+      "name": "Region's Map Quiz",
+      "category": "Formative",
+      "dateDue": "08/28/2026",
+      "score": null,
+      "totalPoints": 100,
+      "weight": 1,
+      "missing": false,
+      "exempt": false,
+      "class": "TAG/AP Human Geography",
+      "courseId": "2212A - 6"
+    }
+  ],
+  "missing": [],
+  "transcript": {
+    "years": [],
+    "gpa": {
+      "weighted": null,
+      "unweighted": null,
+      "rank": null,
+      "classSize": null
+    }
+  },
+  "attendance": [],
+  "warnings": []
+}

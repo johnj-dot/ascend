@@ -1,0 +1,1039 @@
+﻿/*
+ * ------------------------------------------------------------------------------------------------
+ * © Copyright 2012-2013 SunGard K-12 Education, All Rights Reserved.
+ * This program is PROPRIETARY and CONFIDENTIAL information of SunGard K-12 Education, and may not
+ * be disclosed or used except as expressly authorized in a license agreement controlling such use
+ * and disclosure.  Unauthorized use of this program will result in legal proceedings, civil
+ * damages, and possible criminal prosecution.
+ * ------------------------------------------------------------------------------------------------
+ * System Name: Teacher Access Center
+ * ------------------------------------------------------------------------------------------------
+ * File Name: CrossSite.css
+ * ------------------------------------------------------------------------------------------------
+ * File Description:
+ *   CSS settings that should be applied across applications
+ *   Everything else should derive from these defaults.
+ * ------------------------------------------------------------------------------------------------
+ */
+body
+{
+    margin: 0;
+    padding: 0;
+    
+    /* Font should be set nowhere else unless an override is needed */
+    font-family: Arial, Verdana, Helvetica, "Trebuchet MS", Sans-Serif;
+    
+    /* The font size here is what the childrens em size is calculated from */
+    font-size: 0.75em;
+    
+    /* min-width and overflow are used to create a minimum screen size
+       for the banner and navigation bar.  980px is for the iPad restrictions */
+    min-width: 980px;
+    overflow: auto;
+}
+
+label
+{
+    /* Labels should always default to bold */
+    font-weight: bold;
+}
+
+select, input
+{
+    /* Webkit has 2px border by default which throws off cross-browser spacing */
+    margin:0 !important;
+}
+
+textarea {
+    font-family: inherit;
+    font-size: inherit;
+}
+
+img
+{
+    /* Prevent images from having borders */
+    border-style: none;
+}
+
+li 
+{
+    list-style-type: none;
+}
+/* ------------------------------------------------------------------------------------------------
+Buttons
+    These styles are used to display buttons in the format we choose.
+ ------------------------------------------------------------------------------------------------*/
+button.ui-button
+{
+    background-image:  url(../eSchoolPLUSResource/GetEmbeddedImage?file=ButtonGradient) !important;
+    background-size:contain !important;
+    height: 1.5em;
+    border: .050em solid #aaaaaa;
+    padding-top: 0;
+    border-radius: .75em;
+    padding-left: .75em;
+    padding-right: .75em;
+    text-align: center;
+    vertical-align: middle;
+    display: inline-block;
+    margin-left: 3px;
+    margin-right: 3px;
+    outline: 0;
+}
+
+button.ui-button:focus
+{
+    border: .050em solid black;
+}
+button.ui-button span.ui-button-text
+{
+    line-height: normal;
+    padding: 0;
+    display: inherit;
+    top: 0;
+}
+
+.ui-button:disabled
+{
+    color: #999999;
+}
+
+button.ui-state-hover:disabled,
+.ui-button:hover:disabled
+{
+    background-image:  url(../eSchoolPLUSResource/GetEmbeddedImage?file=ButtonGradient) !important;
+}
+
+/* ------------------------------------------------------------------------------------------------
+Headers 
+    These set a element and its children (via inherit) to have a styling. 
+    Meant to be a row-like    
+ ------------------------------------------------------------------------------------------------*/
+
+/* Standard header
+    Height is the height of the background images
+    Width is the width of the parent container 
+    SEE: TAC homepage widgets. */
+.sg-header
+{
+    color: #333333;
+    border: 1px solid #aaaaaa;
+    -moz-border-top-left-radius: 10px;
+    -webkit-border-top-left-radius: 10px;
+    border-top-left-radius: 10px;
+    margin:0;
+    padding:0;
+    background-image: url(../eSchoolPLUSResource/GetEmbeddedImage?file=HeaderFill);
+    background-position: center;
+    background-repeat: repeat-x;
+    text-align: left;
+}
+    
+.sg-page-content-header
+{
+    color: #333333;
+    background-color: #F4F4F4;
+    background-position: center;
+    background-repeat: repeat-x;
+    border: 1px solid #aaaaaa;
+    -moz-border-top-left-radius: 10px;
+    -webkit-border-top-left-radius: 10px;
+    border-top-left-radius: 10px;
+    position: relative;
+    margin-top: 27px;
+}
+
+/* Text title of the heading 
+    SEE: TAC homepage widgets. */
+.sg-header-heading
+{
+    margin-top: 6px;
+    margin-left: 10px;
+    margin-right: 15px;
+    font-weight: bold;
+    font-size: 17px;
+    color: #333333;
+    float: left;
+}
+
+/* An image that is within the header title bar or on the toolbar
+    SEE: TAC homepage widgets. */
+.sg-header-image
+{
+    position: relative; 
+    padding-left: 10px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    float: left;
+}
+
+/* Header with grey background white text various other formatting.
+    SEE: TAC homepage MyClasses grid table header.
+    NOTE: doesnt have to be in a grid. */
+.sg-header-content,                 /* For custom headers */
+.ui-jqgrid-view .ui-jqgrid-hdiv,    /* jQgrid header override */
+.ui-jqgrid tr.ui-jqgrid-labels th,   /* jQgrid header override */
+.ui-jqgrid-toppager.sg-grid-toolbar /*.ui-pager-control .ui-pg-table tbody tr*/
+{
+    color: #ffffff;
+    background: #CCCCCC url(../eSchoolPLUSResource/GetEmbeddedImage?file=GridColumnHeaderGradient) 50% 50% repeat-x;
+    border-bottom-color: #727375;
+    border-right-color: #727375;
+    vertical-align:middle;
+    text-align: left;
+}
+
+.sg-grid-alternate-bgrdColor
+{
+    background: #eeeeee;
+}
+
+.sg-grid-toolbar
+{
+    font-size: 1.2em;
+}
+
+.sg-student-header
+{
+    padding-left:5px; padding-bottom:7px; font-size:11pt;
+    color: #ffffff;
+    background: #CCCCCC url(../eSchoolPLUSResource/GetEmbeddedImage?file=GridColumnHeaderGradient) 50% 50% repeat-x;
+    border-bottom-color: #727375;
+    border-right-color: #727375;
+    vertical-align:middle;
+}
+.sg-student-header-alerts
+{
+    top:7px; position:relative;
+}
+
+/* Darker Grey background white text various other formatting.
+    SEE: TAC homepage MyClasses grid group header. 
+    NOTE: doesnt have to be in a grid. */
+.sg-header-grouping,            /* For custom headers */
+.ui-jqgrid tr.jqgroup td        /* jQgrid grouping header override */
+{
+    background-color: #57575a;
+    background-image: none;
+    color: #ffffff;
+    vertical-align: middle;
+    height: 15px;
+}
+
+/* ------------------------------------------------------------------------------------------------
+form dialog 
+    A popup dialog.
+    SEE: TAC gradebook student alert dialog
+ ------------------------------------------------------------------------------------------------*/
+.sg-form-dialog
+{
+    background-color: White;
+    box-shadow: 4px 4px 10px black;
+    /* Change this to border-left if IE8 support is dropped */
+    border: 1px solid #aaaaaa;
+    padding: 0;   /* Override ui-dialog padding. */
+    overflow: visible;
+    -moz-border-top-left-radius: 10px;
+    -webkit-border-top-left-radius: 10px;
+    border-top-left-radius: 10px;
+}
+
+.sg-form-dialog .sg-form-item
+{
+    padding-bottom: 5px;   
+}
+
+.sg-form-dialog label
+{
+    font-size: 1em;
+    padding-right: 10px;
+}
+
+/* on dialog forms, if you want the form content's overflow to inherit */
+.sg-form-dialog .sg-overflow-inherit
+{
+    overflow: inherit;
+}
+
+/* ------------------------------------------------------------------------------------------------
+Container 
+    Holds content. Provides things like box-shadow etc.
+    SEE: TAC login.
+ ------------------------------------------------------------------------------------------------*/
+.sg-container
+{
+    display: table;
+    background-color: White;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 27px;
+    text-align: center;
+    box-shadow: 0 4px 10px Black;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    border-radius: 5px;
+    -moz-border-top-left-radius: 10px;
+    -webkit-border-top-left-radius: 10px;
+    border-top-left-radius: 10px;
+}
+
+/* Should be refactored? */
+.sg-container-content thead th
+{
+    background-color: #a3a3a3; 
+    color: White;
+    text-align: left;
+}
+
+.sg-container-button
+{
+    text-align: right;
+}
+
+/* Centers content */
+.sg-content-centered 
+{
+    margin: 0 auto;
+    width: 926px;
+}
+
+.sg-content-margin-left-right
+{
+    margin-right: 27px; 
+    margin-left: 27px;
+}
+
+.sg-content-margin-bottom
+{
+    margin-bottom: 27px;
+}
+
+.sg-content-grid-container
+{
+    border: 1px solid #aaaaaa;
+    border-top: 0 none;
+    border-radius: 5px;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    background-color: #cccccc;
+}
+
+.sg-content-grid-container-bold-header
+{
+    padding:10px;
+    border-left-style: solid;
+    border-left-color: #aaaaaa;
+    border-left-width: 1px;
+    border-right-style: solid;
+    border-right-color: #aaaaaa;
+    border-right-width: 1px;
+    font-weight: bold;
+    background-color: #cccccc;
+}
+
+.sg-content-container
+{
+    margin: 27px;
+}
+
+/* ------------------------------------------------------------------------------------------------
+Content formating
+    Classes which modify
+------------------------------------------------------------------------------------------------*/
+.sg-content,
+.sg-widget-content
+{
+    border: 1px solid #aaaaaa;
+    border-top: 0 none;
+    border-radius: 5px;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
+
+/* Seperates rows like TAC notifications grid does.
+    Used primarily for multiline rows. */
+.sg-seperated-rows .jqgrow td
+{
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+}
+
+/* Hides an element. It won't take up layout space. 
+    Usually this class applied and removed programmatically.
+    SEE: TAC homepage MyClasses period cell. (period cells can span multiple rows thus the cells below them are hidden) */
+.sg-hidden
+{
+    display: none;
+}
+
+/* class to turn off bold, usually only used for labels that shouldn't be bold. */
+.sg-nobold
+{
+    font-weight: normal;
+}
+
+/*Adds ellispis to text if it goes over the width.
+    SEE: TAC homepage links table widget.
+    Note: Must apply "width" on element using this class. */
+.sg-content-ellipsis
+{
+    white-space:nowrap; 
+    overflow:hidden;    
+    text-overflow:ellipsis; 
+    -o-text-overflow:ellipsis;
+    -ms-text-overflow:ellipsis;
+}
+
+/* Display vertical scrollbar only.
+    Make sure the vertical scroll is always shown. 
+    SEE: TAC homepage links widget. */
+.sg-content-vertical-scrollbar
+{
+    overflow-x:hidden; 
+    -ms-overflow-x:hidden;
+    overflow-y:scroll;   
+    -ms-overflow-y:scroll; 
+}
+
+/* Set on a parent element its children will have an alternated background
+    SEE: TAC homepage news widget (it must have more the 1 row) */
+.sg-content-alternating > *:nth-child(even),        /* Only direct children. SEE TAC news widget. */
+.sg-content-secondary,                              /* For custom alternations. See TAC MyClasses grid. */
+.sg-content-table-alternating tr:nth-child(even)    /* Excludeds header rows. SEE: TAC gradebook grid autocomplete. */
+{
+    background-color:#eeeeee;
+    background-image:none; /* needed to see the color */
+}
+
+.sg-content-table-alternating tr:hover    /* Excludeds header rows. SEE: TAC gradebook grid autocomplete. */
+{
+    background-color:#a1c2e3;
+    background-image:none; /* needed to see the color */
+}
+
+/* Centers an element when there are other elements in the same row.
+    SEE: TAC gradebook toolbar. */
+.sg-center
+{
+    margin-left:auto;
+    margin-right:auto;
+    position:absolute;
+    padding-top: 2px;
+    left:33%;
+}
+
+/* Places an element to the left side when there are other elements in the same row.
+    NOTE: sg-clearfix must be applied to the parent element of this element.
+    SEE: TAC gradebook toolbar. */
+.sg-left
+{
+    float: left !important;
+}
+
+/* Places an element to the right side when there are other elements in the same row.
+    NOTE: sg-clearfix must be applied to the parent element of this element.
+    SEE: TAC gradebook toolbar. */
+.sg-right
+{
+    float: right !important;
+    padding-right: 5px;
+}
+
+/* Fixes Internet Explorer (even version 9) guillotine. Set on a parent element.
+    This is used when floating elements and the containers height breaks.
+    SEE: TAC gradebook toolbar. */
+.sg-clearfix:after,
+.sg-tableless-row:after,
+.sg-clearfix-parent > *:after, /*only direct children*/
+.sg-header:after,
+.sg-page-content-header:after,
+.ui-widget-header:after /* like TAC login header */
+ {
+    content: ".";
+    display: block;
+    height: 0;
+    clear: both;
+    visibility: hidden;
+}
+
+/*Formats the alerts icon container*/
+.sg-grid-alert-image
+{
+     position: relative;
+     float: left;
+     height: 13px;
+     width: 12px;
+     margin-left: 1px;
+     margin-right: 1px;
+     cursor: pointer;
+}
+
+.sg-grid-pop-up
+{
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+.ui-jqgrid .loading {
+    visibility: hidden;
+}
+.sg-custom-loading .ui-jqgrid .loading  {
+    visibility: visible;
+    display: block !important;
+}
+
+/* ------------------------------------------------------------------------------------------------
+Tableless layout 
+    Use tableless layout for your elements if they are not a table (have data like an excel sheet)
+ ------------------------------------------------------------------------------------------------*/
+
+/* Makes a tableless row with 10px padding on top and bottom.
+    SEE: TAC homepage news widget.
+    EX: <div class="sg-tableless-row">yourstuff</div> */
+.sg-tableless-row,
+.sg-container-content,       /* probably could be replaced by sg-content-item */
+.sg-form-dialog .ui-dialog-content  /* probley could be set different */
+{
+    padding-left:5px;   /* gives 10px total along with cells */
+    padding-right:5px;  /* gives 10px total along with cells */
+    padding-top:10px;
+    padding-bottom:10px;
+    text-align: left;
+    white-space: nowrap;
+    clear:both;
+}
+
+.sg-nowrap
+{
+    white-space: nowrap;
+}
+
+.sg-form-dialog .sg-form-dialog-no-padding.ui-dialog-content
+{
+    padding: 0;
+}
+
+.sg-form-dialog .sg-header
+{
+    padding: 0;
+    height: 30px;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.sg-form-dialog .ui-dialog-title
+{
+    vertical-align: middle;
+}
+
+.sg-wrap, .sg-wrap .ui-dialog-content
+{
+    white-space: normal;
+}
+
+.sg-tableless-row-thin
+{
+    padding-top:2px;
+    padding-bottom:2px;
+}
+
+/* Tableless cells
+    Makes a cell with 5px padding side to side (adds to 10 because there will be 2 items).
+    When these are used (or anything with a float you may need sg-clearfix set on a parent).
+    SEE: TAC homepage news widget.
+    EXAMPLE:
+        <div class="sg-tableless-cell">yourFirstThign</div>
+        <div class="sg-tableless-cell>yourSecondThing</div> */
+.sg-tableless-cell
+{
+    padding-left: 5px;      /* Gives 10px total along with cells/rows */
+    padding-right: 5px;     /* Gives 10px total along with cells/rows */
+    float:left;
+    white-space: normal;
+    vertical-align: top;
+}
+
+.sg-pageloaderror
+{    
+    min-height: 100px;
+    padding: 2px;    
+}
+
+.sg-pageloaderror-messsage 
+{ 
+    display: table-cell;
+    vertical-align: middle;
+}
+
+.sg-block
+{
+    display: block;
+}
+
+.sg-message-box
+{
+    width: 50%;
+    margin-left: auto;
+    margin-right: auto;
+    display: inline-block;
+    padding: 10px 10px 10px 35px;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    border-radius: 5px;
+    text-align: left;
+    font-weight: bold;
+    font-size: small;
+    background-repeat: no-repeat;
+    background-position: 10px 9px; 
+}
+
+.sg-error-box
+{
+    background-color: #FFCCCC;
+    background-image: url(../eSchoolPLUSResource/GetEmbeddedImage?file=MessageError);
+    border: 1px solid #993333;
+}
+
+.sg-warning-box
+{
+    background-color: #FFFFCC;
+    background-image: url(../eSchoolPLUSResource/GetEmbeddedImage?file=MessageWarning);
+    border: 1px solid #CC9900;
+}
+
+.sg-info-box
+{
+    background-color: #99CCFF;
+    background-image: url(../eSchoolPLUSResource/GetEmbeddedImage?file=MessageInfo);
+    border: 1px solid #0099CC;
+}
+
+/*JQ Overrides */
+/***************************************/
+.ui-state-hover,
+.ui-widget-content .ui-state-hover,
+.ui-widget-header .ui-state-hover,
+.ui-state-focus,
+.ui-widget-content .ui-state-focus,
+.ui-widget-header .ui-state-focus
+{
+    background: #a1c2e3 ;
+}
+
+.ui-state-hover a,
+.ui-state-hover a:hover
+{
+    color: #005c96;
+    text-decoration: none;
+}
+
+.ui-widget
+{
+    font-family: inherit;
+}
+
+
+/* All dropdown menus. Example combobox. */
+.sg-menu {
+    background-color: black;
+    border: 2px solid #999;
+    box-shadow: 4px 4px 10px #999;
+    position:absolute;
+    z-index: 3;
+}
+
+.ui-jqgrid
+{
+    font-size: 1em;
+    border: 0px none;
+}
+
+/* grid header cells*/
+.ui-jqgrid-htable th 
+{
+    background: #999 url(../eSchoolPLUSResource/GetEmbeddedImage?file=GridColumnHeaderGradient) 50% 50% repeat-x;
+}
+
+/* grid header cell divs */
+.ui-jqgrid-htable th div 
+{
+    height: auto;
+    vertical-align: middle;
+    padding-left: 10px;
+    padding-right: 5px;
+    text-align: left;
+}
+
+.ui-jqgrid-htable th div input[type='checkbox']
+{
+    height: auto;
+    vertical-align: middle;
+    text-align: center;
+}
+
+/* grid cells */
+.jqgrow td /* all jqgrid cells */
+{
+    padding: 0;
+    vertical-align: middle;
+    border-bottom: 0 none !important;
+    border-top: 0 none;
+    border-right:1px solid inherit;
+    white-space: normal !important;
+}
+
+.ui-subgrid, .subgrid-cell
+{
+    background-color: #999999;
+    background-image: none;
+}
+
+/***************************************/
+
+/* plus icon */
+.ui-icon-plus, .ui-state-highlight .ui-icon-plus
+{
+    background-image: url(../eSchoolPLUSResource/GetEmbeddedImage?file=Expand) !important;
+    /* Using background-position instead of the separate corresponding x and y styles because they are only supported by IE */
+    background-position: 0 0;
+}
+
+/* minus icon */
+.ui-icon-minus, .ui-state-highlight .ui-icon-minus
+{
+    background-image: url(../eSchoolPLUSResource/GetEmbeddedImage?file=Collapse) !important;
+    /* Using background-position instead of the separate corresponding x and y styles because they are only supported by IE */
+    background-position: 0 0;
+}
+
+/* inline save icon */
+span.ui-icon.ui-icon-disk
+{
+    width: 17px;
+    height: 17px;
+    padding: 4px 2px 4px 2px;
+    background-image: url(../eSchoolPLUSResource/GetEmbeddedImage?file=Save17);
+    background-position: 0;
+}
+
+span.ui-icon.ui-icon-upload
+{
+    width: 17px;
+    height: 17px;
+    padding: 4px 2px 4px 2px;
+    background-image: url(../eSchoolPLUSResource/GetEmbeddedImage?file=Upload17);
+    background-position: 0;
+}
+
+/* inline cancel edit icon */
+span.ui-icon.ui-icon-cancel
+{
+    width: 17px;
+    height: 17px;
+    padding: 4px 2px 4px 2px;
+    background-image: url(../eSchoolPLUSResource/GetEmbeddedImage?file=Cancel17);
+    background-position: 0;
+}
+
+/* inline edit icon */
+span.ui-icon.ui-icon-pencil
+{
+    width: 17px;
+    height: 17px;
+    padding: 4px 2px 4px 2px;
+    background-image: url(../eSchoolPLUSResource/GetEmbeddedImage?file=Edit17);
+    background-position: 0;
+}
+
+/* inline delete icon */
+span.ui-icon.ui-icon-trash
+{
+    width: 17px;
+    height: 17px;
+    padding: 4px 2px 4px 2px;
+    background-image: url(../eSchoolPLUSResource/GetEmbeddedImage?file=Delete17);
+    background-position: 0;
+}
+
+span.ui-icon.ui-icon-add
+{
+    width: 17px;
+    height: 17px;
+    padding: 4px 2px 4px 2px;
+    background-image: url(../eSchoolPLUSResource/GetEmbeddedImage?file=RowAdd17);
+    background-position: 0;
+}
+
+span.ui-icon.ui-icon-clear
+{
+    width: 17px;
+    height: 17px;
+    padding: 4px 2px 4px 2px;
+    background-image: url(../eSchoolPLUSResource/GetEmbeddedImage?file=Clear17);
+    background-position: 0;
+}
+
+/* jqGrid Overrides */
+/***************************************/
+
+.ui-tabs.ui-widget-content
+{
+  border: 0;
+  background: none;
+}
+
+.ui-tabs .ui-widget-header
+{
+  border: 0;
+  background: none;
+}
+
+.ui-tabs .ui-tabs-panel
+{
+  border: 1px solid #666666;
+  background: lightGrey;
+}
+
+.ui-tabs .ui-tabs-nav .ui-state-default
+{
+  border: 0;
+  background: none;
+}
+
+.ui-tabs, .ui-tabs .ui-tabs-nav
+{
+    padding: 0;
+}
+
+.ui-tabs .ui-state-default.ui-state-active a {
+  background: #0E73B4;
+  color: #FFF;
+  -o-box-shadow: 0 0 0 rgba(0,0,0,0.5), inset 0 1px rgba(255,255,255,0.3), inset 0 10px rgba(255,255,255,0.2), inset 0 10px 20px rgba(255,255,255,0.25), inset 0 -15px 30px rgba(0,0,0,0.3); 
+  -webkit-box-shadow: 0 0 0 rgba(0,0,0,0.5), inset 0 1px rgba(255,255,255,0.3), inset 0 10px rgba(255,255,255,0.2), inset 0 10px 20px rgba(255,255,255,0.25), inset 0 -15px 30px rgba(0,0,0,0.3); 
+  -moz-box-shadow: 0 0 0 rgba(0,0,0,0.5), inset 0 1px rgba(255,255,255,0.3), inset 0 10px rgba(255,255,255,0.2), inset 0 10px 20px rgba(255,255,255,0.25), inset 0 -15px 30px rgba(0,0,0,0.3);
+  box-shadow: 0 0 0 rgba(0,0,0,0.5), inset 0 1px rgba(255,255,255,0.3), inset 0 10px rgba(255,255,255,0.1), inset 0 10px 20px rgba(255,255,255,0.3), inset 0 -15px 30px rgba(0,0,0,0.3); 
+}
+
+.ui-tabs .ui-state-default a, .sg-tabs-scroll {
+  background: #FFF;
+  color: #000;
+  border: 1px solid rgba(0,0,0,0.5);
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+  -o-box-shadow: 0 2px 6px rgba(0,0,0,0.5), inset 0 1px rgba(255,255,255,0.3), inset 0 10px rgba(255,255,255,0.2), inset 0 10px 20px rgba(255,255,255,0.25), inset 0 -15px 30px rgba(0,0,0,0.3); 
+  -webkit-box-shadow: 0 2px 6px rgba(0,0,0,0.5), inset 0 1px rgba(255,255,255,0.3), inset 0 10px rgba(255,255,255,0.2), inset 0 10px 20px rgba(255,255,255,0.25), inset 0 -15px 30px rgba(0,0,0,0.3); 
+  -moz-box-shadow: 0 2px 6px rgba(0,0,0,0.5), inset 0 1px rgba(255,255,255,0.3), inset 0 10px rgba(255,255,255,0.2), inset 0 10px 20px rgba(255,255,255,0.25), inset 0 -15px 30px rgba(0,0,0,0.3);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5), inset 0 1px rgba(255,255,255,0.3), inset 0 10px rgba(255,255,255,0.1), inset 0 10px 20px rgba(255,255,255,0.3), inset 0 -15px 30px rgba(0,0,0,0.3); 
+}
+
+.ui-tabs .ui-tabs-nav li, .sg-tabs-scroll {
+  margin: 0;
+}
+
+.ui-tooltip {
+    font-size: 1em;
+}
+
+/* Toggle styling */
+.sg-toggle-left {
+    -moz-border-top-left-radius: 5px;
+    -webkit-border-top-left-radius: 5px;
+    border-top-left-radius: 5px;
+    -moz-border-bottom-left-radius: 5px;
+    -webkit-border-bottom-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+}
+
+.sg-toggle-right {
+    -moz-border-top-right-radius: 5px;
+    -webkit-border-top-right-radius: 5px;
+    border-top-right-radius: 5px;
+    -moz-border-bottom-right-radius: 5px;
+    -webkit-border-bottom-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+}
+
+.sg-toggle-left, .sg-toggle-middle, .sg-toggle-right {
+    padding: 3px;
+    border-width: 1px;
+    border-style: solid;
+    margin-top: 0;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    vertical-align: middle;
+    height: 15px;
+    display: inline-block;
+    -moz-background-size: contain !important;
+    -webkit-background-size: contain !important;
+    background-size: contain !important;
+}
+
+.sg-toggle-left img,
+.sg-toggle-middle img,
+.sg-toggle-right img
+{
+    padding-right: 5px;
+    vertical-align: middle;
+}
+
+.sg-toggle-on {
+    background-color: #0e73b4;
+    background-image:  url(../eSchoolPLUSResource/GetEmbeddedImage?file=EspButtonGradient) !important;
+    color: white;
+    border-color: black;
+}
+
+.sg-toggle-off {
+    background-color: lightgray;
+    background-image: url(../eSchoolPLUSResource/GetEmbeddedImage?file=ButtonGradient) !important;
+    color: black;
+    border-color: darkgray;
+    cursor: pointer;
+}
+
+.sg-ui-state-error, .jqgrow td.sg-ui-state-error, .sg-ui-state-error input.sg-tablehelp-textbox
+{   
+    background-color: #FEE !important;
+    cursor: help;
+}
+
+.sg-ui-state-error, .jqgrow td.sg-ui-state-error
+{
+    border: 1px solid red !important;
+}
+
+.sg-bold
+{
+    font-weight: bold !important;
+}
+
+.sg-tabs-scrollarea
+{
+    overflow: auto;
+}
+
+.sg-scrollable-tab
+{
+    width: 20000em;
+}
+.sg-table
+{
+    display: table;
+}
+.sg-table-center
+{
+    margin: auto;
+    width: 500px;
+}
+.sg-row
+{
+    display: table-row;
+}
+.sg-col
+{
+    display: table-cell;
+}
+.sg-border
+{
+    border: solid 1px #aaaaaa;
+    background-color: #ffffff;
+    padding-left: 2px;
+    padding-right: 2px;
+}
+.sg-centered-header
+{
+    font-size: 17px;
+    font-weight: bold;
+    margin-top: 6px;
+}
+.sg-tab-panel
+{
+    height: 400px;
+}
+.sg-placeholder
+{
+    color: #AAA;
+}
+
+.sg-center-studentID-header
+{
+    text-align: center !important;
+}
+
+/*#region CALENDAR PAGE RELATED STYLES*/
+/*Adjusts the sliding effect*/
+.sg-horizontal-slide
+{
+    position:absolute;/*absolute*/
+    width: 200px;        
+}
+.sg-horizontal-slide .sg-horizontal-slide-left
+{
+    position:relative;   
+    left:0px;    /* this will hide the panel to 20px from the left. **Note: If this gets modified this value must be adjusted in "$('#SlideButton').click()"  */
+    bottom: 0;
+}
+
+/*Content of sliding Pane*/
+#PanelFiltersContainer
+{
+    visibility: hidden;
+    position: relative;     
+    z-index: 9; 
+    height:600px;
+    width: 240px;
+}
+
+/*Adjusts display of items in accordion controls*/
+#BuildingsAccordion, #HeaderOptionsAccordion, #FilterOptionsAccordion, #FilterResultsContainer{ margin-right: 40px; }
+#BuildingsAccordion > div,
+#HeaderOptionsAccordion > div,
+#FilterOptionsAccordion > div, 
+#FilterResultsContainer > div {
+    /*margin-left: -10px; Removed because of margins added on sides of calendar*/
+    font-size: 11px;
+}
+
+/*Overwrites the event(s) from displaying over top of the slide drawer*/
+.fc-grid
+{
+    z-index: auto;
+}
+
+/*Div that contains the sliding button*/
+#PanelFiltersContainer div:first-child
+{ 
+    float:right;     
+    /*margin-top: 30px;*/ 
+}
+
+/*Applies "pointer" cursor when hovering over image*/
+#PanelFiltersContainer div:first-child img
+{cursor: pointer;}
+
+/*#endregion*/
+
+input:focus, select:focus {
+    outline-width: 0;
+}
+
+.sg-text-readonly
+{
+    background-color: #EBEBE4;
+    border: 1px solid #ABADB3;
+    padding: 2px;
+    color: #545454;
+}
+
+textarea.sg-text-readonly
+{
+    overflow: auto;
+}
+
+.sg-text-readonly::-ms-clear {
+    display: none;
+}
