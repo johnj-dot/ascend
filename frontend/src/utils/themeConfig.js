@@ -132,5 +132,8 @@ export const THEMES = [
 ];
 
 export function getTheme(themeId) {
-  return THEMES.find(t => t.id === themeId) || THEMES[0];
+  if (!themeId) {
+    return THEMES.find(t => t.id === 'midnight') || THEMES[0];
+  }
+  return THEMES.find(t => t.id === themeId) || THEMES.find(t => t.id === 'midnight') || THEMES[0];
 }

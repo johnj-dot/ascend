@@ -4,7 +4,7 @@ import { useDocStore } from '../store/useDocStore';
 import { getTheme } from '../utils/themeConfig';
 import { 
   ChevronDown, ChevronUp, CheckCircle2, AlertCircle, 
-  Clock, BookOpen, Plus, FileText
+  Clock, BookOpen, Plus, FileText, Send
 } from 'lucide-react';
 import ClassDocsModal from '../components/docs/ClassDocsModal';
 import DocAdderModal from '../components/docs/DocAdderModal';
@@ -74,40 +74,29 @@ function getActiveMP() {
 }
 
 function AssignmentRow({ a, theme, isIncognito }) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const dueDate = a.dateDue ? new Date(a.dateDue) : null;
-  if (dueDate) dueDate.setHours(0, 0, 0, 0);
-
   const scored = a.score !== null && a.score !== undefined && a.score !== '';
-  const isFuture = dueDate && dueDate > today;
-  const isPast = dueDate && dueDate < today;
 
-  let badgeType = 'pending';
+  let badgeType = 'pending'; // Default: Not Graded
 
-  if (a.missing || (isPast && !scored && !a.exempt)) {
+  if (a.missing) {
     badgeType = 'missing';
   } else if (a.exempt) {
     badgeType = 'exempt';
   } else if (scored) {
     badgeType = 'scored';
-  } else if (isFuture) {
-    badgeType = 'upcoming';
-  } else if (isPast && !scored) {
-    badgeType = 'submitted';
   }
 
   const pct = scored && a.totalPoints ? ((parseFloat(a.score) / a.totalPoints) * 100).toFixed(1) : null;
 
   return (
-    <div className={`flex items-start justify-between py-3 px-4 border-b ${theme.divideColor} last:border-0`}>
+    <div className={`flex items-start justify-between py-3 px-4 transition ${
+      theme.isDark ? 'hover:bg-slate-800/30' : 'hover:bg-gray-50/50'
+    }`}>
       <div className="flex items-start gap-3 flex-1 min-w-0">
         <div className="mt-0.5 shrink-0">
           {badgeType === 'missing' && <AlertCircle size={16} className="text-red-400" />}
           {badgeType === 'scored' && <CheckCircle2 size={16} className={theme.textClass} />}
-          {badgeType === 'submitted' && <Send size={16} className="text-blue-400" />}
-          {badgeType === 'upcoming' && <Clock size={16} className={theme.textMuted} />}
+          {badgeType === 'exempt' && <Clock size={16} className={theme.textMuted} />}
           {badgeType === 'pending' && <Clock size={16} className={theme.textMuted} />}
         </div>
         <div className="min-w-0">
@@ -119,7 +108,9 @@ function AssignmentRow({ a, theme, isIncognito }) {
               </span>
             )}
             {a.weight > 0 && a.weight !== 1 && (
-              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${theme.lightBgClass} ${theme.textClass}`}>
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                theme.isDark ? 'bg-slate-800 text-emerald-400 border border-slate-700' : `${theme.lightBgClass} ${theme.textClass}`
+              }`}>
                 {(a.weight * 100).toFixed(0)}% Weight
               </span>
             )}
@@ -135,14 +126,10 @@ function AssignmentRow({ a, theme, isIncognito }) {
         {badgeType === 'missing' && (
           <span className="text-xs font-bold text-red-500 bg-red-500/10 px-2 py-1 rounded-lg">Missing</span>
         )}
-        {badgeType === 'submitted' && (
-          <span className="text-xs font-bold text-blue-500 bg-blue-500/10 px-2 py-1 rounded-lg">Submitted</span>
-        )}
-        {badgeType === 'upcoming' && (
-          <span className={`text-xs font-bold ${theme.textMuted} ${theme.lightBgClass} px-2 py-1 rounded-lg`}>Upcoming</span>
-        )}
         {badgeType === 'exempt' && (
-          <span className={`text-xs font-bold ${theme.textMuted} ${theme.lightBgClass} px-2 py-1 rounded-lg`}>Exempt</span>
+          <span className={`text-xs font-bold ${
+            theme.isDark ? 'bg-slate-800 text-slate-400 border border-slate-700' : `${theme.textMuted} ${theme.lightBgClass}`
+          } px-2 py-1 rounded-lg`}>Exempt</span>
         )}
         {badgeType === 'scored' && (
           <div>
@@ -151,7 +138,9 @@ function AssignmentRow({ a, theme, isIncognito }) {
           </div>
         )}
         {badgeType === 'pending' && (
-          <span className={`text-xs ${theme.textMuted} ${theme.lightBgClass} px-2 py-1 rounded-lg`}>Not Graded</span>
+          <span className={`text-xs font-bold ${
+            theme.isDark ? 'bg-slate-800 text-slate-400 border border-slate-700' : `${theme.textMuted} ${theme.lightBgClass}`
+          } px-2 py-1 rounded-lg`}>Not Graded</span>
         )}
       </div>
     </div>
@@ -160,6 +149,7 @@ function AssignmentRow({ a, theme, isIncognito }) {
 
 export default function Grades() {
   const { hacData, activeTheme } = useStore();
+  const isIncognito = useStore(state => !!state.localOverrides?.settings?.incognito);
   const { documents } = useDocStore();
   const theme = getTheme(activeTheme);
   const [activeTab, setActiveTab] = useState(getActiveMP());
@@ -217,7 +207,9 @@ export default function Grades() {
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`flex-1 py-1.5 text-sm font-bold rounded-lg transition-colors cursor-pointer ${
-                  activeTab === tab ? `bg-white ${theme.textClass} shadow-sm` : 'text-white/80 hover:text-white'
+                  activeTab === tab 
+                    ? (theme.isDark ? 'bg-slate-800 text-white shadow-sm' : `bg-white ${theme.textClass} shadow-sm`) 
+                    : 'text-white/80 hover:text-white'
                 }`}
               >
                 {tab}
@@ -232,7 +224,51 @@ export default function Grades() {
         <div className="max-w-5xl mx-auto space-y-3">
           {classes.map(cls => {
             const isOpen = expandedId === cls.id;
-            const assignments = cls.assignments || [];
+            const activeMP = getActiveMP();
+            const MP_ORDER = ['MP1', 'MP2', 'MP3', 'MP4'];
+            const currentMPIndex = MP_ORDER.indexOf(activeMP);
+            const selectedMPIndex = MP_ORDER.indexOf(activeTab);
+
+            const isFutureMP = selectedMPIndex > currentMPIndex;
+            const isPastMP = selectedMPIndex < currentMPIndex;
+
+            let classAvg = null;
+            let classLetter = null;
+            let assignments = [];
+
+            if (isFutureMP) {
+              // Future Marking Period: Not reached yet, default no-grade state
+              classAvg = null;
+              classLetter = null;
+              assignments = [];
+            } else if (isPastMP) {
+              // Past Marking Period: Locked historical snapshot
+              const historical = cls.mpHistory?.[activeTab] || null;
+              classAvg = historical?.average ?? null;
+              classLetter = historical?.letterGrade ?? gradeToLetter(classAvg);
+              const rawHistorical = historical?.assignments || [];
+              assignments = rawHistorical.filter(a => {
+                if (!a.name) return false;
+                const nameStr = a.name.trim();
+                if (/^(Course\s*Average|Overall\s*Average|Average|Total)$/i.test(nameStr)) return false;
+                if (/^\d+(\.\d+)?$/.test(nameStr) && !a.dateDue && (a.score === null || a.score === undefined)) return false;
+                return true;
+              });
+            } else {
+              // Current Active Marking Period: Live effective grades & assignments
+              const effective = getEffectiveClassGrade(cls);
+              classAvg = effective.average;
+              classLetter = effective.letterGrade;
+              const rawAssignments = cls.assignments || [];
+              assignments = rawAssignments.filter(a => {
+                if (!a.name) return false;
+                const nameStr = a.name.trim();
+                if (/^(Course\s*Average|Overall\s*Average|Average|Total)$/i.test(nameStr)) return false;
+                if (/^\d+(\.\d+)?$/.test(nameStr) && !a.dateDue && (a.score === null || a.score === undefined)) return false;
+                return true;
+              });
+            }
+
             const classDocCount = documents.filter(d => d.classId === cls.id).length;
 
             return (
@@ -242,14 +278,19 @@ export default function Grades() {
               >
                 {/* Class Header Row */}
                 <button
+                  type="button"
                   onClick={() => setExpandedId(isOpen ? null : cls.id)}
-                  className={`w-full flex items-center justify-between p-4 text-left hover:${theme.lightBgClass} transition cursor-pointer`}
+                  className={`w-full flex items-center justify-between p-4 text-left transition cursor-pointer ${
+                    theme.isDark ? 'hover:bg-slate-800/50' : 'hover:bg-gray-50/80'
+                  }`}
                 >
                   <div className="flex-1 pr-3 min-w-0">
                     <div className="flex items-center gap-2">
                       <h3 className={`font-bold ${theme.textPrimary} leading-tight truncate`}>{cls.name}</h3>
                       {classDocCount > 0 && (
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${theme.lightBgClass} ${theme.textClass} border ${theme.borderClass}`}>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                          theme.isDark ? 'bg-slate-800 text-emerald-400 border border-slate-700' : `${theme.lightBgClass} ${theme.textClass} border ${theme.borderClass}`
+                        }`}>
                           {classDocCount} Doc{classDocCount !== 1 ? 's' : ''}
                         </span>
                       )}
@@ -258,28 +299,24 @@ export default function Grades() {
                       {cls.teacher} · Period {cls.period}
                     </p>
                   </div>
-                  {(() => {
-                    const { average: classAvg, letterGrade: classLetter } = getEffectiveClassGrade(cls);
-                    return (
-                      <div className="flex items-center gap-2 shrink-0">
-                        {/* Average pill */}
-                        <div
-                          className={`w-14 h-10 flex items-center justify-center rounded-xl font-bold text-base shadow-xs ${gradeColor(classAvg, theme.isDark)}`}
-                          title={classAvg !== null ? undefined : 'Not Graded Yet'}
-                        >
-                          {classAvg !== null ? `${Math.round(classAvg)}` : '—'}
-                        </div>
-                        {/* Letter grade */}
-                        <span className={`text-xs font-bold ${theme.textMuted} w-4`}>
-                          {classLetter ?? ''}
-                        </span>
-                        {/* Expand chevron */}
-                        <div className={`${theme.textMuted} ml-1`}>
-                          {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                        </div>
-                      </div>
-                    );
-                  })()}
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    {/* Average pill */}
+                    <div
+                      className={`w-14 h-10 flex items-center justify-center rounded-xl font-bold text-base shadow-xs ${gradeColor(classAvg, theme.isDark)}`}
+                      title={classAvg !== null ? `${activeTab} Average: ${classAvg}%` : `${activeTab}: Not Graded Yet`}
+                    >
+                      {classAvg !== null ? `${Math.round(classAvg)}` : '—'}
+                    </div>
+                    {/* Letter grade */}
+                    <span className={`text-xs font-bold ${theme.textMuted} w-4`}>
+                      {classLetter ?? ''}
+                    </span>
+                    {/* Expand chevron */}
+                    <div className={`${theme.textMuted} ml-1`}>
+                      {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                    </div>
+                  </div>
                 </button>
 
                 {/* Assignment Curtain & Action Bar */}
@@ -287,14 +324,22 @@ export default function Grades() {
                   <div className={`border-t ${theme.cardBorder} ${theme.isDark ? 'bg-slate-900/60' : 'bg-black/[0.02]'}`}>
                     
                     {/* Course Header Info */}
-                    <div className="px-4 py-2 bg-gray-50/60 dark:bg-slate-800/40 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between">
-                      <span className="text-[11px] font-semibold text-gray-500 dark:text-slate-400">
-                        {assignments.length} total assignment{assignments.length !== 1 ? 's' : ''}
+                    <div className={`px-4 py-2 border-b flex items-center justify-between ${
+                      theme.isDark ? 'bg-slate-800/40 border-slate-800 text-slate-400' : 'bg-gray-50/60 border-gray-100 text-gray-500'
+                    }`}>
+                      <span className="text-[11px] font-semibold">
+                        {isFutureMP ? `${activeTab} Not Started` : `${assignments.length} total assignment${assignments.length !== 1 ? 's' : ''}`}
                       </span>
                     </div>
 
-                    {assignments.length === 0 ? (
-                      <p className={`text-center ${theme.textMuted} text-sm py-6`}>No assignments yet.</p>
+                    {isFutureMP ? (
+                      <p className={`text-center ${theme.textMuted} text-sm py-6`}>
+                        Marking period has not started yet. Grades and assignments will appear once {activeTab} begins.
+                      </p>
+                    ) : assignments.length === 0 ? (
+                      <p className={`text-center ${theme.textMuted} text-sm py-6`}>
+                        No assignments recorded for {activeTab}.
+                      </p>
                     ) : (
                       <>
                         {/* Category summary bar */}
@@ -308,9 +353,11 @@ export default function Grades() {
                           });
 
                           return validCategories.length > 0 ? (
-                            <div className={`px-4 py-3 border-b ${theme.divideColor} flex gap-3 flex-wrap`}>
+                            <div className={`px-4 py-3 border-b ${theme.isDark ? 'border-slate-800' : 'border-gray-100'} flex gap-3 flex-wrap`}>
                               {validCategories.map(({ cat, catAvg }) => (
-                                <span key={cat} className={`text-xs font-semibold ${theme.lightBgClass} ${theme.textClass} px-2.5 py-1 rounded-lg`}>
+                                <span key={cat} className={`text-xs font-semibold px-2.5 py-1 rounded-lg ${
+                                  theme.isDark ? 'bg-slate-800 text-emerald-400 border border-slate-700' : `${theme.lightBgClass} ${theme.textClass}`
+                                }`}>
                                   {cat}{catAvg !== null ? `: ${catAvg}%` : ''}
                                 </span>
                               ))}
@@ -319,7 +366,7 @@ export default function Grades() {
                         })()}
 
                         {/* Assignment rows */}
-                        <div>
+                        <div className={`divide-y ${theme.isDark ? 'divide-slate-800/80' : 'divide-gray-100'}`}>
                           {assignments
                             .sort((a, b) => new Date(b.dateDue) - new Date(a.dateDue))
                             .map((a, i) => (

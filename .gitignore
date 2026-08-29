@@ -7,3 +7,5 @@ dist/
 .env
 .DS_Store
 Thumbs.db
+extracted_*.html
+backend/extracted_*.html

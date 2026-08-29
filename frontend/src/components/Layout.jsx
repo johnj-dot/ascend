@@ -5,39 +5,65 @@ import { useStore } from '../store/useStore';
 import { getTheme } from '../utils/themeConfig';
 
 export default function Layout() {
-  const { 
-    activeTheme, 
-    syncHacData, 
-    isSyncing,
-    logout, 
-    syncWarnings, 
-    clearSyncWarnings,
-    syncNotification,
-    clearSyncNotification 
-  } = useStore();
+  const activeTheme = useStore(state => state.activeTheme);
+  const syncHacData = useStore(state => state.syncHacData);
+  const isSyncing = useStore(state => state.isSyncing);
+  const logout = useStore(state => state.logout);
+  const syncNotification = useStore(state => state.syncNotification);
+  const clearSyncNotification = useStore(state => state.clearSyncNotification);
+  const [isDismissing, setIsDismissing] = useState(false);
   const theme = getTheme(activeTheme);
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Auto-dismiss successful sync notifications after 3.8s
+  // Auto-dismiss successful sync notifications: stay for ~1.2s then slide upwards out of screen
   useEffect(() => {
     if (syncNotification && syncNotification.type === 'success') {
-      const timer = setTimeout(() => {
-        clearSyncNotification();
-      }, 3800);
-      return () => clearTimeout(timer);
-    }
-  }, [syncNotification]);
+      setIsDismissing(false);
+      const exitTimer = setTimeout(() => {
+        setIsDismissing(true);
+      }, 1200);
 
-  const handleSync = async () => {
+      const removeTimer = setTimeout(() => {
+        clearSyncNotification();
+        setIsDismissing(false);
+      }, 1800);
+
+      return () => {
+        clearTimeout(exitTimer);
+        clearTimeout(removeTimer);
+      };
+    } else {
+      setIsDismissing(false);
+    }
+  }, [syncNotification, clearSyncNotification]);
+
+  const handleDismiss = () => {
+    setIsDismissing(true);
+    setTimeout(() => {
+      clearSyncNotification();
+      setIsDismissing(false);
+    }, 450);
+  };
+
+  const handleSync = async (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (isSyncing) return;
     try {
       await syncHacData();
-    } catch {
-      // Notification is set by useStore
+    } catch (err) {
+      console.warn('Sync failed:', err);
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     logout();
     navigate('/login');
   };
@@ -62,7 +88,7 @@ export default function Layout() {
             </div>
             <div>
               <h1 className={`text-xl font-extrabold tracking-tight ${theme.isDark ? 'text-white' : theme.textClass}`}>Ascend</h1>
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block -mt-1">AI Academic Hub</span>
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block -mt-1">Academic Hub</span>
             </div>
           </div>
         </div>
@@ -83,11 +109,6 @@ export default function Layout() {
                 {tab.icon}
                 <span>{tab.name}</span>
               </div>
-              {tab.isAi && (
-                <span className="text-[10px] uppercase font-black px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-rose-500 text-white shadow-xs">
-                  Canvas
-                </span>
-              )}
             </NavLink>
           ))}
         </div>
@@ -96,9 +117,15 @@ export default function Layout() {
       {/* Main Content Area */}
       <main className={`flex-1 overflow-y-auto pb-20 md:pb-0 relative ${theme.appBg}`}>
         
-        {/* Top-Center Sync Notification Pop-up */}
+        {/* Top-Center Sync Notification Pop-up with slide-up exit */}
         {syncNotification && (
-          <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 max-w-md w-[92%] sm:w-auto min-w-[320px] animate-in fade-in slide-in-from-top-4 duration-200">
+          <div
+            className={`fixed top-4 left-1/2 -translate-x-1/2 z-[100] max-w-md w-[92%] sm:w-auto min-w-[320px] transition-all duration-500 ease-in-out pointer-events-auto ${
+              isDismissing
+                ? '-translate-y-[220%] opacity-0 pointer-events-none scale-95'
+                : 'translate-y-0 opacity-100 scale-100 animate-in fade-in slide-in-from-top-4 duration-300'
+            }`}
+          >
             <div className={`px-4 py-3 rounded-2xl shadow-xl border flex items-center justify-between gap-3.5 backdrop-blur-md ${
               theme.isDark
                 ? syncNotification.type === 'success'
@@ -157,7 +184,7 @@ export default function Layout() {
                 )}
                 {syncNotification.type !== 'syncing' && (
                   <button
-                    onClick={clearSyncNotification}
+                    onClick={handleDismiss}
                     className={`p-1 rounded-lg transition cursor-pointer ${
                       theme.isDark
                         ? 'text-white/60 hover:text-white hover:bg-white/10'
@@ -173,24 +200,34 @@ export default function Layout() {
           </div>
         )}
 
-        {/* Floating Top-Right Corner Action Buttons */}
-        <div className="absolute top-6 right-6 z-40 hidden sm:flex items-center gap-2">
+        {/* Floating Top-Right Corner Action Buttons - Fixed z-[90] for instant clickability */}
+        <div className="fixed top-5 right-5 z-[90] flex items-center gap-2">
           <button
+            type="button"
             onClick={handleSync}
             disabled={isSyncing}
-            className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white font-bold px-3.5 py-2.5 rounded-2xl text-xs backdrop-blur-md transition shadow-sm border border-white/20 cursor-pointer"
+            className={`flex items-center gap-1.5 font-bold px-3.5 py-2 rounded-2xl text-xs backdrop-blur-md transition shadow-md border cursor-pointer ${
+              theme.isDark
+                ? 'bg-slate-900/90 hover:bg-slate-800 text-white border-slate-700/80'
+                : 'bg-white/90 hover:bg-white text-gray-900 border-gray-200/80 shadow-gray-900/5'
+            }`}
             title="Sync latest data from Home Access Center"
           >
-            <RefreshCw size={14} className={isSyncing ? 'animate-spin' : ''} />
+            <RefreshCw size={13} className={`shrink-0 ${isSyncing ? 'animate-spin text-emerald-500' : ''}`} />
             <span>{isSyncing ? 'Syncing...' : 'Sync Data'}</span>
           </button>
           <button
+            type="button"
             onClick={handleLogout}
-            className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white font-bold px-3 py-2.5 rounded-2xl text-xs backdrop-blur-md transition shadow-sm border border-white/20 cursor-pointer"
+            className={`flex items-center gap-1.5 font-bold px-3 py-2 rounded-2xl text-xs backdrop-blur-md transition shadow-md border cursor-pointer ${
+              theme.isDark
+                ? 'bg-slate-900/90 hover:bg-slate-800 text-white border-slate-700/80'
+                : 'bg-white/90 hover:bg-white text-gray-900 border-gray-200/80 shadow-gray-900/5'
+            }`}
             title="Log out of account"
           >
-            <LogOut size={15} />
-            <span>Logout</span>
+            <LogOut size={14} className="shrink-0" />
+            <span className="hidden sm:inline">Logout</span>
           </button>
         </div>
 

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { getTheme } from '../utils/themeConfig';
 import { 
-  CheckCircle2, Circle, Plus, Trash2, X, BookOpen, UserCheck, AlertCircle, Bell, Sparkles 
+  CheckCircle2, Circle, Plus, Trash2, Edit3, X, BookOpen, UserCheck, AlertCircle, Bell 
 } from 'lucide-react';
 import TaskAdderModal from '../components/TaskAdderModal';
 
@@ -10,6 +10,7 @@ export default function Planner() {
   const { hacData, localOverrides, addPlannerTask, removePlannerTask, completedItemIds, toggleItemCompleted, activeTheme } = useStore();
   const theme = getTheme(activeTheme);
   const [showModal, setShowModal] = useState(false);
+  const [editingTask, setEditingTask] = useState(null);
 
   // Helper for 12-hour time format
   const formatTime12 = (tStr) => {
@@ -41,6 +42,11 @@ export default function Planner() {
 
   (hacData?.classes || []).forEach(c => {
     (c.assignments || []).forEach(a => {
+      if (!a.name) return;
+      const nameStr = a.name.trim();
+      if (/^(Course\s*Average|Overall\s*Average|Average|Total)$/i.test(nameStr)) return;
+      if (/^\d+(\.\d+)?$/.test(nameStr) && !a.dateDue && (a.score === null || a.score === undefined)) return;
+
       // If student already has a grade for it, automatically exclude from planner
       const hasGrade = a.score !== null && a.score !== undefined && a.score !== '';
       if (hasGrade && !a.missing) return;
@@ -111,7 +117,7 @@ export default function Planner() {
     .map(t => ({
       id: t.id,
       title: t.name,
-      subtitle: `${t.course ? t.course + ' · ' : ''}${t.type || (t.tab === 'reminder' ? 'Reminder' : 'Task')}${t.dueTime ? ' at ' + formatTime12(t.dueTime) : ''}`,
+      subtitle: `${t.course ? t.course + ' · ' : ''}${t.type || 'Task'}${t.dueTime ? ' due at ' + formatTime12(t.dueTime) : ''}`,
       date: t.dueDate || '',
       time: t.dueTime || '',
       type: (t.type || '').toLowerCase(),
@@ -137,28 +143,6 @@ export default function Planner() {
     return new Date(a) - new Date(b);
   });
 
-  const handleLoadSampleTasks = () => {
-    const today = new Date();
-    const formatDate = (offsetDays) => {
-      const d = new Date(today);
-      d.setDate(d.getDate() + offsetDays);
-      const mm = String(d.getMonth() + 1).padStart(2, '0');
-      const dd = String(d.getDate()).padStart(2, '0');
-      const yyyy = d.getFullYear();
-      return `${mm}/${dd}/${yyyy}`;
-    };
-
-    const sampleTasks = [
-      { id: `sample-${Date.now()}-1`, name: 'AP Human Geography: Population & DTM Practice Worksheet', course: 'TAG/AP Human Geography', type: 'Homework', dueDate: formatDate(0), dueTime: '17:00', completed: false },
-      { id: `sample-${Date.now()}-2`, name: 'Algebra II: Absolute Value & Quadratic Systems Quiz Prep', course: 'TAG/Advanced Alg II', type: 'Quiz', dueDate: formatDate(1), dueTime: '08:30', completed: false },
-      { id: `sample-${Date.now()}-3`, name: 'AP CSP: Logic Gates & Truth Table Circuit Simulations', course: 'AP Comp Sci Principles', type: 'Lab', dueDate: formatDate(2), dueTime: '23:59', completed: false },
-      { id: `sample-${Date.now()}-4`, name: 'Biology: Cell Membrane Osmosis Lab Write-up', course: 'TAG/Advanced Biology', type: 'Lab Report', dueDate: formatDate(3), dueTime: '16:00', completed: false },
-      { id: `sample-${Date.now()}-5`, name: 'English I: Rhetorical Analysis Essay Outline', course: 'TAG/Advanced English I', type: 'Essay', dueDate: formatDate(4), dueTime: '23:59', completed: false },
-    ];
-
-    sampleTasks.forEach(task => addPlannerTask(task));
-  };
-
   const formatDateHeaderDisplay = (dStr) => {
     if (!dStr || dStr === 'No Due Date') return 'NO DUE DATE';
     try {
@@ -183,16 +167,16 @@ export default function Planner() {
   const getCardStyling = (item, isCompleted) => {
     const isDark = !!theme.isDark;
 
-    // 1. Completed state
+    // 1. Completed state (Slight white/grey, more visible)
     if (isCompleted) {
       return {
         cardBg: isDark
-          ? 'bg-slate-900/40 border-slate-800/50 opacity-60'
-          : 'bg-gray-50/70 border-gray-200/50 opacity-60',
+          ? 'bg-slate-900/60 border-slate-800/80 opacity-75 shadow-2xs'
+          : 'bg-gray-50/90 border-gray-200/70 opacity-75 shadow-2xs',
         textStyle: isDark
-          ? 'line-through text-slate-500 font-medium'
-          : 'line-through text-gray-400 font-medium',
-        subtextStyle: isDark ? 'text-slate-500' : 'text-gray-400',
+          ? 'line-through text-slate-400 font-semibold'
+          : 'line-through text-gray-500 font-semibold',
+        subtextStyle: isDark ? 'text-slate-500 font-medium' : 'text-gray-400 font-medium',
         circleColor: isDark ? 'text-emerald-400' : 'text-emerald-500',
         badgeBg: isDark ? 'bg-slate-800 text-slate-400' : 'bg-gray-200/80 text-gray-600',
       };
@@ -213,47 +197,8 @@ export default function Planner() {
 
     const t = (item.type || item.typeId || '').toLowerCase();
     
-    // 3. Quiz / Test / Exam / Summative (Warm Amber)
+    // 3. Quiz / Test / Exam / Summative (Purple)
     if (t.includes('test') || t.includes('quiz') || t.includes('exam') || t.includes('assessment') || t.includes('summative')) {
-      return {
-        cardBg: isDark
-          ? 'bg-[#1f1309]/90 border-[#78350f] shadow-xs hover:border-[#b45309]'
-          : 'bg-amber-50/80 border-amber-200/90 shadow-xs hover:border-amber-400',
-        textStyle: isDark ? 'text-white font-bold' : 'text-amber-950 font-bold',
-        subtextStyle: isDark ? 'text-[#facc15]/90 font-medium' : 'text-amber-800/80 font-medium',
-        circleColor: isDark ? 'text-[#facc15]' : 'text-amber-500 hover:text-amber-600',
-        badgeBg: isDark ? 'bg-amber-950/70 text-amber-300' : 'bg-amber-100/90 text-amber-800 border border-amber-200',
-      };
-    }
-
-    // 4. Homework / Formative / Assignment / Daily Worksheet / Syllabus (Emerald)
-    if (t.includes('homework') || t.includes('formative') || t.includes('assignment') || t.includes('worksheet') || t.includes('syllabus')) {
-      return {
-        cardBg: isDark
-          ? 'bg-[#071f18]/90 border-[#065f46] shadow-xs hover:border-[#059669]'
-          : 'bg-emerald-50/80 border-emerald-200/90 shadow-xs hover:border-emerald-400',
-        textStyle: isDark ? 'text-[#34d399] font-bold' : 'text-emerald-950 font-bold',
-        subtextStyle: isDark ? 'text-[#10b981]/90 font-medium' : 'text-emerald-800/80 font-medium',
-        circleColor: isDark ? 'text-[#34d399]' : 'text-emerald-500 hover:text-emerald-600',
-        badgeBg: isDark ? 'bg-emerald-950/70 text-emerald-300' : 'bg-emerald-100/90 text-emerald-800 border border-emerald-200',
-      };
-    }
-
-    // 5. Project / Lab / Activity (Indigo)
-    if (t.includes('project') || t.includes('lab') || t.includes('activity')) {
-      return {
-        cardBg: isDark
-          ? 'bg-[#0c1527]/90 border-[#1e3a8a] shadow-xs hover:border-[#2563eb]'
-          : 'bg-indigo-50/80 border-indigo-200/90 shadow-xs hover:border-indigo-400',
-        textStyle: isDark ? 'text-[#93c5fd] font-bold' : 'text-indigo-950 font-bold',
-        subtextStyle: isDark ? 'text-[#60a5fa]/90 font-medium' : 'text-indigo-800/80 font-medium',
-        circleColor: isDark ? 'text-[#60a5fa]' : 'text-indigo-500 hover:text-indigo-600',
-        badgeBg: isDark ? 'bg-indigo-950/70 text-indigo-300' : 'bg-indigo-100/90 text-indigo-800 border border-indigo-200',
-      };
-    }
-
-    // 6. Reading / Notes / Study (Purple)
-    if (t.includes('reading') || t.includes('notes') || t.includes('study') || t.includes('review') || t.includes('essay')) {
       return {
         cardBg: isDark
           ? 'bg-[#1a0f28]/90 border-[#581c87] shadow-xs hover:border-[#7e22ce]'
@@ -265,22 +210,69 @@ export default function Planner() {
       };
     }
 
-    // Default: Emerald Light
+    // 4. Projects & Essays (Vibrant Cyan / Teal)
+    if (t.includes('project') || t.includes('essay')) {
+      return {
+        cardBg: isDark
+          ? 'bg-[#061e24]/90 border-[#0891b2] shadow-xs hover:border-[#06b6d4]'
+          : 'bg-cyan-50/80 border-cyan-200/90 shadow-xs hover:border-cyan-400',
+        textStyle: isDark ? 'text-[#67e8f9] font-bold' : 'text-cyan-950 font-bold',
+        subtextStyle: isDark ? 'text-[#22d3ee]/90 font-medium' : 'text-cyan-800/80 font-medium',
+        circleColor: isDark ? 'text-[#22d3ee]' : 'text-cyan-500 hover:text-cyan-600',
+        badgeBg: isDark ? 'bg-cyan-950/70 text-cyan-300' : 'bg-cyan-100/90 text-cyan-800 border border-cyan-200',
+      };
+    }
+
+    // 5. Labs & Activities (Indigo / Royal Blue)
+    if (t.includes('lab') || t.includes('activity')) {
+      return {
+        cardBg: isDark
+          ? 'bg-[#0c1527]/90 border-[#1e3a8a] shadow-xs hover:border-[#2563eb]'
+          : 'bg-indigo-50/80 border-indigo-200/90 shadow-xs hover:border-indigo-400',
+        textStyle: isDark ? 'text-[#93c5fd] font-bold' : 'text-indigo-950 font-bold',
+        subtextStyle: isDark ? 'text-[#60a5fa]/90 font-medium' : 'text-indigo-800/80 font-medium',
+        circleColor: isDark ? 'text-[#60a5fa]' : 'text-indigo-500 hover:text-indigo-600',
+        badgeBg: isDark ? 'bg-indigo-950/70 text-indigo-300' : 'bg-indigo-100/90 text-indigo-800 border border-indigo-200',
+      };
+    }
+
+    // 6. Study / Review / Notes / Reading (Fresh Emerald / Mint Green)
+    if (t.includes('study') || t.includes('review') || t.includes('reading') || t.includes('notes') || t.includes('prep')) {
+      return {
+        cardBg: isDark
+          ? 'bg-[#071f18]/90 border-[#065f46] shadow-xs hover:border-[#059669]'
+          : 'bg-emerald-50/80 border-emerald-200/90 shadow-xs hover:border-emerald-400',
+        textStyle: isDark ? 'text-[#34d399] font-bold' : 'text-emerald-950 font-bold',
+        subtextStyle: isDark ? 'text-[#10b981]/90 font-medium' : 'text-emerald-800/80 font-medium',
+        circleColor: isDark ? 'text-[#34d399]' : 'text-emerald-500 hover:text-emerald-600',
+        badgeBg: isDark ? 'bg-emerald-950/70 text-emerald-300' : 'bg-emerald-100/90 text-emerald-800 border border-emerald-200',
+      };
+    }
+
+    // 7. HAC Assignments, Homework, Formative, Worksheet, Syllabus, & Default Tasks (Warm Amber/Yellow)
     return {
       cardBg: isDark
-        ? 'bg-[#071f18]/90 border-[#065f46] shadow-xs hover:border-[#059669]'
-        : 'bg-emerald-50/80 border-emerald-200/90 shadow-xs hover:border-emerald-400',
-      textStyle: isDark ? 'text-[#34d399] font-bold' : 'text-emerald-950 font-bold',
-      subtextStyle: isDark ? 'text-[#10b981]/90 font-medium' : 'text-emerald-800/80 font-medium',
-      circleColor: isDark ? 'text-[#34d399]' : 'text-emerald-500 hover:text-emerald-600',
-      badgeBg: isDark ? 'bg-emerald-950/70 text-emerald-300' : 'bg-emerald-100/90 text-emerald-800 border border-emerald-200',
+        ? 'bg-[#1f1309]/90 border-[#78350f] shadow-xs hover:border-[#b45309]'
+        : 'bg-amber-50/80 border-amber-200/90 shadow-xs hover:border-amber-400',
+      textStyle: isDark ? 'text-white font-bold' : 'text-amber-950 font-bold',
+      subtextStyle: isDark ? 'text-[#facc15]/90 font-medium' : 'text-amber-800/80 font-medium',
+      circleColor: isDark ? 'text-[#facc15]' : 'text-amber-500 hover:text-amber-600',
+      badgeBg: isDark ? 'bg-amber-950/70 text-amber-300' : 'bg-amber-100/90 text-amber-800 border border-amber-200',
     };
   };
 
   return (
     <div className={`${theme.appBg} min-h-screen flex flex-col relative transition-colors duration-200`}>
-      {/* Task Creation Modal */}
-      {showModal && <TaskAdderModal onClose={() => setShowModal(false)} />}
+      {/* Task Creation & Editing Modal */}
+      {showModal && (
+        <TaskAdderModal
+          onClose={() => {
+            setShowModal(false);
+            setEditingTask(null);
+          }}
+          initialTask={editingTask}
+        />
+      )}
 
       {/* Header */}
       <div className={`${theme.bgClass} px-6 pt-12 pb-6 text-white w-full shadow-md`}>
@@ -291,21 +283,16 @@ export default function Planner() {
           </div>
           
           {/* Header Action Buttons */}
-          <div className="flex items-center gap-2.5 flex-wrap">
+          <div className="flex items-center gap-2.5">
             <button
-              onClick={handleLoadSampleTasks}
-              className="bg-white/20 hover:bg-white/30 transition px-3.5 py-2.5 rounded-2xl flex items-center gap-1.5 font-bold text-xs shadow-sm cursor-pointer"
-              title="Load sample tasks to test the planner"
-            >
-              <Sparkles size={15} />
-              <span>Load Sample Tasks</span>
-            </button>
-            <button
-              onClick={() => setShowModal(true)}
+              onClick={() => {
+                setEditingTask(null);
+                setShowModal(true);
+              }}
               className="bg-white/20 hover:bg-white/30 transition px-4 py-2.5 rounded-2xl flex items-center gap-1.5 font-bold text-xs shadow-sm cursor-pointer"
             >
               <Plus size={16} />
-              <span>New Task</span>
+              <span>New Item</span>
             </button>
           </div>
         </div>
@@ -318,12 +305,15 @@ export default function Planner() {
           {buckets.length === 0 ? (
             <div className={`text-center ${theme.textMuted} py-16 space-y-3`}>
               <p className={`font-bold text-base ${theme.textPrimary}`}>Planner is clear!</p>
-              <p className={`text-sm ${theme.textSecondary}`}>No pending tasks or upcoming deadlines. Click below to add a new task.</p>
+              <p className={`text-sm ${theme.textSecondary}`}>No pending tasks or upcoming deadlines. Click below to add a new item.</p>
               <button
-                onClick={() => setShowModal(true)}
+                onClick={() => {
+                  setEditingTask(null);
+                  setShowModal(true);
+                }}
                 className={`inline-flex items-center gap-2 ${theme.bgClass} text-white font-bold text-xs px-5 py-3 rounded-2xl shadow-md cursor-pointer`}
               >
-                <Plus size={16} /> Add Task
+                <Plus size={16} /> Add Item
               </button>
             </div>
           ) : (
@@ -368,8 +358,6 @@ export default function Planner() {
                           <p className={`text-xs flex items-center gap-1.5 mt-0.5 ${subtextStyle}`}>
                             {item.missing ? (
                               <AlertCircle size={12} className="text-red-600 shrink-0" />
-                            ) : item.type.includes('reminder') ? (
-                              <Bell size={12} className="shrink-0 opacity-80" />
                             ) : item.source === 'hac' ? (
                               <BookOpen size={12} className="shrink-0 opacity-80" />
                             ) : (
@@ -380,16 +368,36 @@ export default function Planner() {
                         </div>
 
                         {item.source === 'custom' && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              removePlannerTask(item.id);
-                            }}
-                            className="text-gray-400 hover:text-red-500 transition p-1.5 rounded-lg hover:bg-black/10 cursor-pointer"
-                            title="Delete task"
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                          <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const rawTask = (localOverrides?.plannerTasks || []).find(t => t.id === item.id) || item;
+                                setEditingTask(rawTask);
+                                setShowModal(true);
+                              }}
+                              className={`p-1.5 rounded-lg transition cursor-pointer ${
+                                theme.isDark
+                                  ? 'text-slate-400 hover:text-emerald-400 hover:bg-slate-800/80'
+                                  : 'text-gray-400 hover:text-emerald-600 hover:bg-emerald-50'
+                              }`}
+                              title="Edit task"
+                            >
+                              <Edit3 size={15} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => removePlannerTask(item.id)}
+                              className={`p-1.5 rounded-lg transition cursor-pointer ${
+                                theme.isDark
+                                  ? 'text-slate-400 hover:text-red-400 hover:bg-red-950/40'
+                                  : 'text-gray-400 hover:text-red-500 hover:bg-red-50'
+                              }`}
+                              title="Delete task"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
                         )}
                       </div>
                     );

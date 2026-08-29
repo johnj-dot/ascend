@@ -1,5 +1,6 @@
-﻿import { create } from 'zustand';
+import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { emitAppEvent, APP_EVENTS } from '../utils/appEvents';
 
 function levenshtein(a, b) {
   const matrix = [];
@@ -42,7 +43,7 @@ export function cleanExtractText(rawText, fileName = '', courseName = '') {
   const hasTooManySymbols = (clean.match(/[^a-zA-Z0-9\s.,!?:;'"()-]/g) || []).length > clean.length * 0.3;
   if (clean.length < 30 || hasTooManySymbols) {
     const baseName = fileName ? fileName.replace(/\.[^/.]+$/, '') : 'Course Document';
-    return `Official course document for ${courseName || 'enrolled course'} (${baseName}). Indexed in Ascend AI Knowledge Base for course-aligned tutoring, pacing, and study plans.`;
+    return `Course reference document for ${courseName || 'enrolled course'} (${baseName}).`;
   }
 
   return clean.slice(0, 8000);
@@ -168,14 +169,18 @@ export const useDocStore = create(
       addDocument: (doc) => {
         const sanitizedContent = cleanExtractText(doc.content, doc.fileName || doc.title, doc.className);
         const newDoc = {
-          id: 'doc-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
+          id: 'doc-' + Date.now() + '-' + Math.random().toString(36).substr(2, 6),
           dateAdded: new Date().toISOString().split('T')[0],
           ...doc,
           content: sanitizedContent
         };
-        set((state) => ({
-          documents: [newDoc, ...state.documents]
-        }));
+        set((state) => {
+          // Remove any previous doc with identical title, fileName, and classId to prevent duplicate stacking
+          const remaining = (state.documents || []).filter(
+            d => !(d.classId === newDoc.classId && d.title?.trim().toLowerCase() === newDoc.title?.trim().toLowerCase() && d.fileName === newDoc.fileName)
+          );
+          return { documents: [newDoc, ...remaining] };
+        });
         return newDoc;
       },
 
@@ -184,7 +189,7 @@ export const useDocStore = create(
         const sanitizedContent = cleanExtractText(fileData.content, fileData.fileName || fileData.title, matchedClass.name);
 
         const newDoc = {
-          id: 'doc-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
+          id: 'doc-' + Date.now() + '-' + Math.random().toString(36).substr(2, 6),
           dateAdded: new Date().toISOString().split('T')[0],
           classId: matchedClass.id,
           className: matchedClass.name,
@@ -195,9 +200,14 @@ export const useDocStore = create(
           fileName: fileData.fileName || 'document.pdf'
         };
 
-        set((state) => ({
-          documents: [newDoc, ...state.documents]
-        }));
+        set((state) => {
+          const remaining = (state.documents || []).filter(
+            d => !(d.classId === newDoc.classId && d.title?.trim().toLowerCase() === newDoc.title?.trim().toLowerCase() && d.fileName === newDoc.fileName)
+          );
+          return { documents: [newDoc, ...remaining] };
+        });
+
+        emitAppEvent(APP_EVENTS.DOC_ADDED, newDoc);
 
         return { doc: newDoc, matchedClass };
       },
@@ -206,32 +216,43 @@ export const useDocStore = create(
         return classifyDocumentToClass(fileData, enrolledClasses);
       },
 
-      removeDocument: (id) => set((state) => ({
-        documents: state.documents.filter(d => d.id !== id)
-      })),
+      removeDocument: (id) => set((state) => {
+        emitAppEvent(APP_EVENTS.DOC_DELETED, { id });
+        return {
+          documents: (state.documents || []).filter(d => d.id !== id)
+        };
+      }),
 
-      updateDocument: (id, updates) => set((state) => ({
-        documents: state.documents.map(d => d.id === id ? { ...d, ...updates } : d)
-      })),
+      clearAllDocuments: () => {
+        emitAppEvent(APP_EVENTS.DOC_DELETED, { all: true });
+        set({ documents: [] });
+      },
+
+      updateDocument: (id, updates) => set((state) => {
+        emitAppEvent(APP_EVENTS.DOC_ADDED, { id, ...updates });
+        return {
+          documents: (state.documents || []).map(d => d.id === id ? { ...d, ...updates } : d)
+        };
+      }),
 
       addDailyNote: (note) => {
         const newNote = {
-          id: 'note-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
+          id: 'note-' + Date.now() + '-' + Math.random().toString(36).substr(2, 6),
           dateAdded: new Date().toISOString().split('T')[0],
           ...note
         };
         set((state) => ({
-          dailyNotes: [newNote, ...state.dailyNotes]
+          dailyNotes: [newNote, ...(state.dailyNotes || [])]
         }));
         return newNote;
       },
 
       removeDailyNote: (id) => set((state) => ({
-        dailyNotes: state.dailyNotes.filter(n => n.id !== id)
+        dailyNotes: (state.dailyNotes || []).filter(n => n.id !== id)
       })),
 
       getDocsForClass: (classNameOrId) => {
-        const docs = get().documents;
+        const docs = get().documents || [];
         if (!classNameOrId) return docs;
         return docs.filter(d => 
           (d.classId && d.classId === classNameOrId) ||
@@ -265,12 +286,24 @@ Notes: ${(n.content || '').slice(0, 1000)}
     }),
     {
       name: 'ascend-docs-store-v2',
-      onRehydrateStorage: () => (state) => {
-        if (state?.documents) {
-          state.documents = state.documents.map(d => ({
-            ...d,
-            content: cleanExtractText(d.content, d.fileName || d.title, d.className)
-          }));
+      storage: {
+        getItem: (name) => {
+          const item = localStorage.getItem(name);
+          if (item) return JSON.parse(item);
+          // Check legacy key and migrate
+          const legacy = localStorage.getItem('ascend-docs-store');
+          if (legacy) {
+            localStorage.setItem(name, legacy);
+            localStorage.removeItem('ascend-docs-store');
+            return JSON.parse(legacy);
+          }
+          return null;
+        },
+        setItem: (name, value) => {
+          localStorage.setItem(name, JSON.stringify(value));
+        },
+        removeItem: (name) => {
+          localStorage.removeItem(name);
         }
       }
     }

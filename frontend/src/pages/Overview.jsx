@@ -308,57 +308,86 @@ function AttendanceOverviewCalendar({ attendance = [], theme }) {
 }
 
 export default function Overview() {
-  const { hacData, activeTheme, localOverrides, completedItemIds } = useStore();
+  const { hacData, activeTheme, localOverrides, completedItemIds, toggleItemCompleted } = useStore();
   const theme = getTheme(activeTheme);
   const navigate = useNavigate();
   const [showSchedule, setShowSchedule] = useState(false);
 
-  // Extract all assignments across classes
-  const allAssignments = (hacData?.classes || []).flatMap(c =>
-    (c.assignments || []).map(a => ({ ...a, class: c.name }))
-  );
+  // Helper to filter out ASP.NET summary footer rows like "99", "Course Average", etc.
+  const isInvalidOrSummaryRow = (a) => {
+    if (!a || !a.name) return true;
+    const nameStr = String(a.name).trim();
+    if (!nameStr) return true;
+    if (/^\d+(\.\d+)?$/.test(nameStr)) return true;
+    if (/^(Course\s*Average|Overall\s*Average|Total\s*Average|Average|Total|Summary)$/i.test(nameStr)) return true;
+    if (/Course\s*Average|Overall\s*Average/i.test(nameStr)) return true;
+    return false;
+  };
 
-  const missingList = allAssignments.filter(a => a.missing);
+  // Extract all valid assignments across classes safely
+  const classesList = Array.isArray(hacData?.classes) ? hacData.classes : [];
+  const allAssignments = classesList.flatMap(c => {
+    const className = String(c?.name || 'Course');
+    const assignList = Array.isArray(c?.assignments) ? c.assignments : [];
+    return assignList
+      .filter(a => !isInvalidOrSummaryRow(a))
+      .map(a => ({ ...a, class: className }));
+  });
+
+  const missingList = allAssignments.filter(a => a?.missing);
 
   // 1. Gather all graded assignment names to filter out any custom tasks that are now graded
   const gradedKeys = new Set();
-  (hacData?.classes || []).forEach(c => {
-    (c.assignments || []).forEach(a => {
-      if (a.score !== null && a.score !== undefined && a.score !== '' && !a.missing) {
-        gradedKeys.add(`${c.name.toLowerCase()}_${a.name.toLowerCase()}`);
-        gradedKeys.add(a.name.toLowerCase().trim());
+  classesList.forEach(c => {
+    const cName = String(c?.name || '').toLowerCase().trim();
+    const assignList = Array.isArray(c?.assignments) ? c.assignments : [];
+    assignList.forEach(a => {
+      if (a && a.name && a.score !== null && a.score !== undefined && a.score !== '' && !a.missing) {
+        const aName = String(a.name).toLowerCase().trim();
+        if (cName && aName) gradedKeys.add(`${cName}_${aName}`);
+        if (aName) gradedKeys.add(aName);
       }
     });
   });
 
+  const completedSet = new Set(Array.isArray(completedItemIds) ? completedItemIds : []);
+
   // 2. Gather HAC upcoming assignments (ungraded only)
   const hacUpcoming = allAssignments
-    .filter(a => !a.missing && (a.score === null || a.score === undefined || a.score === '') && !a.exempt && !(completedItemIds || []).includes(`hac-${a.class}-${a.name}-${a.dateDue || a.date}`))
-    .map(a => ({
-      id: `hac-${a.class}-${a.name}-${a.dateDue || a.date}`,
-      name: a.name,
-      class: a.class || 'HAC Assignment',
-      category: a.category || 'Assignment',
-      dateDue: a.dateDue || a.date || '',
-      time: '',
-      source: 'hac',
-    }));
+    .filter(a => a && !a.missing && (a.score === null || a.score === undefined || a.score === '') && !a.exempt)
+    .map(a => {
+      const cls = String(a.class || 'HAC Assignment');
+      const name = String(a.name || 'Assignment');
+      const dateVal = a.dateDue || a.date || '';
+      return {
+        id: `hac-${cls}-${name}-${dateVal}`,
+        name,
+        class: cls,
+        category: a.category || 'Assignment',
+        dateDue: dateVal,
+        time: '',
+        source: 'hac',
+      };
+    })
+    .filter(item => !completedSet.has(item.id));
 
   // 3. Gather custom created tasks from planner (exclude if already graded)
-  const customUpcoming = (localOverrides?.plannerTasks || [])
+  const customTasksList = Array.isArray(localOverrides?.plannerTasks) ? localOverrides.plannerTasks : [];
+  const customUpcoming = customTasksList
     .filter(t => {
-      if (!t.dueDate) return false;
-      if ((completedItemIds || []).includes(t.id)) return false;
-      const taskName = (t.name || '').toLowerCase().trim();
-      const courseKey = t.course ? `${t.course.toLowerCase()}_${taskName}` : '';
+      if (!t || !t.dueDate) return false;
+      if (completedSet.has(t.id)) return false;
+      const taskName = String(t.name || '').toLowerCase().trim();
+      const courseName = String(t.course || '').toLowerCase().trim();
+      const courseKey = courseName ? `${courseName}_${taskName}` : '';
       if (gradedKeys.has(taskName) || (courseKey && gradedKeys.has(courseKey))) return false;
       return true;
     })
     .map(t => ({
-      id: t.id,
-      name: t.name,
-      class: t.course || (t.tab === 'reminder' ? 'Personal' : 'General Task'),
-      category: t.type || (t.tab === 'reminder' ? 'Reminder' : 'Homework'),
+      id: t.id || String(Date.now()),
+      name: t.name || 'Task',
+      class: t.course || 'General Task',
+      category: t.type || 'Homework',
       dateDue: t.dueDate,
       time: t.dueTime || '',
       source: 'custom',
@@ -366,9 +395,12 @@ export default function Overview() {
 
   // 4. Combine & sort upcoming assignments chronologically
   const upcomingList = [...hacUpcoming, ...customUpcoming].sort((a, b) => {
-    const da = a.dateDue ? new Date(a.dateDue).getTime() : Infinity;
-    const db = b.dateDue ? new Date(b.dateDue).getTime() : Infinity;
-    return da - db;
+    const parseDate = (dStr) => {
+      if (!dStr) return Infinity;
+      const t = new Date(dStr).getTime();
+      return isNaN(t) ? Infinity : t;
+    };
+    return parseDate(a.dateDue) - parseDate(b.dateDue);
   });
 
   return (
@@ -449,22 +481,34 @@ export default function Overview() {
               </div>
             ) : (
               <div className="space-y-3">
-                {upcomingList.slice(0, 8).map(item => (
-                  <div key={item.id} className={`${theme.cardBg} p-4 rounded-2xl shadow-sm border ${theme.cardBorder} flex items-center gap-4 transition-colors duration-200`}>
-                    <div className={`${theme.lightBgClass} ${theme.textClass} px-2.5 py-3 rounded-xl font-bold text-xs text-center leading-tight shrink-0`}>
-                      <BookOpen size={18} />
+                {upcomingList.slice(0, 8).map(item => {
+                  const isDone = (completedItemIds || []).includes(item.id);
+                  return (
+                    <div key={item.id} className={`${theme.cardBg} p-4 rounded-2xl shadow-sm border ${theme.cardBorder} flex items-center gap-4 transition-colors duration-200`}>
+                      <button
+                        type="button"
+                        onClick={() => toggleItemCompleted(item.id)}
+                        className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 transition cursor-pointer ${
+                          isDone
+                            ? 'bg-emerald-500 text-white shadow-xs'
+                            : `${theme.lightBgClass} ${theme.textClass} hover:opacity-80`
+                        }`}
+                        title={isDone ? 'Mark as incomplete' : 'Mark as complete'}
+                      >
+                        {isDone ? <CheckCircle2 size={20} /> : <BookOpen size={18} />}
+                      </button>
+                      <div className="flex-1 min-w-0">
+                        <h3 className={`font-bold ${theme.textPrimary} text-sm truncate ${isDone ? 'line-through opacity-60' : ''}`}>{item.name}</h3>
+                        <p className={`text-xs ${theme.textSecondary}`}>{item.class} · {item.category}</p>
+                      </div>
+                      {item.dateDue && (
+                        <span className={`text-xs font-bold ${theme.textClass} ${theme.lightBgClass} px-2.5 py-1 rounded-lg shrink-0`}>
+                          {item.dateDue}
+                        </span>
+                      )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className={`font-bold ${theme.textPrimary} text-sm truncate`}>{item.name}</h3>
-                      <p className={`text-xs ${theme.textSecondary}`}>{item.class} · {item.category}</p>
-                    </div>
-                    {item.dateDue && (
-                      <span className={`text-xs font-bold ${theme.textClass} ${theme.lightBgClass} px-2.5 py-1 rounded-lg shrink-0`}>
-                        {item.dateDue}
-                      </span>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

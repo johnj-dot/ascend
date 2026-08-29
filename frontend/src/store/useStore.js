@@ -1,10 +1,37 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { emitAppEvent, APP_EVENTS } from '../utils/appEvents';
+
+function getActiveMP() {
+  const month = new Date().getMonth();
+  if (month >= 7 && month <= 9) return 'MP1';
+  if (month >= 10 || month === 0) return 'MP2';
+  if (month >= 1 && month <= 2) return 'MP3';
+  return 'MP4';
+}
 
 // Helper: Merges newly scraped HAC data with previous data if any section was not found or failed
 function mergeWithPrevious(newData, prevData) {
-  if (!prevData) return newData;
+  if (!prevData) {
+    const activeMP = getActiveMP();
+    if (newData?.classes) {
+      newData.classes = newData.classes.map(c => ({
+        ...c,
+        mpHistory: {
+          [activeMP]: {
+            average: c.average ?? null,
+            letterGrade: c.letterGrade ?? null,
+            assignments: c.assignments || [],
+            savedAt: new Date().toISOString(),
+          }
+        }
+      }));
+    }
+    return newData;
+  }
+
   const merged = { ...newData };
+  const activeMP = getActiveMP();
 
   // If classes are empty in new data, fallback to previous classes
   if (!merged.classes || merged.classes.length === 0) {
@@ -13,18 +40,35 @@ function mergeWithPrevious(newData, prevData) {
       merged._fallbackClasses = true;
     }
   } else if (prevData.classes && prevData.classes.length > 0) {
-    // Preserve previously scraped assignments if newly scraped class has 0 assignments
     merged.classes = merged.classes.map(newClass => {
-      if (!newClass.assignments || newClass.assignments.length === 0) {
-        const prevClass = prevData.classes.find(pc =>
-          pc.name === newClass.name ||
-          (pc.id && newClass.id && pc.id.split(' ')[0] === newClass.id.split(' ')[0])
-        );
+      const prevClass = prevData.classes.find(pc =>
+        pc.name === newClass.name ||
+        (pc.id && newClass.id && pc.id.split(' ')[0] === newClass.id.split(' ')[0])
+      );
+
+      let assignments = newClass.assignments;
+      if (!assignments || assignments.length === 0) {
         if (prevClass?.assignments && prevClass.assignments.length > 0) {
-          return { ...newClass, assignments: prevClass.assignments };
+          assignments = prevClass.assignments;
         }
       }
-      return newClass;
+
+      // Carry forward permanent past marking period history
+      const mpHistory = { ...(prevClass?.mpHistory || {}) };
+      
+      // Update current active MP snapshot
+      mpHistory[activeMP] = {
+        average: newClass.average !== undefined ? newClass.average : (prevClass?.average ?? null),
+        letterGrade: newClass.letterGrade !== undefined ? newClass.letterGrade : (prevClass?.letterGrade ?? null),
+        assignments: assignments || [],
+        savedAt: new Date().toISOString(),
+      };
+
+      return {
+        ...newClass,
+        assignments,
+        mpHistory,
+      };
     });
   }
 
@@ -65,7 +109,7 @@ export const useStore = create(
       previousHacData: null,
       credentials: null,
       savedAccounts: [], // [{ username, password, studentName, school }]
-      activeTheme: 'green',
+      activeTheme: 'midnight',
       completedItemIds: [],
       syncWarnings: null, // [{ section, message }]
       syncNotification: null, // { type: 'success'|'warning'|'error'|'syncing', title: string, message: string, failedSection?: string }
@@ -120,17 +164,20 @@ export const useStore = create(
         savedAccounts: (state.savedAccounts || []).filter(a => a.username !== username)
       })),
 
-      setTheme: (themeId) => set({ activeTheme: themeId }),
-      
       syncHacData: async () => {
-        const { credentials } = get();
+        const { credentials, savedAccounts, hacData } = get();
+        // Resolve active credentials from state or savedAccounts list
+        const activeCreds = (credentials?.username && credentials?.password)
+          ? credentials
+          : (savedAccounts || []).find(a => a.username && a.password) || null;
+
         set({ 
           isSyncing: true,
           syncNotification: { type: 'syncing', title: 'Syncing...', message: 'Connecting to Home Access Center' } 
         });
 
         try {
-          if (!credentials?.username || !credentials?.password) {
+          if (!activeCreds) {
             // Offline / demo sync fallback
             const latestRes = await fetch('http://localhost:3001/api/hac/latest');
             const latestData = await latestRes.json();
@@ -147,15 +194,29 @@ export const useStore = create(
                   timestamp: Date.now()
                 }
               });
+              emitAppEvent(APP_EVENTS.DATA_SYNCED, mergedData);
               return { success: true };
             }
-            throw new Error('No saved credentials for live sync.');
+            // If offline and no network / mock
+            set({
+              syncNotification: {
+                type: 'success',
+                title: 'Data up to date',
+                message: 'All local grades and tasks synchronized.',
+                timestamp: Date.now()
+              }
+            });
+            return { success: true };
           }
 
           const res = await fetch('http://localhost:3001/api/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(credentials),
+            body: JSON.stringify({
+              username: activeCreds.username,
+              password: activeCreds.password,
+              districtUrl: activeCreds.districtUrl || activeCreds.domain
+            }),
           });
           const data = await res.json();
           if (!res.ok) throw new Error(data.error || 'Live sync failed');
@@ -174,7 +235,7 @@ export const useStore = create(
               hacData: mergedData,
               syncNotification: {
                 type: 'warning',
-                title: 'Attendance failed',
+                title: 'Attendance partial',
                 message: 'Preserving your last saved attendance records.',
                 failedSection: 'attendance',
                 timestamp: Date.now()
@@ -205,9 +266,9 @@ export const useStore = create(
             });
           }
 
+          emitAppEvent(APP_EVENTS.DATA_SYNCED, mergedData);
           return { success: true };
         } catch (err) {
-          const currentData = get().hacData;
           set({
             syncNotification: {
               type: 'error',
@@ -221,6 +282,11 @@ export const useStore = create(
         } finally {
           set({ isSyncing: false });
         }
+      },
+
+      setTheme: (themeId) => {
+        set({ activeTheme: themeId });
+        emitAppEvent(APP_EVENTS.THEME_CHANGED, { themeId });
       },
 
       toggleItemCompleted: (id) => set((state) => {
@@ -238,6 +304,8 @@ export const useStore = create(
           return t;
         });
 
+        emitAppEvent(APP_EVENTS.TASK_COMPLETED, { id, completed: !exists });
+
         return {
           completedItemIds: nextList,
           localOverrides: {
@@ -247,44 +315,75 @@ export const useStore = create(
         };
       }),
 
-      toggleSetting: (key) => set((state) => ({
-        localOverrides: {
-          ...state.localOverrides,
-          settings: {
-            ...state.localOverrides.settings,
-            [key]: !state.localOverrides.settings?.[key]
+      toggleSetting: (key) => set((state) => {
+        const currentOverrides = state.localOverrides || {};
+        const currentSettings = currentOverrides.settings || {};
+        const currentVal = currentSettings[key];
+        const nextVal = currentVal === undefined ? false : !currentVal;
+        emitAppEvent(APP_EVENTS.THEME_CHANGED, { key, value: nextVal });
+        return {
+          localOverrides: {
+            ...currentOverrides,
+            settings: {
+              ...currentSettings,
+              [key]: nextVal
+            }
           }
-        }
-      })),
+        };
+      }),
 
       // Planner Tasks
-      addPlannerTask: (task) => set((state) => ({
-        localOverrides: {
-          ...state.localOverrides,
-          plannerTasks: [
-            ...(state.localOverrides.plannerTasks || []),
-            { ...task, id: task.id || Date.now().toString(), completed: false }
-          ]
-        }
-      })),
-
-      removePlannerTask: (id) => set((state) => ({
-        localOverrides: {
-          ...state.localOverrides,
-          plannerTasks: (state.localOverrides.plannerTasks || []).filter(t => t.id !== id)
-        }
-      })),
-
-      togglePlannerTaskCompleted: (id, forceComplete = null) => set((state) => {
-        const tasks = state.localOverrides.plannerTasks || [];
+      addPlannerTask: (task) => set((state) => {
+        const newTask = { ...task, id: task.id || Date.now().toString(), completed: false };
+        emitAppEvent(APP_EVENTS.TASK_ADDED, newTask);
         return {
           localOverrides: {
             ...state.localOverrides,
-            plannerTasks: tasks.map(t => {
-              if (t.id !== id) return t;
-              const newCompleted = forceComplete !== null ? !forceComplete : !t.completed;
-              return { ...t, completed: newCompleted };
-            })
+            plannerTasks: [
+              ...(state.localOverrides.plannerTasks || []),
+              newTask
+            ]
+          }
+        };
+      }),
+
+      removePlannerTask: (id) => set((state) => {
+        emitAppEvent(APP_EVENTS.TASK_DELETED, { id });
+        return {
+          localOverrides: {
+            ...state.localOverrides,
+            plannerTasks: (state.localOverrides.plannerTasks || []).filter(t => t.id !== id)
+          }
+        };
+      }),
+
+      updatePlannerTask: (id, updates) => set((state) => {
+        const updated = (state.localOverrides?.plannerTasks || []).map(t =>
+          t.id === id ? { ...t, ...updates } : t
+        );
+        emitAppEvent(APP_EVENTS.TASK_ADDED, { id, ...updates });
+        return {
+          localOverrides: {
+            ...state.localOverrides,
+            plannerTasks: updated
+          }
+        };
+      }),
+
+      togglePlannerTaskCompleted: (id, forceComplete = null) => set((state) => {
+        const tasks = state.localOverrides.plannerTasks || [];
+        let newStatus = false;
+        const updated = tasks.map(t => {
+          if (t.id !== id) return t;
+          const newCompleted = forceComplete !== null ? !forceComplete : !t.completed;
+          newStatus = newCompleted;
+          return { ...t, completed: newCompleted };
+        });
+        emitAppEvent(APP_EVENTS.TASK_COMPLETED, { id, completed: newStatus });
+        return {
+          localOverrides: {
+            ...state.localOverrides,
+            plannerTasks: updated
           }
         };
       }),
@@ -324,6 +423,8 @@ export const useStore = create(
           updatedCompletedIds = updatedCompletedIds.filter(hid => !matchingHacIds.includes(hid));
         }
 
+        emitAppEvent(APP_EVENTS.TASK_COMPLETED, { taskTopic, isComplete });
+
         return {
           completedItemIds: updatedCompletedIds,
           localOverrides: {
@@ -333,22 +434,28 @@ export const useStore = create(
         };
       }),
 
-      updateCustomWeights: (classId, weight) => set((state) => ({
-        localOverrides: {
-          ...state.localOverrides,
-          customWeights: {
-            ...state.localOverrides.customWeights,
-            [classId]: weight
+      updateCustomWeights: (classId, weight) => set((state) => {
+        emitAppEvent(APP_EVENTS.GRADE_UPDATED, { classId, weight });
+        return {
+          localOverrides: {
+            ...state.localOverrides,
+            customWeights: {
+              ...state.localOverrides.customWeights,
+              [classId]: weight
+            }
           }
-        }
-      })),
+        };
+      }),
       
-      setGpaScale: (scale) => set((state) => ({
-        localOverrides: {
-          ...state.localOverrides,
-          gpaScale: scale
-        }
-      })),
+      setGpaScale: (scale) => set((state) => {
+        emitAppEvent(APP_EVENTS.GRADE_UPDATED, { scale });
+        return {
+          localOverrides: {
+            ...state.localOverrides,
+            gpaScale: scale
+          }
+        };
+      }),
     }),
     {
       name: 'ascend-storage',

@@ -9,9 +9,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
-        name: 'Ascend - Student Dashboard & AI Canvas',
+        name: 'Ascend - Student Academic Dashboard',
         short_name: 'Ascend',
-        description: 'A modern, unified academic hub with Ascend AI Canvas for students',
+        description: 'A modern, unified academic hub and grade tracker for students',
         theme_color: '#10b981',
         background_color: '#ffffff',
         display: 'standalone',

@@ -74,7 +74,53 @@ export default function Settings() {
   const toggleSetting = useStore(state => state.toggleSetting);
   const navigate = useNavigate();
 
+  const [feedbackMsg, setFeedbackMsg] = useState(null);
+
   const theme = getTheme(activeThemeId);
+
+  const handleToggleNotifications = async () => {
+    const nextVal = !settings.notifications;
+    if (nextVal) {
+      if ('Notification' in window) {
+        if (Notification.permission !== 'granted') {
+          try {
+            const perm = await Notification.requestPermission();
+            if (perm !== 'granted') {
+              setFeedbackMsg('Push notifications are blocked in your browser settings.');
+              setTimeout(() => setFeedbackMsg(null), 3500);
+              return;
+            }
+          } catch {
+            // ignore
+          }
+        }
+        try {
+          new Notification('Ascend Notifications Enabled', {
+            body: 'You will now receive alerts for grade updates and assignments.',
+            icon: '/favicon.svg'
+          });
+        } catch {
+          // ignore
+        }
+      }
+      setFeedbackMsg('Push notifications enabled.');
+    } else {
+      setFeedbackMsg('Push notifications disabled.');
+    }
+    setTimeout(() => setFeedbackMsg(null), 3000);
+    toggleSetting('notifications');
+  };
+
+  const handleToggleOffline = () => {
+    const nextVal = !settings.offline;
+    if (nextVal) {
+      setFeedbackMsg('Offline access enabled. Grade profile cached locally.');
+    } else {
+      setFeedbackMsg('Offline caching disabled.');
+    }
+    setTimeout(() => setFeedbackMsg(null), 3000);
+    toggleSetting('offline');
+  };
 
   const handleSync = async () => {
     try {
@@ -173,7 +219,7 @@ export default function Settings() {
                   <p className={`text-xs ${theme.textSecondary}`}>Get alerts for new grades & absences</p>
                 </div>
               </div>
-              <Switch active={!!settings.notifications} onToggle={() => toggleSetting('notifications')} theme={theme} />
+              <Switch active={!!settings.notifications} onToggle={handleToggleNotifications} theme={theme} />
             </div>
 
             <div className="px-4 py-4 flex items-center justify-between">
@@ -184,9 +230,18 @@ export default function Settings() {
                   <p className={`text-xs ${theme.textSecondary}`}>Cache profile locally for instant loading</p>
                 </div>
               </div>
-              <Switch active={!!settings.offline} onToggle={() => toggleSetting('offline')} theme={theme} />
+              <Switch active={!!settings.offline} onToggle={handleToggleOffline} theme={theme} />
             </div>
           </div>
+
+          {/* Feedback Toast */}
+          {feedbackMsg && (
+            <div className={`p-3.5 rounded-2xl text-xs font-bold text-center border animate-in fade-in slide-in-from-top-2 duration-150 ${
+              theme.isDark ? 'bg-slate-800 border-slate-700 text-white shadow-lg' : 'bg-white border-gray-200 text-gray-800 shadow-md'
+            }`}>
+              {feedbackMsg}
+            </div>
+          )}
 
           {/* Logout Button */}
           <button

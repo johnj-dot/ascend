@@ -28,9 +28,30 @@ function assert(label, condition, detail = '') {
 
 console.log('\n=== GradeForge Scraper Unit Tests ===\n');
 
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const getFixture = (name) => {
+  const p1 = path.join(__dirname, 'testData', name);
+  if (fs.existsSync(p1)) return p1;
+  const p2 = path.join(process.cwd(), name);
+  if (fs.existsSync(p2)) return p2;
+  const p3 = path.join(process.cwd(), 'scraper', 'testData', name);
+  if (fs.existsSync(p3)) return p3;
+  return null;
+};
+
+const readFixture = (name) => {
+  const p = getFixture(name);
+  return p ? fs.readFileSync(p, 'utf8') : null;
+};
+
 // ── Test 1: Classes ──
 console.log('[ Classes ]');
-const classesHtml = fs.existsSync('extracted_299.html') ? fs.readFileSync('extracted_299.html', 'utf8') : null;
+const classesHtml = readFixture('extracted_299.html');
 if (classesHtml) {
   const classes = scrapeClasses(classesHtml);
   assert('Returns array', Array.isArray(classes));
@@ -46,7 +67,7 @@ if (classesHtml) {
 
 // ── Test 2: Assignments ──
 console.log('\n[ Assignments ]');
-const assignHtml = fs.existsSync('extracted_220.html') ? fs.readFileSync('extracted_220.html', 'utf8') : null;
+const assignHtml = readFixture('extracted_220.html');
 if (assignHtml && classesHtml) {
   const classes = scrapeClasses(classesHtml);
   scrapeAssignments(assignHtml, classes);
@@ -65,9 +86,7 @@ if (assignHtml && classesHtml) {
 
 // ── Test 3: Multi-Year Transcript & GPA/Rank ──
 console.log('\n[ Transcript & GPA ]');
-const transcriptPath = fs.existsSync('scraper/testData/Transcript_2.html')
-  ? 'scraper/testData/Transcript_2.html'
-  : (fs.existsSync('extracted_transcript_364.html') ? 'extracted_transcript_364.html' : null);
+const transcriptPath = getFixture('Transcript_2.html') || getFixture('extracted_transcript_364.html');
 
 if (transcriptPath) {
   const transcriptHtml = fs.readFileSync(transcriptPath, 'utf8');
@@ -89,7 +108,7 @@ if (transcriptPath) {
 
 // ── Test 4: Registration Info ──
 console.log('\n[ Registration ]');
-const regPath = fs.existsSync('scraper/testData/Registration_2.html') ? 'scraper/testData/Registration_2.html' : null;
+const regPath = getFixture('Registration_2.html');
 if (regPath) {
   const regHtml = fs.readFileSync(regPath, 'utf8');
   const reg = scrapeRegistration(regHtml);
@@ -105,7 +124,7 @@ if (regPath) {
 
 // ── Test 5: Attendance ──
 console.log('\n[ Attendance ]');
-const attendanceHtml = fs.existsSync('extracted_148.html') ? fs.readFileSync('extracted_148.html', 'utf8') : null;
+const attendanceHtml = readFixture('extracted_148.html');
 if (attendanceHtml) {
   const records = scrapeAttendance(attendanceHtml);
   assert('Returns array', Array.isArray(records));

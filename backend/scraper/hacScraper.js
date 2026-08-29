@@ -266,6 +266,11 @@ function scrapeAssignments(html, classes) {
 
         if (!assignName) return;
 
+        const rowText = $(row).text();
+        if (/Course\s*Average|Overall\s*Average|Total\s*Average/i.test(rowText)) return;
+        if (/^(Course\s*Average|Average|Total)$/i.test(assignName)) return;
+        if (/^\d+(\.\d+)?$/.test(assignName) && !dateDue && (!score || score.trim() === '')) return;
+
         const isMissing  = $(cols[4]).find('.sg-content-alert-container').length > 0 || score === 'M';
         const isExempt   = score === 'X';
         const numericScore = score && !isNaN(parseFloat(score)) ? parseFloat(score) : null;
