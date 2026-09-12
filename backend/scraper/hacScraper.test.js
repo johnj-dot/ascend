@@ -26,7 +26,7 @@ function assert(label, condition, detail = '') {
   }
 }
 
-console.log('\n=== GradeForge Scraper Unit Tests ===\n');
+console.log('\n=== Ascend Scraper Unit Tests ===\n');
 
 import path from 'path';
 import { fileURLToPath } from 'url';

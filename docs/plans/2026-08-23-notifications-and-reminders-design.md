@@ -1,7 +1,7 @@
 # Notification System Design with Multi-Offset & Repeated Alerts
 
 ## Overview
-A comprehensive notification and reminder system for GradeForge supporting:
+A comprehensive notification and reminder system for Ascend supporting:
 1. Multi-select push notification timing offsets for assignments & tasks (e.g. *1 day before*, *1 hour before*, *30 minutes before*, *at due time*).
 2. Repeated / recurring notification cadences (*Daily*, *Weekdays Mon–Fri*, *Weekly*, and *Custom Intervals e.g. every 30m / 1h / 2h*).
 3. Foreground & Service Worker background notification scheduler.

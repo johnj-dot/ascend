@@ -6,7 +6,7 @@ let broadcastChannel = null;
 
 try {
   if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
-    broadcastChannel = new BroadcastChannel('gradeforge_events');
+    broadcastChannel = new BroadcastChannel('ascend_events');
     broadcastChannel.onmessage = (event) => {
       if (event?.data?.type) {
         const list = listeners.get(event.data.type);
@@ -23,14 +23,14 @@ try {
 }
 
 export const APP_EVENTS = {
-  TASK_ADDED: 'gradeforge:task_added',
-  TASK_COMPLETED: 'gradeforge:task_completed',
-  TASK_DELETED: 'gradeforge:task_deleted',
-  DOC_ADDED: 'gradeforge:doc_added',
-  DOC_DELETED: 'gradeforge:doc_deleted',
-  GRADE_UPDATED: 'gradeforge:grade_updated',
-  THEME_CHANGED: 'gradeforge:theme_changed',
-  DATA_SYNCED: 'gradeforge:data_synced',
+  TASK_ADDED: 'ascend:task_added',
+  TASK_COMPLETED: 'ascend:task_completed',
+  TASK_DELETED: 'ascend:task_deleted',
+  DOC_ADDED: 'ascend:doc_added',
+  DOC_DELETED: 'ascend:doc_deleted',
+  GRADE_UPDATED: 'ascend:grade_updated',
+  THEME_CHANGED: 'ascend:theme_changed',
+  DATA_SYNCED: 'ascend:data_synced',
 };
 
 /**

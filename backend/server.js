@@ -226,7 +226,7 @@ if (fs.existsSync(frontendDist)) {
 }
 
 const server = app.listen(PORT, () => {
-  console.log(`GradeForge Server running on port ${PORT}`);
+  console.log(`Ascend Server running on port ${PORT}`);
 });
 
 server.on('error', (err) => {
