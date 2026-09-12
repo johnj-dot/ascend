@@ -69,11 +69,11 @@ export default function Layout() {
   };
 
   const tabs = [
-    { name: 'Overview',   path: '/overview',   icon: <Home size={21} /> },
-    { name: 'Grades',     path: '/grades',     icon: <BookOpen size={21} /> },
-    { name: 'Planner',    path: '/planner',    icon: <Calendar size={21} /> },
-    { name: 'GPA',        path: '/gpa',        icon: <Calculator size={21} /> },
-    { name: 'Settings',   path: '/settings',   icon: <Settings size={21} /> },
+    { name: 'Overview',       path: '/overview',   icon: <Home size={21} /> },
+    { name: 'Grades',         path: '/grades',     icon: <BookOpen size={21} /> },
+    { name: 'Planner',        path: '/planner',    icon: <Calendar size={21} /> },
+    { name: 'GPA Calculator', path: '/gpa',        icon: <Calculator size={21} /> },
+    { name: 'Settings',       path: '/settings',   icon: <Settings size={21} /> },
   ];
 
   return (
