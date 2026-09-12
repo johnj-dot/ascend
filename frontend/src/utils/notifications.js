@@ -24,51 +24,78 @@ export function playNotificationSound() {
   }
 }
 
-// Request permission & send system desktop notification
+// Request permission & send system desktop notification without blocking alert popups
 export async function requestAndSendTestNotification() {
   playNotificationSound();
 
   if (!('Notification' in window)) {
-    alert('This browser does not support desktop notifications.');
-    return { success: false, reason: 'unsupported' };
+    return { success: true, mode: 'audio_only', reason: 'unsupported' };
   }
 
   let perm = Notification.permission;
   if (perm === 'default') {
     try {
-      perm = await Notification.requestPermission();
+      const permPromise = Notification.requestPermission();
+      const timeoutPromise = new Promise((res) => setTimeout(() => res('timeout'), 3500));
+      const result = await Promise.race([permPromise, timeoutPromise]);
+      if (result !== 'timeout') {
+        perm = result;
+      }
     } catch (e) {
       console.warn('Notification.requestPermission error:', e);
     }
   }
 
   if (perm === 'granted') {
-    await fireNotification('🔔 GradeForge Test Reminder', 'Desktop notifications are working! Your study & task alerts are active.');
-    return { success: true, permission: 'granted' };
+    const delivered = await fireNotification(
+      '🔔 Ascend Notifications Active',
+      'System & audio notifications are working! Grade updates and study alerts are active.'
+    );
+    return { success: true, permission: 'granted', delivered };
   } else if (perm === 'denied') {
-    alert('Notification permission is blocked by your browser.\n\nTo enable notifications:\n1. Click the lock/settings icon on the left of the URL bar\n2. Set "Notifications" to "Allow"\n3. Refresh and try again.');
-    return { success: false, reason: 'denied' };
+    return { 
+      success: true, 
+      mode: 'audio_only', 
+      reason: 'denied',
+      message: 'System alerts blocked by browser. In-app audio alerts active.' 
+    };
   } else {
-    return { success: false, reason: 'dismissed' };
+    return { 
+      success: true, 
+      mode: 'audio_only', 
+      reason: 'pending',
+      message: 'Permission prompt pending. In-app audio alerts active.' 
+    };
   }
 }
 
-// Fire notification helper
-async function fireNotification(title, body) {
+// Fire notification helper with ServiceWorker & Web Notification fallback
+export async function fireNotification(title, body, options = {}) {
   playNotificationSound();
   let sent = false;
 
+  // Try Service Worker registration first (standard for PWAs & Android/iOS)
   if ('serviceWorker' in navigator) {
     try {
-      const reg = await navigator.serviceWorker.getRegistration();
+      let reg = null;
+      if (navigator.serviceWorker.ready) {
+        reg = await Promise.race([
+          navigator.serviceWorker.ready,
+          new Promise(res => setTimeout(() => res(null), 1000))
+        ]);
+      }
+      if (!reg) {
+        reg = await navigator.serviceWorker.getRegistration();
+      }
+
       if (reg && reg.showNotification) {
         await reg.showNotification(title, {
           body,
-          icon: '/icon-192.png',
-          badge: '/icon-192.png',
-          tag: 'gradeforge-alert',
+          icon: '/favicon.svg',
+          badge: '/favicon.svg',
+          tag: options.tag || 'ascend-alert',
           renotify: true,
-          requireInteraction: true,
+          ...options
         });
         sent = true;
       }
@@ -77,43 +104,51 @@ async function fireNotification(title, body) {
     }
   }
 
-  if (!sent) {
+  // Fallback to Window Notification constructor if SW didn't trigger
+  if (!sent && 'Notification' in window) {
     try {
-      const notif = new Notification(title, {
-        body,
-        icon: '/icon-192.png',
-        requireInteraction: true,
-      });
-      notif.onclick = () => {
-        window.focus();
-        notif.close();
-      };
+      if (Notification.permission === 'granted') {
+        const notif = new Notification(title, {
+          body,
+          icon: '/favicon.svg',
+          tag: options.tag || 'ascend-alert',
+          ...options
+        });
+        notif.onclick = () => {
+          window.focus();
+          notif.close();
+        };
+        sent = true;
+      }
     } catch (err) {
       console.warn('Standard Notification fallback failed:', err);
     }
   }
+
+  return sent;
 }
 
-// Schedule notification after a delay (in seconds) so user can switch tabs/minimize
+// Schedule notification after a delay (in seconds)
 export async function scheduleNotificationInSeconds(seconds, customMessage = 'Your scheduled reminder has arrived!') {
   if (!('Notification' in window)) {
-    alert('This browser does not support desktop notifications.');
-    return { success: false };
+    return { success: false, reason: 'unsupported' };
   }
 
   let perm = Notification.permission;
   if (perm === 'default') {
-    perm = await Notification.requestPermission();
-  }
-
-  if (perm !== 'granted') {
-    alert('Notification permission not granted. Please allow notifications in browser settings.');
-    return { success: false, reason: perm };
+    try {
+      const permPromise = Notification.requestPermission();
+      const timeoutPromise = new Promise(res => setTimeout(() => res('timeout'), 3000));
+      const res = await Promise.race([permPromise, timeoutPromise]);
+      if (res !== 'timeout') perm = res;
+    } catch {
+      // ignore
+    }
   }
 
   setTimeout(() => {
-    fireNotification('⏰ GradeForge Scheduled Reminder', customMessage);
+    fireNotification('⏰ Ascend Reminder', customMessage);
   }, seconds * 1000);
 
-  return { success: true, delaySeconds: seconds };
+  return { success: true, delaySeconds: seconds, permission: perm };
 }

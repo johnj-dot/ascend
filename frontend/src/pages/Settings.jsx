@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { LogOut, User, Bell, Smartphone, Palette, Check, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { LogOut, User, Bell, BellRing, Smartphone, Palette, Check, RefreshCw, Wifi, WifiOff, Database } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { useNavigate } from 'react-router-dom';
 import { THEMES, getTheme } from '../utils/themeConfig';
+import { requestAndSendTestNotification, fireNotification, playNotificationSound } from '../utils/notifications';
 
 function Switch({ active, onToggle, theme }) {
   const activeTrack = theme.id === 'midnight'
@@ -24,7 +25,7 @@ function Switch({ active, onToggle, theme }) {
       }`}
     >
       <div
-        className={`w-5 h-5 rounded-full bg-white shadow-md transform transition-transform duration-200 ${
+        className={`w-5 h-5 rounded-full bg-white shadow-md transform transition-all duration-200 ease-spring ${
           active ? 'translate-x-5' : 'translate-x-0'
         }`}
       />
@@ -33,19 +34,21 @@ function Switch({ active, onToggle, theme }) {
 }
 
 function ThemeSwatch({ themeData, isSelected, isDarkApp }) {
-  const clipId = `settings-clip-${themeData.id}`;
+  const clipId = `clip-${themeData.id}`;
   return (
     <div
-      className={`w-11 h-11 rounded-full flex items-center justify-center relative transition-all duration-150 transform group-hover:scale-105 ${
+      className={`relative w-11 h-11 rounded-2xl p-0.5 transition-all duration-150 ${
         isSelected
-          ? `ring-3 ${themeData.ringClass} ring-offset-2 ${isDarkApp ? 'ring-offset-slate-900' : 'ring-offset-white'} scale-105`
-          : 'border border-black/15 dark:border-white/10'
+          ? isDarkApp
+            ? 'ring-2 ring-white ring-offset-2 ring-offset-slate-900 scale-105'
+            : 'ring-2 ring-gray-900 ring-offset-2 ring-offset-white scale-105'
+          : 'hover:scale-105 opacity-80 hover:opacity-100'
       }`}
     >
-      <svg width="44" height="44" viewBox="0 0 44 44" className="rounded-full overflow-hidden block">
+      <svg className="w-full h-full rounded-[14px] overflow-hidden shadow-xs" viewBox="0 0 44 44">
         <defs>
           <clipPath id={clipId}>
-            <circle cx="22" cy="22" r="22" />
+            <rect width="44" height="44" rx="14" />
           </clipPath>
         </defs>
         <g clipPath={`url(#${clipId})`}>
@@ -75,32 +78,39 @@ export default function Settings() {
   const navigate = useNavigate();
 
   const [feedbackMsg, setFeedbackMsg] = useState(null);
+  const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
 
   const theme = getTheme(activeThemeId);
 
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
   const handleToggleNotifications = async () => {
     const nextVal = !settings.notifications;
+    toggleSetting('notifications');
+
     if (nextVal) {
+      playNotificationSound();
       if ('Notification' in window) {
-        if (Notification.permission !== 'granted') {
+        if (Notification.permission === 'default') {
           try {
-            const perm = await Notification.requestPermission();
-            if (perm !== 'granted') {
-              setFeedbackMsg('Push notifications are blocked in your browser settings.');
-              setTimeout(() => setFeedbackMsg(null), 3500);
-              return;
-            }
+            const permPromise = Notification.requestPermission();
+            const timeoutPromise = new Promise(res => setTimeout(() => res('timeout'), 3000));
+            await Promise.race([permPromise, timeoutPromise]);
           } catch {
             // ignore
           }
         }
-        try {
-          new Notification('Ascend Notifications Enabled', {
-            body: 'You will now receive alerts for grade updates and assignments.',
-            icon: '/favicon.svg'
-          });
-        } catch {
-          // ignore
+        if (Notification.permission === 'granted') {
+          await fireNotification('🔔 Ascend Notifications Enabled', 'You will receive alerts for grade updates and assignments.');
         }
       }
       setFeedbackMsg('Push notifications enabled.');
@@ -108,7 +118,16 @@ export default function Settings() {
       setFeedbackMsg('Push notifications disabled.');
     }
     setTimeout(() => setFeedbackMsg(null), 3000);
-    toggleSetting('notifications');
+  };
+
+  const handleTestNotification = async () => {
+    const res = await requestAndSendTestNotification();
+    if (res.permission === 'granted') {
+      setFeedbackMsg('Test notification delivered to system & audio chime played!');
+    } else {
+      setFeedbackMsg(res.message || 'In-app notification chime played successfully!');
+    }
+    setTimeout(() => setFeedbackMsg(null), 3500);
   };
 
   const handleToggleOffline = () => {
@@ -116,10 +135,34 @@ export default function Settings() {
     if (nextVal) {
       setFeedbackMsg('Offline access enabled. Grade profile cached locally.');
     } else {
-      setFeedbackMsg('Offline caching disabled.');
+      setFeedbackMsg('Offline caching disabled. Local cache cleared.');
     }
     setTimeout(() => setFeedbackMsg(null), 3000);
     toggleSetting('offline');
+  };
+
+  const handleVerifyOfflineCache = () => {
+    try {
+      const raw = localStorage.getItem('ascend-storage');
+      if (!raw) {
+        setFeedbackMsg('No cache in local storage.');
+        setTimeout(() => setFeedbackMsg(null), 3500);
+        return;
+      }
+      const parsed = JSON.parse(raw);
+      const studentName = parsed.state?.hacData?.studentName || hacData?.studentName || 'Student';
+      const classesCount = parsed.state?.hacData?.classes?.length ?? (hacData?.classes?.length || 0);
+      if (settings.offline && classesCount > 0) {
+        setFeedbackMsg(`Offline Cache OK: ${classesCount} classes & ${studentName}'s profile cached locally.`);
+      } else if (!settings.offline) {
+        setFeedbackMsg('Offline caching disabled: local academic cache cleared.');
+      } else {
+        setFeedbackMsg('Cache is initialized. Sync to populate full offline profile.');
+      }
+    } catch {
+      setFeedbackMsg('Error reading offline storage.');
+    }
+    setTimeout(() => setFeedbackMsg(null), 3500);
   };
 
   const handleSync = async () => {
@@ -211,26 +254,80 @@ export default function Settings() {
 
           {/* Interactive Toggle Settings */}
           <div className={`${theme.cardBg} rounded-2xl shadow-sm border ${theme.cardBorder} overflow-hidden divide-y ${theme.divideColor} transition-colors duration-200`}>
-            <div className="px-4 py-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Bell size={20} className={theme.isDark ? 'text-slate-400' : 'text-gray-400'} />
-                <div>
-                  <h4 className={`font-bold ${theme.textPrimary} text-sm`}>Push Notifications</h4>
-                  <p className={`text-xs ${theme.textSecondary}`}>Get alerts for new grades & absences</p>
+            {/* Push Notifications */}
+            <div className="px-4 py-4 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Bell size={20} className={theme.isDark ? 'text-slate-400' : 'text-gray-400'} />
+                  <div>
+                    <h4 className={`font-bold ${theme.textPrimary} text-sm`}>Push Notifications</h4>
+                    <p className={`text-xs ${theme.textSecondary}`}>Get alerts for new grades & absences</p>
+                  </div>
                 </div>
+                <Switch active={!!settings.notifications} onToggle={handleToggleNotifications} theme={theme} />
               </div>
-              <Switch active={!!settings.notifications} onToggle={handleToggleNotifications} theme={theme} />
+
+              {settings.notifications && (
+                <div className="pt-1 flex items-center justify-between">
+                  <span className={`text-[11px] ${theme.textMuted}`}>
+                    Status: Active
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleTestNotification}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                      theme.isDark
+                        ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
+                        : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200'
+                    }`}
+                  >
+                    <BellRing size={13} />
+                    <span>Send Test Alert</span>
+                  </button>
+                </div>
+              )}
             </div>
 
-            <div className="px-4 py-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Smartphone size={20} className={theme.isDark ? 'text-slate-400' : 'text-gray-400'} />
-                <div>
-                  <h4 className={`font-bold ${theme.textPrimary} text-sm`}>Offline Access</h4>
-                  <p className={`text-xs ${theme.textSecondary}`}>Cache profile locally for instant loading</p>
+            {/* Offline Access */}
+            <div className="px-4 py-4 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Smartphone size={20} className={theme.isDark ? 'text-slate-400' : 'text-gray-400'} />
+                  <div>
+                    <h4 className={`font-bold ${theme.textPrimary} text-sm`}>Offline Access</h4>
+                    <p className={`text-xs ${theme.textSecondary}`}>Cache profile locally for instant loading</p>
+                  </div>
                 </div>
+                <Switch active={!!settings.offline} onToggle={handleToggleOffline} theme={theme} />
               </div>
-              <Switch active={!!settings.offline} onToggle={handleToggleOffline} theme={theme} />
+
+              <div className="pt-1 flex items-center justify-between">
+                <span className={`text-[11px] flex items-center gap-1.5 ${theme.textMuted}`}>
+                  {isOnline ? (
+                    <>
+                      <Wifi size={13} className="text-emerald-500" />
+                      <span>{settings.offline ? 'Online • Ready for offline use' : 'Online • Offline caching disabled'}</span>
+                    </>
+                  ) : (
+                    <>
+                      <WifiOff size={13} className="text-amber-500" />
+                      <span>Offline • Serving local cache</span>
+                    </>
+                  )}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleVerifyOfflineCache}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                    theme.isDark
+                      ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
+                      : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200'
+                  }`}
+                >
+                  <Database size={13} />
+                  <span>Verify Offline Cache</span>
+                </button>
+              </div>
             </div>
           </div>
 

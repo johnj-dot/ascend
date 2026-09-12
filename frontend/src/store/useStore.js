@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { emitAppEvent, APP_EVENTS } from '../utils/appEvents';
 import { API_BASE_URL } from '../utils/apiConfig';
+import { fireNotification } from '../utils/notifications';
 
 function getActiveMP() {
   const month = new Date().getMonth();
@@ -277,14 +278,23 @@ export const useStore = create(
             });
           }
 
+          // Trigger push notification if enabled
+          const currentSettings = get().localOverrides?.settings;
+          if (currentSettings?.notifications) {
+            fireNotification('Ascend • Data Synchronized', 'All latest grades and attendance records have been updated.');
+          }
+
           emitAppEvent(APP_EVENTS.DATA_SYNCED, mergedData);
           return { success: true };
         } catch (err) {
+          const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
           set({
             syncNotification: {
-              type: 'error',
-              title: 'Sync failed',
-              message: err.message || 'Could not reach Home Access Center. Using last saved data.',
+              type: isOffline ? 'warning' : 'error',
+              title: isOffline ? 'Offline Mode' : 'Sync failed',
+              message: isOffline
+                ? 'Device is offline. Viewing locally cached profile and grades.'
+                : (err.message || 'Could not reach Home Access Center. Using last saved data.'),
               failedSection: 'network',
               timestamp: Date.now()
             }
@@ -332,6 +342,47 @@ export const useStore = create(
         const currentVal = currentSettings[key];
         const nextVal = currentVal === undefined ? false : !currentVal;
         emitAppEvent(APP_EVENTS.THEME_CHANGED, { key, value: nextVal });
+
+        // When offline caching is disabled, immediately scrub cached student profile from persistent storage
+        if (key === 'offline' && !nextVal) {
+          try {
+            const raw = localStorage.getItem('ascend-storage');
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              if (parsed && parsed.state) {
+                parsed.state.hacData = null;
+                parsed.state.credentials = null;
+                parsed.state.previousHacData = null;
+                parsed.state.savedAccounts = [];
+                localStorage.setItem('ascend-storage', JSON.stringify(parsed));
+              }
+            }
+          } catch (e) {
+            console.warn('Could not clear offline cache from localStorage:', e);
+          }
+        }
+
+        // When offline caching is re-enabled, immediately snapshot state into persistent storage
+        if (key === 'offline' && nextVal) {
+          try {
+            localStorage.setItem('ascend-storage', JSON.stringify({
+              state: {
+                ...state,
+                localOverrides: {
+                  ...currentOverrides,
+                  settings: {
+                    ...currentSettings,
+                    offline: true
+                  }
+                }
+              },
+              version: 0
+            }));
+          } catch (e) {
+            console.warn('Could not cache profile to localStorage:', e);
+          }
+        }
+
         return {
           localOverrides: {
             ...currentOverrides,
@@ -470,6 +521,18 @@ export const useStore = create(
     }),
     {
       name: 'ascend-storage',
+      partialize: (state) => {
+        const offlineEnabled = state.localOverrides?.settings?.offline ?? true;
+        if (!offlineEnabled) {
+          // Do NOT persist sensitive student profile or credentials when offline access is disabled
+          return {
+            activeTheme: state.activeTheme,
+            localOverrides: state.localOverrides,
+            completedItemIds: state.completedItemIds
+          };
+        }
+        return state;
+      },
       // Migrate from old gradeforge-storage if present
       storage: {
         getItem: (name) => {
