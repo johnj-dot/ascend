@@ -860,27 +860,38 @@ export async function scrapeHac(username, password, customDistrictUrl = null) {
   }
 
   const $logon = cheerio.load(logonHtml);
-  const verificationToken = $logon('input[name="__RequestVerificationToken"]').val() || '';
-  const viewState = $logon('input[name="__VIEWSTATE"]').val() || '';
-  const viewStateGen = $logon('input[name="__VIEWSTATEGENERATOR"]').val() || '';
-  const eventValidation = $logon('input[name="__EVENTVALIDATION"]').val() || '';
-
-  const userField = $logon('input[name*="UserName" i]').attr('name') || 'LogOnDetails.UserName';
-  const passField = $logon('input[type="password"]').attr('name') || 'LogOnDetails.Password';
 
   const formParams = new URLSearchParams();
-  if (verificationToken) formParams.append('__RequestVerificationToken', verificationToken);
-  if (viewState) formParams.append('__VIEWSTATE', viewState);
-  if (viewStateGen) formParams.append('__VIEWSTATEGENERATOR', viewStateGen);
-  if (eventValidation) formParams.append('__EVENTVALIDATION', eventValidation);
-  formParams.append(userField, username);
-  formParams.append(passField, password);
 
-  const dbSelect = $logon('select[name*="Database" i]');
-  if (dbSelect.length > 0) {
-    const val = dbSelect.find('option[selected]').val() || dbSelect.find('option').first().val();
-    if (val) formParams.append(dbSelect.attr('name'), val);
+  // Gather all form inputs (e.g. __RequestVerificationToken, Type, LocalLogin, SiteCode, Database, VerificationOption)
+  $logon('form input').each((_, el) => {
+    const name = $logon(el).attr('name');
+    const val = $logon(el).attr('value') || '';
+    if (name && !['tempUN', 'tempPW', 'LogOnDetails.UserName', 'LogOnDetails.Password'].includes(name)) {
+      formParams.append(name, val);
+    }
+  });
+
+  // Gather select inputs inside form if any
+  $logon('form select').each((_, el) => {
+    const name = $logon(el).attr('name');
+    const val = $logon(el).find('option[selected]').val() || $logon(el).find('option').first().val() || '';
+    if (name) formParams.set(name, val);
+  });
+
+  // Resolve exact real username and password field names (skipping decoy tempUN / tempPW)
+  let userField = $logon('input[name="LogOnDetails.UserName"]').attr('name');
+  if (!userField) {
+    userField = $logon('input[name*="UserName" i]:not(#tempUN)').attr('name') || 'LogOnDetails.UserName';
   }
+
+  let passField = $logon('input[name="LogOnDetails.Password"]').attr('name');
+  if (!passField) {
+    passField = $logon('input[type="password"]:not(#tempPW)').attr('name') || 'LogOnDetails.Password';
+  }
+
+  formParams.set(userField, username);
+  formParams.set(passField, password);
 
   console.log(`[HAC Scraper] Authenticating student credentials...`);
 

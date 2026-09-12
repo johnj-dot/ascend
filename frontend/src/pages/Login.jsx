@@ -281,9 +281,10 @@ export default function Login() {
         </div>
       )}
 
-      <div className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-emerald-600 mb-2">Ascend</h1>
+      {!showOnboarding && (
+        <div className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold text-emerald-600 mb-2">Ascend</h1>
           <p className="text-gray-500">Student Dashboard & AI Canvas</p>
         </div>
 
@@ -435,6 +436,7 @@ export default function Login() {
           </form>
         )}
       </div>
+      )}
     </div>
   );
 }
