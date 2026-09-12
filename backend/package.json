@@ -11,12 +11,10 @@
   "type": "module",
   "dependencies": {
     "@google/genai": "^2.19.0",
-    "canvas-confetti": "^1.9.4",
     "cheerio": "^1.2.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "groq-sdk": "^1.6.0",
-    "puppeteer": "^25.8.0"
+    "groq-sdk": "^1.6.0"
   }
 }
