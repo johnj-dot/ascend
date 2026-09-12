@@ -1,5 +1,4 @@
 import fs from 'fs';
-import puppeteer from 'puppeteer';
 import * as cheerio from 'cheerio';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
