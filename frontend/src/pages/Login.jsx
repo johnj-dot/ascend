@@ -385,7 +385,7 @@ export default function Login() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="e.g. s123456"
-                className="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition text-sm font-medium"
+                className="w-full px-4 py-3 rounded-2xl bg-white border border-gray-200 text-gray-900 placeholder:text-gray-400 placeholder-gray-400 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition text-sm font-medium"
               />
             </div>
 
@@ -401,7 +401,7 @@ export default function Login() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-4 pr-11 py-3 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition text-sm font-medium"
+                  className="w-full pl-4 pr-11 py-3 rounded-2xl bg-white border border-gray-200 text-gray-900 placeholder:text-gray-400 placeholder-gray-400 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition text-sm font-medium"
                 />
                 <button
                   type="button"
