@@ -31,3 +31,4 @@
 | 27. Midnight Theme Pop-up Adaptations | Done | Adapted OnboardingModal and theme elements to dark mode backgrounds |
 | 28. Individual Assignment GPA What-If & Summary Row Fix | Done | Filtered HAC category summaries, removed modal button, added inline 4-decimal exact grades and live assignment scoring |
 | 29. 4-Decimal Grade & GPA Customize Inputs | Done | Removed assignment count subtitle, added 4-decimal precision to grade and weighted GPA customize inputs |
+| 30. Mobile Bottom Navbar Clipping Fix | Done | Added pb-36 scroll buffer so bottom cards on Overview, Grades, and GPA never clip behind navbar |
