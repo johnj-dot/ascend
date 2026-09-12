@@ -25,3 +25,7 @@
 | 21. Sidebar Navigation Tab (GPA Calculator) | Done | Updated Layout.jsx and App.jsx routing cleanly |
 | 22. Gradeway-Style GPA Calculator UI | Done | Implemented Unweighted (left), Weighted (right), Rank banner, and What-If simulator |
 | 23. Verification via Chrome DevTools MCP & Unit Tests | Done | Verified UI live in Chrome MCP (snapshot + screenshot) and confirmed all tests pass |
+| 24. 4-Decimal GPA & Exact Decimals Precision | Done | Implemented 4-decimal precision across unweighted & weighted GPA, cards, and What-If slider |
+| 25. Exact Decimal Grade Pop-up in Grades.jsx | Done | Created ExactGradeModal showing unrounded 4-decimal average, category weights, and GPA points |
+| 26. Course Title Pollution & Spanish Tier Fixes | Done | Fixed scraper regex and PE word boundary to prevent assignment concatenation and classify Spanish III correctly |
+| 27. Midnight Theme Pop-up Adaptations | Done | Adapted OnboardingModal and theme elements to dark mode backgrounds |
