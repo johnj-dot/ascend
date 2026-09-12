@@ -788,295 +788,229 @@ function parseHacFromHar(harSource) {
 
 // ── Main Scraper ──
 
+// ── Cookie Jar Helper for HTTP Scraping ──
+class CookieJar {
+  constructor() {
+    this.cookies = new Map();
+  }
+
+  setFromHeaders(headers) {
+    if (!headers) return;
+    if (typeof headers.getSetCookie === 'function') {
+      const list = headers.getSetCookie();
+      if (Array.isArray(list)) {
+        for (const cookieStr of list) {
+          this._parseCookie(cookieStr);
+        }
+      }
+    } else {
+      const raw = headers.get ? headers.get('set-cookie') : null;
+      if (raw) {
+        const parts = raw.split(/,(?=\s*[A-Za-z0-9_.-]+=)/);
+        for (const cookieStr of parts) {
+          this._parseCookie(cookieStr);
+        }
+      }
+    }
+  }
+
+  _parseCookie(cookieStr) {
+    if (!cookieStr) return;
+    const [pair] = cookieStr.split(';');
+    const eqIdx = pair.indexOf('=');
+    if (eqIdx > 0) {
+      const name = pair.slice(0, eqIdx).trim();
+      const val = pair.slice(eqIdx + 1).trim();
+      this.cookies.set(name, val);
+    }
+  }
+
+  getCookieHeader() {
+    const list = [];
+    for (const [k, v] of this.cookies.entries()) {
+      list.push(`${k}=${v}`);
+    }
+    return list.join('; ');
+  }
+}
+
+// ── Main Lightweight HTTP Scraper ──
 export async function scrapeHac(username, password, customDistrictUrl = null) {
   const LOGIN_URL = customDistrictUrl || process.env.HAC_URL || 'https://accesscenter.roundrockisd.org/HomeAccess/Account/LogOn';
-  const BASE_URL = LOGIN_URL.replace(/\/Account\/LogOn.*$/i, '');
+  const urlObj = new URL(LOGIN_URL);
+  const basePath = urlObj.pathname.replace(/\/Account\/LogOn.*$/i, '');
+  const BASE_URL = `${urlObj.origin}${basePath}`;
 
-  let browser;
+  const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
+  const jar = new CookieJar();
+
+  console.log(`[HAC Scraper] Connecting to ${LOGIN_URL}...`);
+
+  // Step 1: GET LogOn page to capture session & verification tokens
+  let logonHtml = '';
   try {
-    browser = await puppeteer.launch({
-      headless: 'new',
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    const logonRes = await fetch(LOGIN_URL, {
+      headers: { 'User-Agent': userAgent },
+      redirect: 'follow'
     });
+    jar.setFromHeaders(logonRes.headers);
+    logonHtml = await logonRes.text();
+  } catch (err) {
+    throw new Error(`Unable to reach district HAC portal: ${err.message}`);
+  }
 
-    const page = await browser.newPage();
-    await page.setUserAgent(
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36'
-    );
+  const $logon = cheerio.load(logonHtml);
+  const verificationToken = $logon('input[name="__RequestVerificationToken"]').val() || '';
+  const viewState = $logon('input[name="__VIEWSTATE"]').val() || '';
+  const viewStateGen = $logon('input[name="__VIEWSTATEGENERATOR"]').val() || '';
+  const eventValidation = $logon('input[name="__EVENTVALIDATION"]').val() || '';
 
-    // ── 1. Login ──────────────────────────────────────────────────────────────
-    console.log('[1/7] Logging in...');
-    await withRetry(async () => {
-      await page.goto(LOGIN_URL, { waitUntil: 'networkidle2' });
-      await page.type('#LogOnDetails_UserName', username);
-      await page.type('#LogOnDetails_Password', password);
-      await Promise.all([
-        page.waitForNavigation({ waitUntil: 'networkidle0' }),
-        page.click('#login'),
-      ]);
+  const userField = $logon('input[name*="UserName" i]').attr('name') || 'LogOnDetails.UserName';
+  const passField = $logon('input[type="password"]').attr('name') || 'LogOnDetails.Password';
 
-      if (page.url().includes('LogOn')) {
-        throw new Error('Invalid credentials');
-      }
+  const formParams = new URLSearchParams();
+  if (verificationToken) formParams.append('__RequestVerificationToken', verificationToken);
+  if (viewState) formParams.append('__VIEWSTATE', viewState);
+  if (viewStateGen) formParams.append('__VIEWSTATEGENERATOR', viewStateGen);
+  if (eventValidation) formParams.append('__EVENTVALIDATION', eventValidation);
+  formParams.append(userField, username);
+  formParams.append(passField, password);
+
+  const dbSelect = $logon('select[name*="Database" i]');
+  if (dbSelect.length > 0) {
+    const val = dbSelect.find('option[selected]').val() || dbSelect.find('option').first().val();
+    if (val) formParams.append(dbSelect.attr('name'), val);
+  }
+
+  console.log(`[HAC Scraper] Authenticating student credentials...`);
+
+  // Step 2: POST credentials
+  let postRes;
+  try {
+    postRes = await fetch(LOGIN_URL, {
+      method: 'POST',
+      headers: {
+        'User-Agent': userAgent,
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Cookie': jar.getCookieHeader(),
+        'Referer': LOGIN_URL
+      },
+      body: formParams.toString(),
+      redirect: 'manual'
     });
-    console.log('    ✓ Login success');
+    jar.setFromHeaders(postRes.headers);
+  } catch (err) {
+    throw new Error(`Authentication request failed: ${err.message}`);
+  }
 
-    // ── 2. WeekView (Home View Summary & Live Grades) ──────────────────────────
-    console.log('[2/7] Scraping WeekView & Current Grades...');
-    let weekClasses = [];
+  // Check login response
+  if (postRes.status === 200) {
+    const postHtml = await postRes.text();
+    const $post = cheerio.load(postHtml);
+    const errorMsg = $post('.validation-summary-errors, .field-validation-error, #LogOnDetails_ValidationSummary').text().trim();
+    if (errorMsg || postHtml.includes('LogOnDetails') || postHtml.includes('incorrect') || postHtml.includes('Invalid')) {
+      throw new Error(errorMsg || 'Invalid HAC username or password.');
+    }
+  } else if (postRes.status >= 400) {
+    throw new Error(`HAC server returned error code ${postRes.status}`);
+  }
+
+  const redirectLocation = postRes.headers.get('location');
+  if (redirectLocation) {
+    const followUrl = new URL(redirectLocation, LOGIN_URL).toString();
     try {
-      await page.goto(`${BASE_URL}/Home/WeekView`, { waitUntil: 'domcontentloaded', timeout: 30000 });
-      await new Promise(r => setTimeout(r, 800));
-      const weekHtml = await page.content();
-      weekClasses = scrapeWeekView(weekHtml);
-      if (weekClasses.length > 0) {
-        console.log(`    ✓ ${weekClasses.length} courses extracted from WeekView`);
-      }
+      const followRes = await fetch(followUrl, {
+        headers: {
+          'User-Agent': userAgent,
+          'Cookie': jar.getCookieHeader(),
+          'Referer': LOGIN_URL
+        },
+        redirect: 'follow'
+      });
+      jar.setFromHeaders(followRes.headers);
     } catch (e) {
-      console.warn('    ⚠️ WeekView navigation skipped, continuing to Classes');
+      console.warn('[HAC Scraper] Follow redirect warning:', e.message);
     }
+  }
 
-    // ── 3. Registration (Student Info & Counselor) ───────────────────────────
-    console.log('[3/7] Scraping Registration Info...');
-    const regRes = await withGracefulRetry(async () => {
-      await page.goto(`${BASE_URL}/Content/Student/Registration.aspx`, { waitUntil: 'domcontentloaded', timeout: 30000 });
-      await new Promise(r => setTimeout(r, 600));
-      const regHtml = await page.content();
-      return scrapeRegistration(regHtml);
-    }, res => !res || !res.studentId, 5, 'Registration');
-    const registration = regRes.data;
-    if (!regRes.failed && registration?.studentId) {
-      console.log(`    ✓ Registration: ${registration.studentName || username} (${registration.building || 'District'})`);
+  console.log(`[HAC Scraper] Login verified. Fetching academic records...`);
+
+  const fetchHacPage = async (pageSubpath) => {
+    const targetUrl = `${BASE_URL}/${pageSubpath.replace(/^\//, '')}`;
+    try {
+      const res = await fetch(targetUrl, {
+        headers: {
+          'User-Agent': userAgent,
+          'Cookie': jar.getCookieHeader(),
+          'Referer': `${BASE_URL}/Home/WeekView`
+        },
+        redirect: 'follow'
+      });
+      if (!res.ok) return '';
+      return await res.text();
+    } catch (e) {
+      console.warn(`[HAC Scraper] Warning fetching ${pageSubpath}:`, e.message);
+      return '';
+    }
+  };
+
+  const [regHtml, weekHtml, classesHtml, assignHtml, transHtml, attHtml] = await Promise.all([
+    fetchHacPage('Content/Student/Registration.aspx'),
+    fetchHacPage('Home/WeekView'),
+    fetchHacPage('Content/Student/Classes.aspx'),
+    fetchHacPage('Content/Student/Assignments.aspx'),
+    fetchHacPage('Content/Student/Transcript.aspx'),
+    fetchHacPage('Content/Attendance/MonthlyView.aspx')
+  ]);
+
+  const registration = regHtml ? scrapeRegistration(regHtml) : null;
+  let classes = weekHtml ? scrapeWeekView(weekHtml) : [];
+  if (classesHtml) {
+    const schedClasses = scrapeClasses(classesHtml);
+    if (classes.length === 0) {
+      classes = schedClasses;
     } else {
-      console.log('    ⚠️ Failed to pull Registration info');
-    }
-
-    // ── 4. Classes (Schedule Table) ──────────────────────────────────────────
-    console.log('[4/7] Scraping Classes...');
-    let classes = weekClasses.length > 0 ? [...weekClasses] : [];
-    let classesHtml = '';
-    const classRes = await withGracefulRetry(async () => {
-      try {
-        await page.goto(`${BASE_URL}/Content/Student/Classes.aspx`, { waitUntil: 'domcontentloaded', timeout: 25000 });
-        await new Promise(r => setTimeout(r, 600));
-        classesHtml = await page.content();
-        const res = scrapeClasses(classesHtml);
-        if (res && res.length > 0) return res;
-      } catch (e) {}
-
-      try {
-        await page.goto(`${BASE_URL}/Classes/Schedule`, { waitUntil: 'domcontentloaded', timeout: 25000 });
-        await new Promise(r => setTimeout(r, 800));
-
-        const iframeSrc = await page.evaluate(() => {
-          const frame = document.querySelector('#sg-legacy-iframe, iframe[src*="Classes"], iframe[src*="Schedule"]');
-          return frame ? frame.src : null;
-        });
-
-        if (iframeSrc) {
-          const targetUrl = iframeSrc.startsWith('http') ? iframeSrc : `${BASE_URL}${iframeSrc.startsWith('/') ? '' : '/'}${iframeSrc}`;
-          await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 25000 });
-          await new Promise(r => setTimeout(r, 600));
-        }
-
-        classesHtml = await page.content();
-        return scrapeClasses(classesHtml);
-      } catch (e) {
-        return [];
-      }
-    }, res => !res || res.length === 0, 5, 'Classes');
-
-    if (classRes.data && classRes.data.length > 0) {
-      classRes.data.forEach(sc => {
-        const matched = classes.find(wc => wc.id === sc.id || wc.name.toLowerCase() === sc.name.toLowerCase());
-        if (matched) {
-          matched.period = sc.period || matched.period;
-          matched.teacher = sc.teacher || matched.teacher;
-          matched.room = sc.room || matched.room;
-          matched.days = sc.days || matched.days;
-          matched.markingPeriods = sc.markingPeriods || matched.markingPeriods;
+      schedClasses.forEach(sc => {
+        const match = classes.find(c => c.id === sc.id || c.name.toLowerCase() === sc.name.toLowerCase());
+        if (match) {
+          match.teacher = sc.teacher || match.teacher;
+          match.room = sc.room || match.room;
+          match.period = sc.period || match.period;
+          match.days = sc.days || match.days;
+          match.markingPeriods = sc.markingPeriods || match.markingPeriods;
         } else {
           classes.push(sc);
         }
       });
-      console.log(`    ✓ ${classes.length} active classes verified`);
     }
-
-    // ── 5. Assignments ────────────────────────────────────────────────────────
-    console.log('[5/7] Scraping Assignments & Course Averages...');
-    try {
-      let assignHtml = '';
-      try {
-        await page.goto(`${BASE_URL}/Content/Student/Assignments.aspx`, { waitUntil: 'domcontentloaded', timeout: 25000 });
-        await new Promise(r => setTimeout(r, 800));
-        assignHtml = await page.content();
-      } catch (e) {}
-
-      if (!assignHtml || !assignHtml.includes('AssignmentClass')) {
-        await page.goto(`${BASE_URL}/Classes/Classwork`, { waitUntil: 'domcontentloaded', timeout: 25000 });
-        await new Promise(r => setTimeout(r, 800));
-
-        const iframeSrc = await page.evaluate(() => {
-          const frame = document.querySelector('#sg-legacy-iframe, iframe[src*="Assignments"], iframe[src*="Classwork"]');
-          return frame ? frame.src : null;
-        });
-        if (iframeSrc) {
-          const targetUrl = iframeSrc.startsWith('http') ? iframeSrc : `${BASE_URL}${iframeSrc.startsWith('/') ? '' : '/'}${iframeSrc}`;
-          await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 25000 });
-          await new Promise(r => setTimeout(r, 800));
-        }
-        assignHtml = await page.content();
-      }
-
-      // Attempt to toggle "Show All Averages" if present so header averages populate
-      try {
-        const showAvgBtn = await page.$('#plnMain_btnShowAverage, #btnShowAverage, button[title*="Show all"], button[title*="averages"]');
-        if (showAvgBtn) {
-          await showAvgBtn.click();
-          await new Promise(r => setTimeout(r, 800));
-          assignHtml = await page.content();
-        }
-      } catch (e) {}
-
-      scrapeAssignments(assignHtml, classes);
-      const withGrades = classes.filter(c => c.average !== null);
-      console.log(`    ✓ Assignments & course averages scraped (${classes.length} classes total, ${withGrades.length} with live grades)`);
-    } catch (e) {
-      console.warn('    ⚠️ Assignments.aspx scrape completed with fallback:', e.message);
-    }
-
-    // ── 6. Transcript ─────────────────────────────────────────────────────────
-    console.log('[6/7] Scraping Transcript...');
-    const transRes = await withGracefulRetry(async () => {
-      await page.goto(`${BASE_URL}/Content/Student/Transcript.aspx`, { waitUntil: 'domcontentloaded', timeout: 30000 });
-      await new Promise(r => setTimeout(r, 800));
-      const transcriptHtml = await page.content();
-      return scrapeTranscript(transcriptHtml);
-    }, res => !res || !res.years || res.years.length === 0, 5, 'Transcript');
-    
-    const transcriptData = transRes.data;
-    const years = transcriptData?.years || [];
-    const gpa = transcriptData?.gpa || { weighted: null, unweighted: null, rank: null, classSize: null };
-    if (!transRes.failed && years.length > 0) {
-      console.log(`    ✓ ${years.length} transcript years found`);
-    } else {
-      console.log('    ⚠️ Failed to pull Transcript records');
-    }
-
-    // Attempt to pull direct PrintGPADetailReport if rank or gpa is null
-    if (!gpa.rank || !gpa.weighted) {
-      try {
-        await page.goto(`${BASE_URL}/Grades/PrintGPADetailReport`, { waitUntil: 'domcontentloaded', timeout: 10000 });
-        await new Promise(r => setTimeout(r, 600));
-        const reportHtml = await page.content();
-        if (reportHtml && (reportHtml.includes('Rank') || reportHtml.includes('GPA'))) {
-          const detailRes = scrapeTranscript(reportHtml);
-          if (detailRes?.gpa?.rank) gpa.rank = detailRes.gpa.rank;
-          if (detailRes?.gpa?.classSize) gpa.classSize = detailRes.gpa.classSize;
-          if (detailRes?.gpa?.weighted) gpa.weighted = detailRes.gpa.weighted;
-          if (detailRes?.gpa?.unweighted) gpa.unweighted = detailRes.gpa.unweighted;
-          console.log(`    ✓ Exposed rank from PrintGPADetailReport: Rank ${gpa.rank}`);
-        }
-      } catch (e) {}
-    }
-
-    // ── 7. Attendance (Multi-Month) ──────────────────────────────────────────
-    console.log('[7/7] Scraping Attendance (Multi-Month)...');
-    const attRes = await withGracefulRetry(async () => {
-      let allRecords = [];
-      let currentMonthHtml = '';
-
-      try {
-        await page.goto(`${BASE_URL}/Content/Attendance/MonthlyView.aspx`, { waitUntil: 'domcontentloaded', timeout: 25000 });
-        await new Promise(r => setTimeout(r, 600));
-        currentMonthHtml = await page.content();
-        allRecords = scrapeAttendance(currentMonthHtml);
-      } catch (e) {}
-
-      if (!allRecords || allRecords.length === 0) {
-        try {
-          await page.goto(`${BASE_URL}/Attendance/MonthView`, { waitUntil: 'domcontentloaded', timeout: 25000 });
-          await new Promise(r => setTimeout(r, 800));
-
-          const iframeSrc = await page.evaluate(() => {
-            const frame = document.querySelector('#sg-legacy-iframe, iframe[src*="MonthlyView"], iframe[src*="Attendance"]');
-            return frame ? frame.src : null;
-          });
-
-          if (iframeSrc) {
-            const targetUrl = iframeSrc.startsWith('http') ? iframeSrc : `${BASE_URL}${iframeSrc.startsWith('/') ? '' : '/'}${iframeSrc}`;
-            await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 25000 });
-            await new Promise(r => setTimeout(r, 600));
-          }
-
-          currentMonthHtml = await page.content();
-          allRecords = scrapeAttendance(currentMonthHtml);
-        } catch (e) {}
-      }
-
-      // Also scrape previous month (e.g. August)
-      try {
-        const prevLink = await page.$('#plnMain_cldAttendance a[title*="previous month"], #plnMain_cldAttendance a[title*="Previous"], a[title*="Go to the previous month"], a[title*="previous month"]');
-        if (prevLink) {
-          await Promise.all([
-            page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => {}),
-            prevLink.click(),
-          ]);
-          await new Promise(r => setTimeout(r, 600));
-          const prevHtml = await page.content();
-          const prevRecords = scrapeAttendance(prevHtml);
-          if (prevRecords && prevRecords.length > 0) {
-            const existingKeys = new Set(allRecords.map(r => `${r.year}-${r.month}-${r.day}`));
-            prevRecords.forEach(pr => {
-              const k = `${pr.year}-${pr.month}-${pr.day}`;
-              if (!existingKeys.has(k)) {
-                existingKeys.add(k);
-                allRecords.push(pr);
-              }
-            });
-          }
-        }
-      } catch (e) {
-        // Previous month navigation optional
-      }
-
-      return allRecords;
-    }, res => !res || res.length === 0, 5, 'Attendance');
-    const attendance = attRes.data || [];
-    if (!attRes.failed && attendance.length > 0) {
-      console.log(`    ✓ ${attendance.length} total multi-month attendance records found`);
-    } else {
-      console.log('    ⚠️ Failed to pull Attendance records');
-    }
-
-    // ── Track Missing / Failed Sections ──────────────────────────────────────
-    const warnings = [];
-    if (regRes.failed || !registration || !registration.studentId) {
-      warnings.push({ section: 'Registration', message: 'Failed to pull registration & counselor details.' });
-    }
-    if (transRes.failed || years.length === 0) {
-      warnings.push({ section: 'Transcript', message: 'Failed to pull transcript academic years.' });
-    }
-    if (attRes.failed || attendance.length === 0) {
-      warnings.push({ section: 'Attendance', message: 'Failed to pull attendance records.' });
-    }
-
-    return buildStudentProfile({
-      registration,
-      classes,
-      transcript: { years, gpa },
-      attendance,
-      warnings,
-    });
-
-  } catch (err) {
-    console.error('[ERROR]', err.message);
-    throw err;
-  } finally {
-    if (browser) await browser.close();
   }
+
+  if (assignHtml && classes.length > 0) {
+    scrapeAssignments(assignHtml, classes);
+  }
+
+  const transcript = transHtml ? scrapeTranscript(transHtml) : { years: [], gpa: { weighted: null, unweighted: null, rank: null, classSize: null } };
+  const attendance = attHtml ? scrapeAttendance(attHtml) : [];
+
+  const warnings = [];
+  if (!registration || !registration.studentId) {
+    warnings.push({ section: 'Registration', message: 'Failed to pull registration details.' });
+  }
+  if (!transcript || !transcript.years || transcript.years.length === 0) {
+    warnings.push({ section: 'Transcript', message: 'Failed to pull transcript records.' });
+  }
+  if (!attendance || attendance.length === 0) {
+    warnings.push({ section: 'Attendance', message: 'Failed to pull attendance records.' });
+  }
+
+  return buildStudentProfile({
+    registration,
+    classes,
+    transcript,
+    attendance,
+    warnings
+  });
 }
 
 // Exports for unit testing without live network
 export { scrapeWeekView, scrapeClasses, scrapeAssignments, scrapeTranscript, scrapeAttendance, scrapeRegistration, gradeToLetter, parseHacFromHar, withGracefulRetry };
-

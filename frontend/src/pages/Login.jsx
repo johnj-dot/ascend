@@ -25,6 +25,8 @@ export default function Login() {
   const [warnings, setWarnings] = useState([]);
   const [pendingProfile, setPendingProfile] = useState(null);
 
+  const [pendingLogin, setPendingLogin] = useState(null);
+
   const currentStepRef = useRef(0);
   const progressTimerRef = useRef(null);
 
@@ -38,31 +40,25 @@ export default function Login() {
     d.domain.toLowerCase().includes(districtSearch.toLowerCase())
   );
 
-  const runScrapeFlow = async (userToAuth, passToAuth, districtObj, isNewAccount = true) => {
+  const startSyncProcess = async (userToAuth, passToAuth, districtObj) => {
     setLoading(true);
     setError('');
     setWarnings([]);
     setPendingProfile(null);
     currentStepRef.current = 0;
-
-    if (isNewAccount) {
-      setShowOnboarding(true);
-      setOnboardingStep('theme');
-    } else {
-      setShowOnboarding(true);
-      setOnboardingStep('progress');
-      setProgress(20);
-      setStatusText(`Logging into ${districtObj?.name || 'Home Access Center'}...`);
-    }
+    setShowOnboarding(true);
+    setOnboardingStep('progress');
+    setProgress(15);
+    setStatusText(`Connecting to ${districtObj?.name || 'Home Access Center'}...`);
 
     const steps = [
-      { progress: 15, text: `Connecting to ${districtObj?.name || 'Home Access Center'}...`, delay: 3000 },
-      { progress: 32, text: 'Authenticating student credentials...', delay: 3000 },
-      { progress: 50, text: 'Extracting student registration & profile...', delay: 3000 },
-      { progress: 68, text: 'Fetching active classes & course averages...', delay: 3000 },
-      { progress: 82, text: 'Scraping assignments & due dates...', delay: 3000 },
-      { progress: 92, text: 'Retrieving multi-year transcript & attendance...', delay: 3000 },
-      { progress: 96, text: 'Finalizing sync & preparing dashboard...', delay: 0 },
+      { progress: 15, text: `Connecting to ${districtObj?.name || 'Home Access Center'}...`, delay: 2500 },
+      { progress: 35, text: 'Authenticating student credentials...', delay: 2500 },
+      { progress: 55, text: 'Extracting student registration & profile...', delay: 2500 },
+      { progress: 75, text: 'Fetching active classes & course averages...', delay: 2500 },
+      { progress: 88, text: 'Scraping assignments & due dates...', delay: 2500 },
+      { progress: 95, text: 'Retrieving multi-year transcript & attendance...', delay: 2500 },
+      { progress: 98, text: 'Finalizing sync & preparing dashboard...', delay: 0 },
     ];
 
     const advanceProgress = (idx) => {
@@ -93,15 +89,15 @@ export default function Login() {
       if (progressTimerRef.current) clearTimeout(progressTimerRef.current);
 
       if (!response.ok) {
-        throw new Error(data.error || 'Login failed. Please check credentials.');
+        throw new Error(data.error || 'Login failed. Please check credentials and district.');
       }
 
-      // Fast-forward through any remaining steps rapidly (180ms each)
+      // Fast-forward through any remaining steps rapidly (150ms each)
       const startIdx = currentStepRef.current;
       for (let s = startIdx + 1; s < steps.length; s++) {
         setProgress(steps[s].progress);
         setStatusText(steps[s].text);
-        await new Promise(r => setTimeout(r, 180));
+        await new Promise(r => setTimeout(r, 150));
       }
 
       setProgress(100);
@@ -142,7 +138,7 @@ export default function Login() {
     if (pendingProfile?.creds) {
       const { username: u, password: p, districtUrl } = pendingProfile.creds;
       const matchedDist = DISTRICTS.find(d => d.url === districtUrl) || selectedDistrict;
-      runScrapeFlow(u, p, matchedDist, false);
+      startSyncProcess(u, p, matchedDist);
     }
   };
 
@@ -157,12 +153,14 @@ export default function Login() {
   const handleFormSubmit = (e) => {
     e.preventDefault();
     if (!username || !password) return;
-    runScrapeFlow(username, password, selectedDistrict, true);
+    setPendingLogin({ username, password, district: selectedDistrict });
+    setShowOnboarding(true);
+    setOnboardingStep('theme');
   };
 
   const handleSavedAccountClick = (acc) => {
     const matchedDist = DISTRICTS.find(d => d.name === acc.school || d.url === acc.districtUrl) || selectedDistrict;
-    runScrapeFlow(acc.username, acc.password, matchedDist, false);
+    startSyncProcess(acc.username, acc.password, matchedDist);
   };
 
   const hasSavedAccounts = savedAccounts.length > 0 && !showAddForm;
@@ -179,7 +177,9 @@ export default function Login() {
           onRetry={handleWarningRetry}
           onContinue={handleWarningContinue}
           onCompleteTheme={() => {
-            setOnboardingStep('progress');
+            if (pendingLogin) {
+              startSyncProcess(pendingLogin.username, pendingLogin.password, pendingLogin.district);
+            }
           }}
         />
       )}

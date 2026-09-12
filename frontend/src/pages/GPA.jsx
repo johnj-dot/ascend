@@ -201,7 +201,7 @@ export default function GPA() {
                 </span>
               </div>
               <p className={`text-xs ${theme.textSecondary} font-medium mt-1`}>
-                Round Rock High School grading scale · Interactive What-If simulation
+                {hacData?.building || hacData?.school || 'District'} grading scale · Interactive What-If simulation
               </p>
             </div>
 

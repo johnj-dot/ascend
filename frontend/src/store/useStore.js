@@ -14,7 +14,7 @@ function getActiveMP() {
 
 // Helper: Merges newly scraped HAC data with previous data if any section was not found or failed
 function mergeWithPrevious(newData, prevData) {
-  if (!prevData) {
+  if (!prevData || (prevData.studentId && newData.studentId && prevData.studentId !== newData.studentId)) {
     const activeMP = getActiveMP();
     if (newData?.classes) {
       newData.classes = newData.classes.map(c => ({
@@ -158,8 +158,8 @@ export const useStore = create(
         });
       },
       
-      logout: () => set((state) => ({
-        previousHacData: state.hacData || state.previousHacData,
+      logout: () => set(() => ({
+        previousHacData: null,
         hacData: null,
         credentials: null,
         completedItemIds: [],
@@ -183,44 +183,25 @@ export const useStore = create(
           ? credentials
           : (savedAccounts || []).find(a => a.username && a.password) || null;
 
+        if (!activeCreds) {
+          set({
+            isSyncing: false,
+            syncNotification: {
+              type: 'error',
+              title: 'Sign In Required',
+              message: 'Active login credentials needed to sync latest grades from HAC.',
+              timestamp: Date.now()
+            }
+          });
+          return { success: false, error: 'Active login credentials needed' };
+        }
+
         set({ 
           isSyncing: true,
           syncNotification: { type: 'syncing', title: 'Syncing...', message: 'Connecting to Home Access Center' } 
         });
 
         try {
-          if (!activeCreds) {
-            // Offline / demo sync fallback
-            const latestRes = await fetch(`${API_BASE_URL}/api/hac/latest`);
-            const latestData = await latestRes.json();
-            if (latestData.success && latestData.data) {
-              const currentData = get().hacData;
-              const mergedData = mergeWithPrevious(latestData.data, currentData);
-              set({
-                previousHacData: currentData,
-                hacData: mergedData,
-                syncNotification: {
-                  type: 'success',
-                  title: 'Sync successful',
-                  message: 'Latest grades & attendance updated.',
-                  timestamp: Date.now()
-                }
-              });
-              emitAppEvent(APP_EVENTS.DATA_SYNCED, mergedData);
-              return { success: true };
-            }
-            // If offline and no network / mock
-            set({
-              syncNotification: {
-                type: 'success',
-                title: 'Data up to date',
-                message: 'All local grades and tasks synchronized.',
-                timestamp: Date.now()
-              }
-            });
-            return { success: true };
-          }
-
           const res = await fetch(`${API_BASE_URL}/api/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
