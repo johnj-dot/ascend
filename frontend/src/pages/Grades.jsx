@@ -317,7 +317,7 @@ export default function Grades() {
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
-                    {/* Average pill: rounded average, with exact 4-decimal grade shown below when class is clicked */}
+                    {/* Average pill: rounded average */}
                     <div className="flex flex-col items-center">
                       <div
                         className={`w-14 h-10 flex items-center justify-center rounded-xl font-black text-base shadow-xs ${gradeColor(classAvg, theme.isDark)}`}
@@ -325,11 +325,6 @@ export default function Grades() {
                       >
                         {classAvg !== null ? `${Math.round(classAvg)}` : '—'}
                       </div>
-                      {isOpen && exactDetails.exactAverage !== null && (
-                        <span className="text-[10px] font-black text-emerald-500 font-mono mt-1 animate-in fade-in">
-                          {exactDetails.exactAverage.toFixed(4)}%
-                        </span>
-                      )}
                     </div>
                     {/* Letter grade */}
                     <span className={`text-xs font-bold ${theme.textMuted} w-4`}>
