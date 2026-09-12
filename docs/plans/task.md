@@ -19,8 +19,9 @@
 | 15. Dynamic Subject & Level Curriculum Intelligence | Done | Created curriculumEngine.js to parse and ground any course level (Spanish 1/2/3/AP, Calc AB/BC, Physics 1/C, etc.) |
 | 16. Verification & Build | Done | Verified clean build (exit 0) |
 | 17. Git Commit of Current Codebase | Done | Staged and committed all pending changes (c1c14f0) |
-| 18. Brainstorm GPA Calculator & Rank Requirements | In Progress | Clarify grading scale, weighting rules, and rank display |
-| 19. Setup Git Worktree | Pending | Configure isolated workspace per user preference |
-| 20. Backend Rank & Transcript Data Enrichment | Pending | Connect transcript, cumulative GPA, and class rank |
-| 21. Gradeway-Style GPA Calculator UI | Pending | Implement Unweighted (left), Weighted (right), and interactive class grade breakdown |
-| 22. End-to-End Verification | Pending | Verify calculations, build, and test suite |
+| 18. Brainstorm GPA Calculator & Rank Requirements | Done | Clarified 6.0/4.0 RRISD scale, AP & Advanced equality, elective exclusions, and rank endpoints |
+| 19. Implement GPA Engine with TDD | Done | Created frontend/src/utils/gpaEngine.js with 5 passing unit tests |
+| 20. Backend Rank & Transcript Data Enrichment | Done | Added PrintGPADetailReport scrape and merged transcript/registration fixtures |
+| 21. Sidebar Navigation Tab (GPA Calculator) | Done | Updated Layout.jsx and App.jsx routing cleanly |
+| 22. Gradeway-Style GPA Calculator UI | Done | Implemented Unweighted (left), Weighted (right), Rank banner, and What-If simulator |
+| 23. Verification via Chrome DevTools MCP & Unit Tests | Done | Verified UI live in Chrome MCP (snapshot + screenshot) and confirmed all tests pass |

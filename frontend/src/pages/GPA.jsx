@@ -27,8 +27,8 @@ export default function GPA() {
   const theme = getTheme(activeTheme);
 
   // Extract raw HAC classes and transcript data
-  const rawClasses = useStore(state => state.hacData?.classes || []);
-  const rawTranscript = useStore(state => state.hacData?.transcript || { years: [], gpa: {} });
+  const rawClasses = hacData?.classes || [];
+  const rawTranscript = hacData?.transcript || { years: [], gpa: {} };
   const officialGpa = rawTranscript.gpa || {};
 
   // Interactive state for courses: allows "What-If" grade edits and tier overrides
@@ -78,9 +78,9 @@ export default function GPA() {
 
   // Format historical transcript courses if student enables cumulative calculation
   const historicalCourses = useMemo(() => {
-    if (!includeTranscript || !rawTranscript.years) return [];
+    if (!includeTranscript || !rawTranscript?.years) return [];
     const courses = [];
-    rawTranscript.years.forEach(yr => {
+    (rawTranscript.years || []).forEach(yr => {
       (yr.courses || []).forEach(c => {
         const finalGrade = parseFloat(c.finalGrade || c.sem1 || c.sem2 || 100);
         const tier = classifyCourse(c.description || '').id;
@@ -274,20 +274,20 @@ export default function GPA() {
           </div>
 
           {/* CLASS RANK & COHORT STANDING PILL */}
-          <div className={`mt-4 p-4 rounded-2xl border ${theme.cardBorder} ${theme.cardBg} flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs`}>
+          <div className={`mt-4 p-4 rounded-2xl border ${theme.cardBorder} ${theme.cardBg} flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-sm`}>
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
                 <Award size={16} />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="font-extrabold text-slate-200">Class Rank:</span>
-                  <span className="font-black text-amber-400">{rankInfo.label}</span>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700">
+                  <span className={`font-extrabold ${theme.isDark ? 'text-slate-200' : 'text-slate-900'}`}>Class Rank:</span>
+                  <span className="font-black text-amber-500">{rankInfo.label}</span>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${theme.isDark ? 'bg-slate-800 text-slate-300 border-slate-700' : 'bg-slate-100 text-slate-700 border-slate-200'} border`}>
                     {rankInfo.quartile}
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-400 mt-0.5">
+                <p className={`text-[11px] ${theme.textSecondary} mt-0.5`}>
                   {rankInfo.isOfficial
                     ? 'Official district class rank verified from HAC transcript.'
                     : 'Round Rock ISD releases official ranks in 10th/11th grade. Current standing is dynamically computed.'}
@@ -295,8 +295,8 @@ export default function GPA() {
               </div>
             </div>
 
-            <div className="shrink-0 flex items-center gap-1.5 text-[11px] text-slate-400">
-              <Info size={13} className="text-slate-500" />
+            <div className={`shrink-0 flex items-center gap-1.5 text-[11px] ${theme.textSecondary}`}>
+              <Info size={13} className="text-slate-400" />
               <span>RRISD Top 10% Auto-Admit Policy</span>
             </div>
           </div>
@@ -436,7 +436,7 @@ export default function GPA() {
                           const val = e.target.value === '' ? null : parseFloat(e.target.value);
                           setEditedGrades(prev => ({ ...prev, [c.id]: val }));
                         }}
-                        className="w-14 px-2 py-1 rounded-xl bg-slate-900 border border-slate-700 text-center font-black text-sm text-white focus:border-emerald-500 focus:outline-none"
+                        className={`w-14 px-2 py-1 rounded-xl ${theme.isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'} border text-center font-black text-sm focus:border-emerald-500 focus:outline-none`}
                       />
                       <span className="text-xs font-bold text-slate-400">%</span>
                     </div>
@@ -444,15 +444,15 @@ export default function GPA() {
 
                   {/* Point Breakdown Pill */}
                   <div className="flex items-center gap-2 text-xs shrink-0 self-end sm:self-auto">
-                    <div className="px-3 py-1.5 rounded-xl bg-slate-900/80 border border-slate-800 text-slate-300 flex items-center gap-2">
-                      <span>UW: <strong className="text-emerald-400">{uwPoint !== null ? uwPoint.toFixed(1) : '—'}</strong> pts</span>
-                      <span className="text-slate-600">|</span>
+                    <div className={`px-3 py-1.5 rounded-xl ${theme.isDark ? 'bg-slate-900/80 border-slate-800 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'} border flex items-center gap-2`}>
+                      <span>UW: <strong className="text-emerald-500 font-bold">{uwPoint !== null ? uwPoint.toFixed(1) : '—'}</strong> pts</span>
+                      <span className="opacity-30">|</span>
                       <span>
                         W:{' '}
                         {wPoint !== null ? (
-                          <strong className="text-teal-300">{wPoint.toFixed(2)} pts</strong>
+                          <strong className="text-teal-500 font-bold">{wPoint.toFixed(2)} pts</strong>
                         ) : (
-                          <span className="text-slate-500 text-[11px]">Excluded (Unweighted)</span>
+                          <span className="text-slate-400 text-[11px]">Excluded (Unweighted)</span>
                         )}
                       </span>
                     </div>
