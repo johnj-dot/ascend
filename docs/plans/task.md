@@ -1,4 +1,4 @@
-﻿# Task Tracker
+# Task Tracker
 
 | Task | Status | Description |
 |---|---|---|
@@ -18,3 +18,9 @@
 | 14. Fixed 3D Card Flip (Zero Mirrored Text) | Done | Added explicit transformStyle, backfaceVisibility, and rotateY inline styles to fix reverse text rendering |
 | 15. Dynamic Subject & Level Curriculum Intelligence | Done | Created curriculumEngine.js to parse and ground any course level (Spanish 1/2/3/AP, Calc AB/BC, Physics 1/C, etc.) |
 | 16. Verification & Build | Done | Verified clean build (exit 0) |
+| 17. Git Commit of Current Codebase | Done | Staged and committed all pending changes (c1c14f0) |
+| 18. Brainstorm GPA Calculator & Rank Requirements | In Progress | Clarify grading scale, weighting rules, and rank display |
+| 19. Setup Git Worktree | Pending | Configure isolated workspace per user preference |
+| 20. Backend Rank & Transcript Data Enrichment | Pending | Connect transcript, cumulative GPA, and class rank |
+| 21. Gradeway-Style GPA Calculator UI | Pending | Implement Unweighted (left), Weighted (right), and interactive class grade breakdown |
+| 22. End-to-End Verification | Pending | Verify calculations, build, and test suite |
