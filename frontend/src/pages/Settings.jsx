@@ -268,22 +268,27 @@ export default function Settings() {
               </div>
 
               {settings.notifications && (
-                <div className="pt-1 flex items-center justify-between">
-                  <span className={`text-[11px] ${theme.textMuted}`}>
-                    Status: Active
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleTestNotification}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
-                      theme.isDark
-                        ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
-                        : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200'
-                    }`}
-                  >
-                    <BellRing size={13} />
-                    <span>Send Test Alert</span>
-                  </button>
+                <div className="pt-1 flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <span className={`text-[11px] ${theme.textMuted}`}>
+                      Status: Active (System & Audio)
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleTestNotification}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                        theme.isDark
+                          ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
+                          : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200'
+                      }`}
+                    >
+                      <BellRing size={13} />
+                      <span>Send Test Alert</span>
+                    </button>
+                  </div>
+                  <p className={`text-[10px] ${theme.textMuted} leading-tight`}>
+                    Tip: On iPhone/iPad, tap Share ➔ "Add to Home Screen" to receive background push notifications.
+                  </p>
                 </div>
               )}
             </div>

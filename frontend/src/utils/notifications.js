@@ -81,7 +81,7 @@ export async function fireNotification(title, body, options = {}) {
       if (navigator.serviceWorker.ready) {
         reg = await Promise.race([
           navigator.serviceWorker.ready,
-          new Promise(res => setTimeout(() => res(null), 1000))
+          new Promise(res => setTimeout(() => res(null), 2500))
         ]);
       }
       if (!reg) {

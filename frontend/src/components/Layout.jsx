@@ -157,13 +157,13 @@ export default function Layout() {
         {/* Top-Center Sync Notification Pop-up with slide-up exit */}
         {syncNotification && (
           <div
-            className={`fixed top-4 left-1/2 -translate-x-1/2 z-[100] max-w-md w-[92%] sm:w-auto min-w-[320px] transition-all duration-500 ease-in-out pointer-events-auto ${
+            className={`fixed top-3 left-1/2 -translate-x-1/2 z-[100] w-[94%] max-w-md transition-all duration-500 ease-in-out pointer-events-auto ${
               isDismissing
                 ? '-translate-y-[220%] opacity-0 pointer-events-none scale-95'
                 : 'translate-y-0 opacity-100 scale-100 animate-in fade-in slide-in-from-top-4 duration-300'
             }`}
           >
-            <div className={`px-4 py-3 rounded-2xl shadow-xl border flex items-center justify-between gap-3.5 backdrop-blur-md ${
+            <div className={`px-4 py-3 rounded-2xl shadow-xl border flex items-start justify-between gap-3 backdrop-blur-md ${
               theme.isDark
                 ? syncNotification.type === 'success'
                   ? 'bg-emerald-950/95 text-emerald-100 border-emerald-500/40 shadow-emerald-950/40'
@@ -180,31 +180,31 @@ export default function Layout() {
                   ? `${theme.lightBgClass} ${theme.textPrimary} border ${theme.borderClass} shadow-md`
                   : 'bg-red-50 text-red-950 border-red-200 shadow-red-950/10'
             }`}>
-              <div className="flex items-center gap-2.5 min-w-0">
+              <div className="flex items-start gap-3 min-w-0 flex-1">
                 {syncNotification.type === 'success' && (
-                  <CheckCircle2 size={19} className="text-emerald-500 shrink-0" />
+                  <CheckCircle2 size={19} className="text-emerald-500 shrink-0 mt-0.5" />
                 )}
                 {syncNotification.type === 'warning' && (
-                  <AlertTriangle size={19} className="text-amber-500 shrink-0" />
+                  <AlertTriangle size={19} className="text-amber-500 shrink-0 mt-0.5" />
                 )}
                 {syncNotification.type === 'error' && (
-                  <AlertCircle size={19} className="text-red-500 shrink-0" />
+                  <AlertCircle size={19} className="text-red-500 shrink-0 mt-0.5" />
                 )}
                 {syncNotification.type === 'syncing' && (
-                  <RefreshCw size={17} className={`${theme.textClass} animate-spin shrink-0`} />
+                  <RefreshCw size={17} className={`${theme.textClass} animate-spin shrink-0 mt-0.5`} />
                 )}
                 
-                <div className="flex flex-col min-w-0">
-                  <span className="font-extrabold text-xs leading-tight truncate">
+                <div className="flex flex-col min-w-0 flex-1">
+                  <span className="font-extrabold text-xs leading-snug break-words">
                     {syncNotification.title}
                   </span>
-                  <span className={`text-[11px] ${theme.isDark ? 'opacity-80' : 'text-gray-600'} leading-tight truncate mt-0.5`}>
+                  <span className={`text-[11px] ${theme.isDark ? 'opacity-85' : 'text-gray-700'} leading-relaxed break-words mt-0.5`}>
                     {syncNotification.message}
                   </span>
                 </div>
               </div>
 
-              <div className="flex items-center gap-1.5 shrink-0">
+              <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
                 {(syncNotification.type === 'warning' || syncNotification.type === 'error') && (
                   <button
                     onClick={handleSync}
