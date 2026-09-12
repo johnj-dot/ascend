@@ -39,6 +39,7 @@ export default function GPA() {
   const [editedGrades, setEditedGrades] = useState({});
   const [editedAssignments, setEditedAssignments] = useState({}); // { [courseId]: { [assignmentIndex]: number } }
   const [tierOverrides, setTierOverrides] = useState({});
+  const [inputStrings, setInputStrings] = useState({}); // Active string values while editing inputs
   const [expandedCourseId, setExpandedCourseId] = useState(null);
   const [includeTranscript, setIncludeTranscript] = useState(false);
   const [activeTierDropdown, setActiveTierDropdown] = useState(null);
@@ -48,6 +49,7 @@ export default function GPA() {
     setEditedGrades({});
     setEditedAssignments({});
     setTierOverrides({});
+    setInputStrings({});
   };
 
   // Close dropdown on click outside
@@ -409,11 +411,6 @@ export default function GPA() {
                       <div className="flex items-center gap-2 text-xs text-slate-400 mt-0.5 flex-wrap">
                         {c.teacher && <span>{c.teacher} ·</span>}
                         <span>Exact: <strong className="text-emerald-500 font-mono font-bold">{c.grade.toFixed(4)}%</strong></span>
-                        {c.assignments?.length > 0 && (
-                          <span className="text-[11px] text-slate-500 hover:text-emerald-400 underline cursor-pointer">
-                            ({c.assignments.length} assignments · click to edit)
-                          </span>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -475,10 +472,10 @@ export default function GPA() {
                       type="range"
                       min="50"
                       max="100"
-                      step="0.1"
-                      value={c.grade || 100}
+                      step="0.0001"
+                      value={typeof c.grade === 'number' ? c.grade : 100}
                       onChange={(e) => {
-                        const val = parseFloat(e.target.value);
+                        const val = parseFloat(parseFloat(e.target.value).toFixed(4));
                         setEditedGrades(prev => ({ ...prev, [c.id]: val }));
                       }}
                       className="w-full accent-emerald-500 h-2 bg-slate-700 rounded-lg cursor-pointer transition-all"
@@ -488,31 +485,76 @@ export default function GPA() {
                         type="number"
                         min="0"
                         max="105"
-                        step="0.01"
-                        value={c.grade !== null && c.grade !== undefined ? (typeof c.grade === 'number' ? Math.round(c.grade * 10000) / 10000 : c.grade) : ''}
+                        step="0.0001"
+                        value={inputStrings[`${c.id}-grade`] ?? (c.grade !== null && c.grade !== undefined ? (typeof c.grade === 'number' ? c.grade.toFixed(4) : c.grade) : '')}
                         onChange={(e) => {
-                          const val = e.target.value === '' ? null : parseFloat(e.target.value);
-                          setEditedGrades(prev => ({ ...prev, [c.id]: val }));
+                          const text = e.target.value;
+                          setInputStrings(prev => ({ ...prev, [`${c.id}-grade`]: text }));
+                          const val = text === '' ? null : parseFloat(text);
+                          if (val !== null && !isNaN(val)) {
+                            setEditedGrades(prev => ({ ...prev, [c.id]: val }));
+                          }
                         }}
-                        className={`w-16 px-2 py-1 rounded-xl ${theme.isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'} border text-center font-black text-xs sm:text-sm focus:border-emerald-500 focus:outline-none`}
+                        onBlur={() => {
+                          setInputStrings(prev => {
+                            const next = { ...prev };
+                            delete next[`${c.id}-grade`];
+                            return next;
+                          });
+                        }}
+                        className={`w-24 px-2 py-1 rounded-xl ${theme.isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'} border text-center font-mono font-black text-xs sm:text-sm focus:border-emerald-500 focus:outline-none`}
+                        title="Customize course grade (4 decimal places)"
                       />
                       <span className="text-xs font-bold text-slate-400">%</span>
                     </div>
                   </div>
 
-                  {/* Point Breakdown Pill */}
+                  {/* Point Breakdown Pill with GPA Customize */}
                   <div className="flex items-center gap-2 text-xs shrink-0 self-end sm:self-auto">
                     <div className={`px-3 py-1.5 rounded-xl ${theme.isDark ? 'bg-slate-900/80 border-slate-800 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'} border flex items-center gap-2`}>
                       <span>UW: <strong className="text-emerald-500 font-bold">{uwPoint !== null ? uwPoint.toFixed(4) : '—'}</strong> pts</span>
                       <span className="opacity-30">|</span>
-                      <span>
-                        W:{' '}
+                      <div className="flex items-center gap-1">
+                        <span>W:</span>
                         {wPoint !== null ? (
-                          <strong className="text-teal-500 font-bold">{wPoint.toFixed(4)} pts</strong>
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="number"
+                              min="0"
+                              max={c.tier === 'ap_advanced' ? "6.5000" : "5.5000"}
+                              step="0.0001"
+                              value={inputStrings[`${c.id}-gpa`] ?? wPoint.toFixed(4)}
+                              onChange={(e) => {
+                                const text = e.target.value;
+                                setInputStrings(prev => ({ ...prev, [`${c.id}-gpa`]: text }));
+                                const pts = text === '' ? null : parseFloat(text);
+                                if (pts !== null && !isNaN(pts)) {
+                                  // Convert weighted GPA points back to grade percentage
+                                  // AP/Advanced: pts = (grade - 40) / 10 => grade = (pts * 10) + 40
+                                  // On-Level: pts = (grade - 50) / 10 => grade = (pts * 10) + 50
+                                  const targetGrade = c.tier === 'ap_advanced' ? (pts * 10) + 40 : (pts * 10) + 50;
+                                  const roundedGrade = parseFloat(targetGrade.toFixed(4));
+                                  setEditedGrades(prev => ({ ...prev, [c.id]: roundedGrade }));
+                                }
+                              }}
+                              onBlur={() => {
+                                setInputStrings(prev => {
+                                  const next = { ...prev };
+                                  delete next[`${c.id}-gpa`];
+                                  return next;
+                                });
+                              }}
+                              className={`w-20 px-1 py-0.5 rounded-lg border text-center font-mono font-bold text-xs focus:border-teal-500 focus:outline-none ${
+                                theme.isDark ? 'bg-slate-800 border-slate-700 text-teal-400' : 'bg-white border-slate-300 text-teal-600'
+                              }`}
+                              title="Customize weighted GPA points (up to 4 decimal places)"
+                            />
+                            <strong className="text-teal-500 font-bold">pts</strong>
+                          </div>
                         ) : (
                           <span className="text-slate-400 text-[11px]">Excluded (Unweighted)</span>
                         )}
-                      </span>
+                      </div>
                     </div>
 
                     {c.isEdited && (
@@ -527,6 +569,12 @@ export default function GPA() {
                           setEditedAssignments(prev => {
                             const next = { ...prev };
                             delete next[c.id];
+                            return next;
+                          });
+                          setInputStrings(prev => {
+                            const next = { ...prev };
+                            delete next[`${c.id}-grade`];
+                            delete next[`${c.id}-gpa`];
                             return next;
                           });
                         }}
@@ -584,11 +632,11 @@ export default function GPA() {
                                   type="number"
                                   min="0"
                                   max="150"
-                                  step="0.5"
+                                  step="0.0001"
                                   value={currentScore}
                                   placeholder="—"
                                   onChange={(e) => handleAssignmentScoreChange(c.id, aIdx, e.target.value, c.rawCourse)}
-                                  className={`w-14 px-1.5 py-0.5 rounded-lg border text-center font-bold text-xs focus:border-emerald-500 focus:outline-none ${
+                                  className={`w-18 px-1.5 py-0.5 rounded-lg border text-center font-bold text-xs focus:border-emerald-500 focus:outline-none ${
                                     isScoreEdited
                                       ? 'border-amber-500 text-amber-400 bg-amber-950/20'
                                       : theme.isDark ? 'border-slate-700 bg-slate-800 text-white' : 'border-slate-300 bg-white text-slate-900'
