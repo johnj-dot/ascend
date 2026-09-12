@@ -111,6 +111,35 @@ export default function Layout() {
             </NavLink>
           ))}
         </div>
+        {/* Desktop Sidebar Footer Actions */}
+        <div className={`p-3 border-t ${theme.sidebarBorder} space-y-1.5`}>
+          <button
+            type="button"
+            onClick={handleSync}
+            disabled={isSyncing}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+              theme.isDark
+                ? 'bg-slate-800/80 hover:bg-slate-800 text-slate-200'
+                : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+            }`}
+            title="Sync latest data from Home Access Center"
+          >
+            <div className="flex items-center gap-2">
+              <RefreshCw size={14} className={isSyncing ? 'animate-spin text-emerald-500' : ''} />
+              <span>{isSyncing ? 'Syncing...' : 'Sync Data'}</span>
+            </div>
+            <span className="text-[10px] text-slate-500 font-mono">HAC</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer text-rose-400 hover:bg-rose-500/10"
+            title="Log out of account"
+          >
+            <LogOut size={14} />
+            <span>Logout</span>
+          </button>
+        </div>
       </nav>
 
       {/* Main Content Area */}
@@ -199,36 +228,43 @@ export default function Layout() {
           </div>
         )}
 
-        {/* Floating Top-Right Corner Action Buttons - Fixed z-[90] for instant clickability */}
-        <div className="fixed top-5 right-5 z-[90] flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleSync}
-            disabled={isSyncing}
-            className={`flex items-center gap-1.5 font-bold px-3.5 py-2 rounded-2xl text-xs backdrop-blur-md transition shadow-md border cursor-pointer ${
-              theme.isDark
-                ? 'bg-slate-900/90 hover:bg-slate-800 text-white border-slate-700/80'
-                : 'bg-white/90 hover:bg-white text-gray-900 border-gray-200/80 shadow-gray-900/5'
-            }`}
-            title="Sync latest data from Home Access Center"
-          >
-            <RefreshCw size={13} className={`shrink-0 ${isSyncing ? 'animate-spin text-emerald-500' : ''}`} />
-            <span>{isSyncing ? 'Syncing...' : 'Sync Data'}</span>
-          </button>
-          <button
-            type="button"
-            onClick={handleLogout}
-            className={`flex items-center gap-1.5 font-bold px-3 py-2 rounded-2xl text-xs backdrop-blur-md transition shadow-md border cursor-pointer ${
-              theme.isDark
-                ? 'bg-slate-900/90 hover:bg-slate-800 text-white border-slate-700/80'
-                : 'bg-white/90 hover:bg-white text-gray-900 border-gray-200/80 shadow-gray-900/5'
-            }`}
-            title="Log out of account"
-          >
-            <LogOut size={14} className="shrink-0" />
-            <span className="hidden sm:inline">Logout</span>
-          </button>
-        </div>
+        {/* Mobile Slim App Header - In-flow, never floating over content */}
+        <header className={`md:hidden px-4 py-2.5 flex items-center justify-between border-b ${theme.cardBorder} ${theme.sidebarBg} shrink-0`}>
+          <div className="flex items-center gap-2">
+            <div className={`w-7 h-7 rounded-xl ${theme.bgClass} flex items-center justify-center text-white text-xs font-black shadow-xs`}>
+              ▲
+            </div>
+            <span className={`font-black text-sm tracking-tight ${theme.isDark ? 'text-white' : theme.textClass}`}>
+              Ascend
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleSync}
+              disabled={isSyncing}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer ${
+                theme.isDark
+                  ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-750'
+                  : 'bg-white border-gray-200 text-gray-700 shadow-2xs hover:bg-gray-50'
+              }`}
+              title="Sync data from HAC"
+            >
+              <RefreshCw size={12} className={isSyncing ? 'animate-spin text-emerald-500' : ''} />
+              <span>{isSyncing ? 'Syncing...' : 'Sync'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className={`p-1.5 rounded-xl border text-rose-400 hover:bg-rose-500/10 transition cursor-pointer ${
+                theme.isDark ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-gray-200 shadow-2xs'
+              }`}
+              title="Log out"
+            >
+              <LogOut size={14} />
+            </button>
+          </div>
+        </header>
 
         <div className="w-full h-full">
           <Outlet />

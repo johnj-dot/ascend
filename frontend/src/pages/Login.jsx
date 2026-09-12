@@ -4,6 +4,7 @@ import { useStore } from '../store/useStore';
 import { DISTRICTS, DEFAULT_DISTRICT } from '../utils/districts';
 import { LogIn, User, Loader2, ChevronRight, ChevronDown, Plus, Trash2, ArrowLeft, Building2, Search, Check, X, Eye, EyeOff } from 'lucide-react';
 import OnboardingModal from '../components/OnboardingModal';
+import { API_BASE_URL } from '../utils/apiConfig';
 
 export default function Login() {
   const [username, setUsername] = useState('');
@@ -78,7 +79,7 @@ export default function Login() {
     advanceProgress(0);
 
     try {
-      const response = await fetch('http://localhost:3001/api/login', {
+      const response = await fetch(`${API_BASE_URL}/api/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

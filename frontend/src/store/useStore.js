@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { emitAppEvent, APP_EVENTS } from '../utils/appEvents';
+import { API_BASE_URL } from '../utils/apiConfig';
 
 function getActiveMP() {
   const month = new Date().getMonth();
@@ -189,7 +190,7 @@ export const useStore = create(
         try {
           if (!activeCreds) {
             // Offline / demo sync fallback
-            const latestRes = await fetch('http://localhost:3001/api/hac/latest');
+            const latestRes = await fetch(`${API_BASE_URL}/api/hac/latest`);
             const latestData = await latestRes.json();
             if (latestData.success && latestData.data) {
               const currentData = get().hacData;
@@ -219,7 +220,7 @@ export const useStore = create(
             return { success: true };
           }
 
-          const res = await fetch('http://localhost:3001/api/login', {
+          const res = await fetch(`${API_BASE_URL}/api/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

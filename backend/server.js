@@ -215,6 +215,16 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
+// ── Serve Frontend Static Files in Production ──
+const frontendDist = path.join(__dirname, '../frontend/dist');
+if (fs.existsSync(frontendDist)) {
+  app.use(express.static(frontendDist));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) return next();
+    res.sendFile(path.join(frontendDist, 'index.html'));
+  });
+}
+
 const server = app.listen(PORT, () => {
   console.log(`GradeForge Server running on port ${PORT}`);
 });
