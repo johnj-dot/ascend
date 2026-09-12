@@ -941,6 +941,23 @@ export async function scrapeHac(username, password, customDistrictUrl = null) {
       console.log('    ⚠️ Failed to pull Transcript records');
     }
 
+    // Attempt to pull direct PrintGPADetailReport if rank or gpa is null
+    if (!gpa.rank || !gpa.weighted) {
+      try {
+        await page.goto(`${BASE_URL}/Grades/PrintGPADetailReport`, { waitUntil: 'domcontentloaded', timeout: 10000 });
+        await new Promise(r => setTimeout(r, 600));
+        const reportHtml = await page.content();
+        if (reportHtml && (reportHtml.includes('Rank') || reportHtml.includes('GPA'))) {
+          const detailRes = scrapeTranscript(reportHtml);
+          if (detailRes?.gpa?.rank) gpa.rank = detailRes.gpa.rank;
+          if (detailRes?.gpa?.classSize) gpa.classSize = detailRes.gpa.classSize;
+          if (detailRes?.gpa?.weighted) gpa.weighted = detailRes.gpa.weighted;
+          if (detailRes?.gpa?.unweighted) gpa.unweighted = detailRes.gpa.unweighted;
+          console.log(`    ✓ Exposed rank from PrintGPADetailReport: Rank ${gpa.rank}`);
+        }
+      } catch (e) {}
+    }
+
     // ── 7. Attendance (Multi-Month) ──────────────────────────────────────────
     console.log('[7/7] Scraping Attendance (Multi-Month)...');
     const attRes = await withGracefulRetry(async () => {
