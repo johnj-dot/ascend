@@ -74,7 +74,7 @@ export default function ClassDocsModal({ onClose, preselectedClassId = null }) {
           onClick={e => e.stopPropagation()}
           className={`${
             isDark ? 'bg-[#0f172a] text-white border-slate-800' : 'bg-white text-gray-900 border-gray-100'
-          } rounded-3xl max-w-4xl w-full shadow-2xl border overflow-hidden flex flex-col my-auto max-h-[90vh] animate-in fade-in zoom-in duration-150`}
+          } rounded-3xl max-w-4xl w-full shadow-2xl border overflow-hidden flex flex-col my-auto max-h-[90vh] animate-slide-up`}
         >
           
           {/* ── Top Header Bar ── */}
@@ -154,7 +154,7 @@ export default function ClassDocsModal({ onClose, preselectedClassId = null }) {
                         className="fixed inset-0 z-20 cursor-default" 
                         onClick={() => setShowCourseMenu(false)} 
                       />
-                      <div className={`absolute left-0 top-full mt-2 w-72 rounded-2xl border shadow-xl z-30 py-2 max-h-72 overflow-y-auto custom-scrollbar ${
+                      <div className={`absolute left-0 top-full mt-2 w-72 rounded-2xl border shadow-xl z-30 py-2 max-h-72 overflow-y-auto custom-scrollbar animate-slide-down ${
                         isDark ? 'bg-[#0b1120] border-slate-700 text-white' : 'bg-white border-gray-200 text-gray-900 shadow-2xl'
                       }`}>
                         <div className={`px-3.5 py-1.5 text-[10px] font-extrabold uppercase tracking-wider ${

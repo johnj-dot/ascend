@@ -92,7 +92,7 @@ function mergeWithPrevious(newData, prevData) {
 
   // If attendance is missing/empty in new data, fallback to previous attendance (never wipe to 0)
   if (!merged.attendance || merged.attendance.length === 0) {
-    if (prevData.attendance && prevData.attendance.length > 0) {
+    if (prevData?.attendance && prevData.attendance.length > 0) {
       merged.attendance = prevData.attendance;
       merged._fallbackAttendance = true;
     }
@@ -108,7 +108,7 @@ export const useStore = create(
       hacData: null,
       previousHacData: null,
       credentials: null,
-      savedAccounts: [], // [{ username, password, studentName, school }]
+      savedAccounts: [], // [{ username, password, studentName, school, cachedProfile }]
       activeTheme: 'midnight',
       completedItemIds: [],
       syncWarnings: null, // [{ section, message }]
@@ -126,11 +126,12 @@ export const useStore = create(
       
       // Actions
       login: (data, creds = null) => {
-        const currentData = get().hacData;
         const currentSaved = get().savedAccounts || [];
+        const savedMatch = creds?.username ? currentSaved.find(a => a.username === creds.username) : null;
+        const currentData = get().hacData || get().previousHacData || savedMatch?.cachedProfile || null;
         const mergedData = mergeWithPrevious(data, currentData);
 
-        // Update or add saved account record
+        // Update or add saved account record with cached profile
         let newSaved = [...currentSaved];
         if (creds?.username) {
           const idx = newSaved.findIndex(a => a.username === creds.username);
@@ -140,13 +141,14 @@ export const useStore = create(
             studentName: mergedData.studentName || 'Student',
             school: mergedData.school || 'School District',
             lastLogin: new Date().toISOString(),
+            cachedProfile: mergedData,
           };
           if (idx >= 0) newSaved[idx] = accObj;
           else newSaved.push(accObj);
         }
 
         set({
-          previousHacData: currentData,
+          previousHacData: currentData || mergedData,
           hacData: mergedData,
           credentials: creds,
           savedAccounts: newSaved,
@@ -154,7 +156,15 @@ export const useStore = create(
         });
       },
       
-      logout: () => set({ hacData: null, previousHacData: null, credentials: null, completedItemIds: [], syncWarnings: null, syncNotification: null, isSyncing: false }),
+      logout: () => set((state) => ({
+        previousHacData: state.hacData || state.previousHacData,
+        hacData: null,
+        credentials: null,
+        completedItemIds: [],
+        syncWarnings: null,
+        syncNotification: null,
+        isSyncing: false
+      })),
 
       clearSyncWarnings: () => set({ syncWarnings: null }),
       setSyncNotification: (notif) => set({ syncNotification: notif }),

@@ -34,26 +34,45 @@ function isFutureDate(d, month, year, today) {
 }
 
 function parseAttendancePeriods(codeStr) {
-  if (!codeStr) return [];
+  if (!codeStr || typeof codeStr !== 'string') return [];
   const periods = [];
-  const regex = /period:\s*(\d+)\s+Attendance:\s*([^)]*?)(?=(?:period:|\)|$))/gi;
+  
+  // Regex to extract each period block, e.g. "period: 01 Attendance: Present", "period: 01, Attendance: Present", "period: 01Attendance: Present"
+  const regex = /(?:period|per)[\s:#]*([0-9a-zA-Z]+)[,\s]*(?:Attendance\s*[:\s]*)?([^,\r\n;]+?)(?=(?:,\s*)?(?:period|per)|\r|\n|;|$)/gi;
   let match;
   while ((match = regex.exec(codeStr)) !== null) {
-    const periodNum = match[1];
-    const rawStatus = match[2].trim();
+    const periodNum = match[1].trim();
+    let rawStatus = match[2].trim();
+    rawStatus = rawStatus.replace(/^[:\-–—]\s*/, '').replace(/[,\r\n]/g, '').trim();
+    if (!rawStatus) continue;
+
     const info = codeInfo(rawStatus);
     periods.push({
       period: periodNum,
       rawStatus,
-      label: info?.label || rawStatus,
-      color: info?.color || 'bg-gray-400',
+      label: info?.label || (rawStatus.toLowerCase().includes('present') ? 'Present' : rawStatus),
+      color: info?.color || (rawStatus.toLowerCase().includes('present') ? 'bg-emerald-500' : 'bg-gray-400'),
     });
   }
+
+  // Fallback: If no periods were matched but codeStr has text, provide single breakdown
+  if (periods.length === 0 && codeStr.trim()) {
+    const info = codeInfo(codeStr);
+    if (info) {
+      periods.push({
+        period: 'All',
+        rawStatus: codeStr,
+        label: info.label,
+        color: info.color,
+      });
+    }
+  }
+
   return periods;
 }
 
 // ── Exact Attendance Tab Calendar Component ───────────────────────────────────
-function AttendanceOverviewCalendar({ attendance = [], theme }) {
+function AttendanceOverviewCalendar({ attendance = [], classes = [], theme }) {
   const today = new Date();
   const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [selectedDay, setSelectedDay] = useState(null);
@@ -63,14 +82,24 @@ function AttendanceOverviewCalendar({ attendance = [], theme }) {
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-  const isScrapedMonth = month === today.getMonth() && year === today.getFullYear();
+  const viewMonthName = MONTHS[month].toLowerCase();
+  const viewYearStr = String(year);
+
   const dayMap = {};
-  if (isScrapedMonth) {
-    attendance.forEach(({ day, code }) => {
-      const n = parseInt(day, 10);
-      if (!isNaN(n)) dayMap[n] = code;
-    });
-  }
+  attendance.forEach((rec) => {
+    const d = parseInt(rec.day, 10);
+    if (isNaN(d)) return;
+
+    const rMonth = String(rec.month || '').toLowerCase().trim();
+    const rYear = String(rec.year || '').trim();
+
+    const matchesMonth = !rMonth || rMonth === viewMonthName || rMonth.startsWith(viewMonthName.slice(0, 3));
+    const matchesYear = !rYear || rYear === viewYearStr;
+
+    if (matchesMonth && matchesYear) {
+      dayMap[d] = rec.code || rec.raw || '';
+    }
+  });
 
   const cells = [];
   for (let i = 0; i < firstDay; i++) cells.push(null);
@@ -136,14 +165,25 @@ function AttendanceOverviewCalendar({ attendance = [], theme }) {
                       Period Breakdown ({periods.length} Periods)
                     </label>
                     <div className={`divide-y ${theme.divideColor} rounded-2xl border ${theme.cardBorder} overflow-hidden ${theme.isDark ? 'bg-slate-900/50' : 'bg-gray-50/50'}`}>
-                      {periods.map((p, idx) => (
-                        <div key={idx} className="px-4 py-2.5 flex items-center justify-between">
-                          <span className={`text-xs font-bold ${theme.textPrimary}`}>Period {p.period}</span>
-                          <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full text-white ${p.color}`}>
-                            {p.label}
-                          </span>
-                        </div>
-                      ))}
+                      {periods.map((p, idx) => {
+                        const matchedClass = classes.find(c =>
+                          c.period === p.period ||
+                          c.period?.replace(/^0+/, '') === p.period?.replace(/^0+/, '')
+                        );
+                        return (
+                          <div key={idx} className="px-4 py-2.5 flex items-center justify-between">
+                            <div className="flex flex-col min-w-0 pr-2">
+                              <span className={`text-xs font-bold ${theme.textPrimary}`}>
+                                {p.period === 'All' ? 'Full Day' : `Period ${p.period}`}
+                                {matchedClass?.name && <span className={`font-normal ${theme.textSecondary}`}> · {matchedClass.name}</span>}
+                              </span>
+                            </div>
+                            <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full text-white ${p.color} shrink-0`}>
+                              {p.label}
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 ) : (
@@ -443,6 +483,7 @@ export default function Overview() {
           {/* Exact Attendance Tab Calendar */}
           <AttendanceOverviewCalendar 
             attendance={hacData?.attendance || []} 
+            classes={hacData?.classes || []}
             theme={theme} 
           />
 

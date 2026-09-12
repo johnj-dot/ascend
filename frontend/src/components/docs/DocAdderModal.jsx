@@ -137,7 +137,7 @@ export default function DocAdderModal({ onClose, preselectedClassId = null }) {
         onClick={(e) => e.stopPropagation()}
         className={`${
           isDark ? 'bg-[#0f172a] text-white border-slate-800' : 'bg-white text-gray-900 border-gray-100'
-        } rounded-3xl w-full max-w-xl md:max-w-2xl shadow-2xl animate-in fade-in zoom-in duration-200 border flex flex-col my-auto max-h-[92vh] overflow-hidden relative`}
+        } rounded-3xl w-full max-w-xl md:max-w-2xl shadow-2xl animate-slide-up border flex flex-col my-auto max-h-[92vh] overflow-hidden relative`}
       >
         
         {/* Top Header Bar */}
@@ -199,7 +199,7 @@ export default function DocAdderModal({ onClose, preselectedClassId = null }) {
 
         {/* ── Sub-View 1: Select Course Drawer (Gradeway UI Clone) ── */}
         {pickerView === 'course' && (
-          <div className={`p-5 md:p-6 overflow-y-auto custom-scrollbar space-y-3 flex-1 ${isDark ? 'bg-[#0b1120]' : 'bg-gray-50/50'}`}>
+          <div className={`p-5 md:p-6 overflow-y-auto custom-scrollbar space-y-3 flex-1 animate-slide-in-right ${isDark ? 'bg-[#0b1120]' : 'bg-gray-50/50'}`}>
             
             {/* Section Header */}
             <div className={`${isDark ? 'bg-slate-800/80 text-slate-300' : 'bg-gray-100 text-gray-600'} py-2.5 px-4 rounded-xl text-center`}>
@@ -262,7 +262,7 @@ export default function DocAdderModal({ onClose, preselectedClassId = null }) {
 
         {/* ── Sub-View 2: Select Document Type Drawer (Gradeway UI Clone) ── */}
         {pickerView === 'type' && (
-          <div className={`p-5 md:p-6 overflow-y-auto custom-scrollbar space-y-2.5 flex-1 ${isDark ? 'bg-[#0b1120]' : 'bg-gray-50/50'}`}>
+          <div className={`p-5 md:p-6 overflow-y-auto custom-scrollbar space-y-2.5 flex-1 animate-slide-in-right ${isDark ? 'bg-[#0b1120]' : 'bg-gray-50/50'}`}>
             {DOCUMENT_TYPES.map(t => {
               const isSel = selectedType?.id === t.id;
               return (

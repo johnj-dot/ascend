@@ -65,13 +65,20 @@ if (classesHtml) {
   console.log('  SKIP — extracted_299.html not found');
 }
 
-// ── Test 2: Assignments ──
-console.log('\n[ Assignments ]');
+// ── Test 2: Assignments & Live Grade Extraction ──
+console.log('\n[ Assignments & Live Grade Extraction ]');
 const assignHtml = readFixture('extracted_220.html');
-if (assignHtml && classesHtml) {
-  const classes = scrapeClasses(classesHtml);
+if (assignHtml) {
+  // Test with empty initial classes array - scrapeAssignments must discover all classes from Assignments page
+  const discoveredClasses = [];
+  scrapeAssignments(assignHtml, discoveredClasses);
+  assert('Discovers classes from Assignments HTML when empty', discoveredClasses.length >= 8, `got ${discoveredClasses.length}`);
+  
+  const classes = classesHtml ? scrapeClasses(classesHtml) : [...discoveredClasses];
   scrapeAssignments(assignHtml, classes);
-  const withAssignments = classes.filter(c => c.assignments.length > 0);
+  assert('Maintains all classes after scrapeAssignments', classes.length >= 8, `got ${classes.length}`);
+  
+  const withAssignments = classes.filter(c => c.assignments && c.assignments.length > 0);
   assert('At least 1 class has assignments', withAssignments.length > 0, `${withAssignments.length} classes with assignments`);
   const first = withAssignments[0]?.assignments[0];
   if (first) {
@@ -79,9 +86,9 @@ if (assignHtml && classesHtml) {
     assert('Assignment has dateDue', !!first.dateDue, first.dateDue);
     assert('Assignment has category', !!first.category, first.category);
   }
-  console.log(`    Classes with assignments: ${withAssignments.map(c => c.name).join(', ')}`);
+  console.log(`    Discovered classes: ${classes.map(c => c.name).join(', ')}`);
 } else {
-  console.log('  SKIP — extracted_220.html or extracted_299.html not found');
+  console.log('  SKIP — extracted_220.html not found');
 }
 
 // ── Test 3: Multi-Year Transcript & GPA/Rank ──
@@ -124,17 +131,44 @@ if (regPath) {
 
 // ── Test 5: Attendance ──
 console.log('\n[ Attendance ]');
-const attendanceHtml = readFixture('extracted_148.html');
+const attendanceHtml = readFixture('Attendance_extracted_69.html') || readFixture('extracted_148.html');
 if (attendanceHtml) {
   const records = scrapeAttendance(attendanceHtml);
   assert('Returns array', Array.isArray(records));
-  assert('No crash on empty calendar', true);
-  console.log(`    Attendance records: ${records.length}`);
+  assert('Extracts calendar attendance days', records.length > 0, `got ${records.length}`);
+  const day19 = records.find(r => r.day === 19);
+  assert('Day 19 record extracted', !!day19);
+  if (day19) {
+    assert('Day 19 has period information', day19.raw.includes('period') || day19.code.includes('period'));
+    assert('Day 19 has status present', day19.status === 'present');
+  }
+  console.log(`    Attendance records: ${records.length} days found`);
 } else {
-  console.log('  SKIP — extracted_148.html not found');
+  console.log('  SKIP — Attendance HTML not found');
 }
 
-// ── Test 6: Grade Letter Conversion ──
+// ── Test 6: 5-Attempt Retry Mechanism ──
+console.log('\n[ Retry Mechanism (5 attempts) ]');
+import { withGracefulRetry } from './hacScraper.js';
+let attemptsMade = 0;
+const retryTestResult = await withGracefulRetry(async () => {
+  attemptsMade++;
+  if (attemptsMade < 5) return null;
+  return ['success_data'];
+}, res => !res || res.length === 0, 5, 'TestStep', 10);
+
+assert('Executes up to 5 attempts', attemptsMade === 5, `expected 5, got ${attemptsMade}`);
+assert('Succeeds on 5th attempt', retryTestResult.failed === false && retryTestResult.data[0] === 'success_data');
+
+let failedAttempts = 0;
+const failureResult = await withGracefulRetry(async () => {
+  failedAttempts++;
+  return [];
+}, res => !res || res.length === 0, 5, 'FailedStep', 10);
+assert('Fails gracefully after exactly 5 attempts', failedAttempts === 5, `expected 5, got ${failedAttempts}`);
+assert('Flags step as failed', failureResult.failed === true);
+
+// ── Test 7: Grade Letter Conversion ──
 console.log('\n[ Grade Letter Conversion ]');
 assert('100 → A', gradeToLetter(100) === 'A');
 assert('90  → A', gradeToLetter(90)  === 'A');

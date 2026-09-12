@@ -119,6 +119,21 @@ app.get('/api/hac/latest', (req, res) => {
   res.status(404).json({ error: 'No synced HAC data found.' });
 });
 
+// Helper: Persist latest synced student profile to disk cache
+function saveCachedProfile(data) {
+  if (!data) return;
+  try {
+    const dataDir = path.join(__dirname, 'data');
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+    const cachePath = path.join(dataDir, 'cached_student_profile.json');
+    fs.writeFileSync(cachePath, JSON.stringify(data, null, 2), 'utf8');
+  } catch (err) {
+    console.warn('[Cache Saver] Error writing cached_student_profile.json:', err.message);
+  }
+}
+
 // API Endpoint to authenticate and scrape HAC
 app.post('/api/login', async (req, res) => {
   const { username, password, districtUrl } = req.body;
@@ -129,13 +144,37 @@ app.post('/api/login', async (req, res) => {
 
   try {
     console.log(`Initiating HAC scraping for user: ${username} (District URL: ${districtUrl || 'default'})...`);
-    const profileData = await scrapeHac(username, password, districtUrl);
+    let profileData = await scrapeHac(username, password, districtUrl);
+    
+    // Automatically preserve previous attendance or profile records if new scrape had partial misses
+    const previousProfile = loadLatestHarData();
+    if (previousProfile) {
+      if ((!profileData.attendance || profileData.attendance.length === 0) && previousProfile.attendance?.length > 0) {
+        console.log(`    ↳ Preserved ${previousProfile.attendance.length} attendance records from previous data.`);
+        profileData.attendance = previousProfile.attendance;
+      }
+      if ((!profileData.classes || profileData.classes.length === 0) && previousProfile.classes?.length > 0) {
+        profileData.classes = previousProfile.classes;
+      }
+      if ((!profileData.transcript?.years || profileData.transcript.years.length === 0) && previousProfile.transcript?.years?.length > 0) {
+        profileData.transcript = previousProfile.transcript;
+      }
+      if (!profileData.registration?.studentId && previousProfile.registration?.studentId) {
+        profileData.registration = previousProfile.registration;
+        profileData.studentName = profileData.studentName || previousProfile.studentName;
+        profileData.school = profileData.school || previousProfile.school;
+      }
+    }
+
+    // Persist latest profile to disk
+    saveCachedProfile(profileData);
+
     res.json({ success: true, data: profileData });
   } catch (error) {
     console.warn('Live HAC Scraping unavailable, checking for updated local HAR archives:', error.message);
     const harProfile = loadLatestHarData();
     if (harProfile) {
-      console.log(`✓ Serving freshly synced student profile from gradeUpdate.har (${harProfile.classes.length} classes, ${harProfile.upcoming.length} upcoming tasks)`);
+      console.log(`✓ Serving freshly synced student profile (${harProfile.classes?.length || 0} classes, ${harProfile.upcoming?.length || 0} upcoming tasks)`);
       return res.json({ success: true, data: harProfile });
     }
     res.status(500).json({ error: error.message || 'Failed to authenticate with HAC' });

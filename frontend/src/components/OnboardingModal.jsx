@@ -72,7 +72,7 @@ export default function OnboardingModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/65 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl w-full max-w-4xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200 border border-gray-100 flex flex-col md:flex-row min-h-[500px]">
+      <div className="bg-white rounded-3xl w-full max-w-4xl overflow-hidden shadow-2xl animate-slide-up border border-gray-100 flex flex-col md:flex-row min-h-[500px]">
 
         {/* ── Mode 1: Theme Selection ── */}
         {mode === 'theme' && (

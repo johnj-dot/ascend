@@ -31,6 +31,32 @@ export const REPEAT_NOTIFICATION_OPTIONS = [
 
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
+// Precomputed magnetic 5-minute snap lookup tables for minute slider
+const RAW_TO_MIN = [];
+const MIN_TO_RAW = {};
+let _currRaw = 0;
+for (let m = 0; m <= 59; m++) {
+  const isMultipleOf5 = m % 5 === 0 && m <= 55;
+  const width = isMultipleOf5 ? 3 : 1; // 3x magnetic snap zone at multiples of 5
+  const centerRaw = _currRaw + Math.floor(width / 2);
+  MIN_TO_RAW[m] = centerRaw;
+  for (let w = 0; w < width; w++) {
+    RAW_TO_MIN[_currRaw + w] = m;
+  }
+  _currRaw += width;
+}
+const MAX_MINUTE_RAW = RAW_TO_MIN.length - 1; // 81
+
+function SmoothAccordion({ isOpen, children, className = '' }) {
+  return (
+    <div className={`accordion-rollout ${isOpen ? 'is-open' : ''} ${className}`}>
+      <div className="accordion-rollout-inner pt-2">
+        {children}
+      </div>
+    </div>
+  );
+}
+
 function CustomThemedTimePicker({ value, onChange, theme, isDark }) {
   const parseVal = (v) => {
     if (!v) return { hour12: 6, minute: '00', ampm: 'PM' };
@@ -61,28 +87,28 @@ function CustomThemedTimePicker({ value, onChange, theme, isDark }) {
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2.5">
       {/* Current Selection & AM/PM Toggle Header */}
-      <div className={`p-4 rounded-2xl border flex items-center justify-between gap-3 ${
+      <div className={`p-2.5 px-3.5 rounded-2xl border flex items-center justify-between gap-3 ${
         isDark ? 'bg-slate-900 border-slate-700/80' : `${theme.lightBgClass} ${theme.borderClass}`
       }`}>
         <div>
           <span className={`text-[10px] font-extrabold uppercase tracking-wider block ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
             Alert Time
           </span>
-          <span className={`text-2xl font-black tracking-tight ${isDark ? 'text-emerald-400' : theme.textClass}`}>
-            {hour12}:{minute} <span className="text-base font-bold opacity-80">{ampm}</span>
+          <span className={`text-xl font-black tracking-tight ${isDark ? 'text-emerald-400' : theme.textClass}`}>
+            {hour12}:{minute} <span className="text-sm font-bold opacity-80">{ampm}</span>
           </span>
         </div>
 
         {/* AM / PM Segmented Toggle */}
-        <div className={`flex p-1 rounded-xl border ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-gray-200/70 border-gray-300/60'}`}>
+        <div className={`flex p-0.5 rounded-xl border ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-gray-200/70 border-gray-300/60'}`}>
           {['AM', 'PM'].map(ap => (
             <button
               key={ap}
               type="button"
               onClick={() => updateTime(hour12, minute, ap)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-black transition cursor-pointer ${
+              className={`px-3 py-1 rounded-lg text-xs font-black transition cursor-pointer ${
                 ampm === ap
                   ? isDark
                     ? 'bg-emerald-600 text-white shadow-sm'
@@ -99,7 +125,7 @@ function CustomThemedTimePicker({ value, onChange, theme, isDark }) {
       </div>
 
       {/* Quick Preset Chips */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
         {presets.map(p => {
           const isActive = hour12 === p.h12 && minute === p.min && ampm === p.ap;
           return (
@@ -107,7 +133,7 @@ function CustomThemedTimePicker({ value, onChange, theme, isDark }) {
               key={p.label}
               type="button"
               onClick={() => updateTime(p.h12, p.min, p.ap)}
-              className={`px-2.5 py-2 rounded-xl text-left border transition cursor-pointer ${
+              className={`px-2 py-1.5 rounded-xl text-left border transition cursor-pointer ${
                 isActive
                   ? isDark
                     ? 'bg-emerald-950/80 border-emerald-500 text-emerald-300 ring-1 ring-emerald-500'
@@ -118,18 +144,18 @@ function CustomThemedTimePicker({ value, onChange, theme, isDark }) {
               }`}
             >
               <span className="text-xs font-bold block truncate">{p.label}</span>
-              <span className={`text-[10px] block truncate ${isDark ? 'text-slate-400' : 'text-gray-400'}`}>{p.desc}</span>
+              <span className={`text-[9px] block truncate ${isDark ? 'text-slate-400' : 'text-gray-400'}`}>{p.desc}</span>
             </button>
           );
         })}
       </div>
 
       {/* Sliders Container */}
-      <div className={`p-4 rounded-2xl border space-y-4 ${
+      <div className={`p-3 rounded-2xl border space-y-2.5 ${
         isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-gray-50 border-gray-200'
       }`}>
         {/* Hour Slider */}
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           <div className="flex justify-between items-center text-xs font-bold">
             <span className={isDark ? 'text-slate-300' : 'text-gray-700'}>Hour</span>
             <span className={`px-2 py-0.5 rounded-md font-mono text-xs font-black ${
@@ -138,7 +164,7 @@ function CustomThemedTimePicker({ value, onChange, theme, isDark }) {
               {hour12}
             </span>
           </div>
-          <div className="relative py-1">
+          <div className="relative py-0.5">
             <input
               type="range"
               min="1"
@@ -191,10 +217,14 @@ function CustomThemedTimePicker({ value, onChange, theme, isDark }) {
             <input
               type="range"
               min="0"
-              max="55"
-              step="5"
-              value={parseInt(minute, 10) || 0}
-              onChange={(e) => updateTime(hour12, String(e.target.value).padStart(2, '0'), ampm)}
+              max={MAX_MINUTE_RAW}
+              step="1"
+              value={MIN_TO_RAW[parseInt(minute, 10) || 0] ?? 0}
+              onChange={(e) => {
+                const rawVal = parseInt(e.target.value, 10) || 0;
+                const snappedMin = RAW_TO_MIN[rawVal] ?? 0;
+                updateTime(hour12, String(snappedMin).padStart(2, '0'), ampm);
+              }}
               className="w-full accent-emerald-500 cursor-pointer h-2 bg-slate-700/40 rounded-lg block"
             />
           </div>
@@ -214,12 +244,13 @@ function CustomThemedTimePicker({ value, onChange, theme, isDark }) {
               { val: 55, label: ':55', show: true },
             ].map(m => {
               const isSelected = (parseInt(minute, 10) || 0) === m.val;
+              const rawCenter = MIN_TO_RAW[m.val] ?? 0;
               return (
                 <button
                   key={m.label}
                   type="button"
                   onClick={() => updateTime(hour12, String(m.val).padStart(2, '0'), ampm)}
-                  style={{ left: `calc(8px + (100% - 16px) * ${m.val / 55})` }}
+                  style={{ left: `calc(8px + (100% - 16px) * (${rawCenter} / ${MAX_MINUTE_RAW}))` }}
                   className={`absolute -translate-x-1/2 flex flex-col items-center cursor-pointer transition-colors ${
                     isSelected
                       ? isDark ? 'text-emerald-400 font-black' : `${theme.textClass} font-black`
@@ -244,14 +275,14 @@ function CustomThemedTimePicker({ value, onChange, theme, isDark }) {
 
 function WeekDaySelector({ selectedDays, onToggleDay, isRepeating, onToggleRepeat, theme, isDark }) {
   return (
-    <div className="space-y-3 pt-3 border-t border-slate-700/60 dark:border-slate-700">
+    <div className="space-y-2.5 pt-2 border-t border-slate-700/60 dark:border-slate-700">
       {/* Week Day Pills */}
-      <div className="space-y-1.5">
+      <div className="space-y-1">
         <div className="flex justify-between items-center">
-          <label className={`block text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+          <label className={`block text-[11px] font-bold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
             Alert Days (This Week)
           </label>
-          <span className="text-[11px] text-gray-400 font-medium">
+          <span className="text-[10px] text-gray-400 font-medium">
             {selectedDays.length === 7
               ? 'Every day'
               : selectedDays.length === 5 && !selectedDays.includes('sun') && !selectedDays.includes('sat')
@@ -261,7 +292,7 @@ function WeekDaySelector({ selectedDays, onToggleDay, isRepeating, onToggleRepea
         </div>
 
         {/* 7 single-letter day pills going from left to right */}
-        <div className="grid grid-cols-7 gap-1.5">
+        <div className="grid grid-cols-7 gap-1">
           {WEEK_DAYS.map(day => {
             const isSelected = selectedDays.includes(day.id);
             return (
@@ -270,7 +301,7 @@ function WeekDaySelector({ selectedDays, onToggleDay, isRepeating, onToggleRepea
                 type="button"
                 onClick={() => onToggleDay(day.id)}
                 title={day.name}
-                className={`h-11 rounded-2xl flex flex-col items-center justify-center font-black text-sm transition-all duration-150 cursor-pointer ${
+                className={`h-9 rounded-xl flex flex-col items-center justify-center font-black text-xs transition-all duration-150 cursor-pointer ${
                   isSelected
                     ? isDark
                       ? 'bg-emerald-600 text-white shadow-md shadow-emerald-950/40 ring-1 ring-emerald-400'
@@ -281,7 +312,7 @@ function WeekDaySelector({ selectedDays, onToggleDay, isRepeating, onToggleRepea
                 }`}
               >
                 <span className="leading-none">{day.letter}</span>
-                <span className="text-[8px] font-bold uppercase leading-tight mt-0.5 opacity-60">{day.id}</span>
+                <span className="text-[7px] font-bold uppercase leading-tight mt-0.5 opacity-60">{day.id}</span>
               </button>
             );
           })}
@@ -289,35 +320,27 @@ function WeekDaySelector({ selectedDays, onToggleDay, isRepeating, onToggleRepea
       </div>
 
       {/* Repeat Every Week Switch */}
-      <div className="pt-2 flex items-center justify-between">
+      <div className="pt-1 flex items-center justify-between">
         <div>
           <span className={`text-xs font-bold block ${isDark ? 'text-slate-200' : 'text-gray-800'}`}>
             Repeat Every Week
           </span>
-          <span className={`text-[11px] block mt-0.5 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+          <span className={`text-[10px] block mt-0.5 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
             {isRepeating ? 'Alerts repeat on selected days each week' : 'Alerts on selected days for this week only'}
           </span>
         </div>
         <button
           type="button"
-          role="switch"
-          aria-checked={isRepeating}
           onClick={onToggleRepeat}
-          className={`w-12 h-7 rounded-full p-1 transition-all duration-200 outline-none border cursor-pointer relative shrink-0 ${
+          className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer ${
             isRepeating
-              ? (isDark || theme.id === 'midnight'
-                  ? 'bg-emerald-500 border-emerald-400 shadow-sm'
-                  : `${theme.bgClass} border-transparent shadow-sm`)
-              : (isDark
-                  ? 'bg-slate-800 border-slate-700/80'
-                  : 'bg-gray-200 border-gray-300')
+              ? isDark ? 'bg-emerald-600' : theme.bgClass
+              : isDark ? 'bg-slate-700' : 'bg-gray-300'
           }`}
         >
-          <div
-            className={`w-5 h-5 rounded-full bg-white shadow-md transform transition-transform duration-200 ${
-              isRepeating ? 'translate-x-5' : 'translate-x-0'
-            }`}
-          />
+          <span className={`w-4 h-4 rounded-full bg-white block transition-transform absolute top-1 ${
+            isRepeating ? 'left-6' : 'left-1'
+          }`} />
         </button>
       </div>
     </div>
@@ -523,13 +546,13 @@ export default function TaskAdderModal({ onClose, initialTask = null }) {
         onClick={(e) => e.stopPropagation()}
         className={`${
           isDark ? 'bg-[#0f172a] text-white border-slate-800' : 'bg-white text-gray-900 border-gray-100'
-        } rounded-3xl w-full max-w-xl md:max-w-2xl shadow-2xl animate-in fade-in zoom-in duration-200 border flex flex-col my-auto max-h-[92vh] overflow-hidden`}
+        } rounded-3xl w-full max-w-xl md:max-w-2xl shadow-2xl animate-slide-up border flex flex-col my-auto max-h-[96vh] overflow-hidden`}
       >
         
         {/* Top Header Bar */}
         <div className={`${
           isDark ? 'bg-slate-900 border-b border-slate-800' : theme.bgClass
-        } px-6 pt-5 pb-5 text-white flex items-center justify-between relative shadow-sm shrink-0`}>
+        } px-5 py-4 text-white flex items-center justify-between relative shadow-sm shrink-0`}>
           {/* Left Slot */}
           <div className="w-20 flex items-center">
             {pickerView !== 'main' ? (
@@ -539,7 +562,7 @@ export default function TaskAdderModal({ onClose, initialTask = null }) {
                 className="p-1.5 rounded-full hover:bg-white/20 transition flex items-center justify-center cursor-pointer"
                 title="Go back"
               >
-                <ChevronLeft size={24} strokeWidth={2.5} />
+                <ChevronLeft size={22} strokeWidth={2.5} />
               </button>
             ) : (
               <button
@@ -554,7 +577,7 @@ export default function TaskAdderModal({ onClose, initialTask = null }) {
           
           {/* Center Title - Perfectly Centered */}
           <div className="flex-1 text-center">
-            <h2 className="text-xl font-extrabold tracking-tight">
+            <h2 className="text-lg font-extrabold tracking-tight">
               {pickerView === 'course' ? 'Select Course' :
                pickerView === 'type' ? 'Select Type' :
                initialTask ? (mode === 'reminder' ? 'Edit Reminder' : 'Edit Task') : (mode === 'reminder' ? 'New Reminder' : 'New Item')}
@@ -586,8 +609,8 @@ export default function TaskAdderModal({ onClose, initialTask = null }) {
 
         {/* ── Sub-View 1: Select Course Drawer (Gradeway UI Clone) ── */}
         {pickerView === 'course' && (
-          <div className={`p-5 md:p-6 overflow-y-auto space-y-3 flex-1 ${isDark ? 'bg-[#0b1120]' : 'bg-gray-50/50'}`}>
-            <div className={`${isDark ? 'bg-slate-800/80 text-slate-300' : 'bg-gray-100 text-gray-600'} py-2.5 px-4 rounded-xl text-center`}>
+          <div className={`p-4 md:p-5 overflow-y-auto space-y-2.5 flex-1 animate-slide-in-right ${isDark ? 'bg-[#0b1120]' : 'bg-gray-50/50'}`}>
+            <div className={`${isDark ? 'bg-slate-800/80 text-slate-300' : 'bg-gray-100 text-gray-600'} py-2 px-4 rounded-xl text-center`}>
               <span className="text-xs font-extrabold uppercase tracking-wider">Choose Course</span>
             </div>
 
@@ -598,7 +621,7 @@ export default function TaskAdderModal({ onClose, initialTask = null }) {
                   key={cls.id}
                   type="button"
                   onClick={() => { setSelectedCourse(cls); setPickerView('main'); }}
-                  className={`w-full p-4 rounded-2xl border text-left flex items-center justify-between transition cursor-pointer ${
+                  className={`w-full p-3.5 rounded-2xl border text-left flex items-center justify-between transition cursor-pointer ${
                     isSel
                       ? isDark
                         ? 'border-emerald-500/80 bg-emerald-950/30 text-white shadow-sm'
@@ -610,9 +633,7 @@ export default function TaskAdderModal({ onClose, initialTask = null }) {
                 >
                   <div className="min-w-0 pr-3">
                     <h4 className={`font-bold text-sm truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>{cls.name}</h4>
-                    <p className={`text-xs font-semibold mt-0.5 ${isDark ? 'text-slate-400' : 'text-gray-400'}`}>
-                      {cls.id || 'Course'} · Period {cls.period || '1'} {cls.teacher ? `· ${cls.teacher}` : ''}
-                    </p>
+                    <p className={`text-xs mt-0.5 ${isDark ? 'text-slate-400' : 'text-gray-400'}`}>{cls.id} · Period {cls.period || '1'}</p>
                   </div>
                   {isSel ? <Check size={18} className={isDark ? 'text-emerald-400' : theme.textClass} /> : <ChevronRight size={18} className={isDark ? 'text-slate-500' : 'text-gray-300'} />}
                 </button>
@@ -621,9 +642,13 @@ export default function TaskAdderModal({ onClose, initialTask = null }) {
           </div>
         )}
 
-        {/* ── Sub-View 2: Select Assignment Type Drawer (Gradeway UI Clone) ── */}
+        {/* ── Sub-View 2: Select Type Drawer (Gradeway UI Clone) ── */}
         {pickerView === 'type' && (
-          <div className={`p-5 md:p-6 overflow-y-auto space-y-2.5 flex-1 ${isDark ? 'bg-[#0b1120]' : 'bg-gray-50/50'}`}>
+          <div className={`p-4 md:p-5 overflow-y-auto space-y-2.5 flex-1 animate-slide-in-right ${isDark ? 'bg-[#0b1120]' : 'bg-gray-50/50'}`}>
+            <div className={`${isDark ? 'bg-slate-800/80 text-slate-300' : 'bg-gray-100 text-gray-600'} py-2 px-4 rounded-xl text-center`}>
+              <span className="text-xs font-extrabold uppercase tracking-wider">Choose Type</span>
+            </div>
+
             {ASSIGNMENT_TYPES.map(t => {
               const isSel = selectedType.id === t.id;
               return (
@@ -631,18 +656,18 @@ export default function TaskAdderModal({ onClose, initialTask = null }) {
                   key={t.id}
                   type="button"
                   onClick={() => { setSelectedType(t); setPickerView('main'); }}
-                  className={`w-full p-4 rounded-2xl border text-left flex items-center justify-between transition cursor-pointer ${
+                  className={`w-full p-3.5 rounded-2xl border text-left flex items-center justify-between transition cursor-pointer ${
                     isSel
                       ? isDark
-                        ? 'border-emerald-500/80 bg-emerald-950/30 text-white shadow-sm font-bold'
-                        : `${theme.borderClass} ${theme.lightBgClass} shadow-sm font-bold`
+                        ? 'border-emerald-500/80 bg-emerald-950/30 text-white shadow-sm'
+                        : `${theme.borderClass} ${theme.lightBgClass} shadow-sm`
                       : isDark
                         ? 'border-slate-800 bg-slate-850 hover:bg-slate-800 text-white'
                         : 'border-gray-200/80 bg-white hover:bg-gray-50 text-gray-900'
                   }`}
                 >
-                  <div className="flex items-center gap-3.5 min-w-0 pr-2">
-                    <div className={`w-10 h-10 rounded-xl ${isDark ? 'bg-slate-800 text-emerald-400 border border-slate-700' : `${theme.bgClass} text-white`} flex items-center justify-center font-bold shadow-sm shrink-0`}>
+                  <div className="flex items-center gap-3 min-w-0 pr-2">
+                    <div className={`w-9 h-9 rounded-xl ${isDark ? 'bg-slate-800 text-emerald-400 border border-slate-700' : `${theme.bgClass} text-white`} flex items-center justify-center font-bold shadow-sm shrink-0`}>
                       {t.icon}
                     </div>
                     <div className="min-w-0">
@@ -659,17 +684,17 @@ export default function TaskAdderModal({ onClose, initialTask = null }) {
 
         {/* ── Main Form View ── */}
         {pickerView === 'main' && (
-          <form onSubmit={handleSubmit} className="p-6 md:p-8 overflow-y-auto space-y-6 flex-1 flex flex-col justify-between">
-            <div className="space-y-6">
+          <form onSubmit={handleSubmit} className="p-4 md:p-5 overflow-y-auto space-y-3.5 flex-1 flex flex-col justify-between custom-scrollbar">
+            <div className="space-y-3.5">
 
               {/* Segmented Top Control (Assignment vs Reminder) */}
-              <div className={`flex p-1.5 rounded-2xl border ${
+              <div className={`flex p-1 rounded-xl border ${
                 isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-gray-100/80 border-gray-200/60'
               }`}>
                 <button
                   type="button"
                   onClick={() => setMode('task')}
-                  className={`flex-1 py-2.5 rounded-xl text-xs font-extrabold transition cursor-pointer flex items-center justify-center gap-2 ${
+                  className={`flex-1 py-2 rounded-lg text-xs font-extrabold transition cursor-pointer flex items-center justify-center gap-1.5 ${
                     mode === 'task'
                       ? isDark
                         ? 'bg-slate-800 text-white shadow-sm ring-1 ring-slate-700'
@@ -680,7 +705,7 @@ export default function TaskAdderModal({ onClose, initialTask = null }) {
                   }`}
                 >
                   <BookOpen size={14} />
-                  <span>Assignment / Task</span>
+                  <span>Assignment</span>
                 </button>
                 <button
                   type="button"
@@ -688,7 +713,7 @@ export default function TaskAdderModal({ onClose, initialTask = null }) {
                     setMode('reminder');
                     if (!notificationTime) setNotificationTime('18:00');
                   }}
-                  className={`flex-1 py-2.5 rounded-xl text-xs font-extrabold transition cursor-pointer flex items-center justify-center gap-2 ${
+                  className={`flex-1 py-2 rounded-lg text-xs font-extrabold transition cursor-pointer flex items-center justify-center gap-1.5 ${
                     mode === 'reminder'
                       ? isDark
                         ? 'bg-slate-800 text-emerald-400 shadow-sm ring-1 ring-emerald-500/50'
@@ -705,7 +730,7 @@ export default function TaskAdderModal({ onClose, initialTask = null }) {
 
               {/* Title Field */}
               <div>
-                <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                <label className={`block text-[11px] font-bold uppercase tracking-wider mb-1.5 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
                   {mode === 'reminder' ? 'Reminder Title' : 'Task Title'}
                 </label>
                 <input
@@ -714,7 +739,7 @@ export default function TaskAdderModal({ onClose, initialTask = null }) {
                   value={name}
                   onChange={e => setName(e.target.value)}
                   placeholder={mode === 'reminder' ? 'e.g. Study for Biology exam, Submit permission slip' : 'e.g. Chapter 4 Review, Read pages 40-55, Math Worksheet'}
-                  className={`w-full px-5 py-3.5 rounded-2xl border outline-none text-sm font-semibold transition ${
+                  className={`w-full px-4 py-2.5 rounded-xl border outline-none text-sm font-semibold transition ${
                     isDark
                       ? 'bg-slate-800/60 border-slate-700 text-white placeholder-slate-500 focus:bg-slate-800 focus:ring-2 focus:ring-emerald-500'
                       : `bg-gray-50/70 border-gray-200 text-gray-900 placeholder-gray-400 hover:bg-white focus:bg-white focus:ring-2 focus:${theme.ringClass}`
@@ -724,29 +749,29 @@ export default function TaskAdderModal({ onClose, initialTask = null }) {
 
               {/* Course Drawer Selector */}
               <div>
-                <div className="flex justify-between items-center mb-2">
-                  <label className={`block text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                <div className="flex justify-between items-center mb-1.5">
+                  <label className={`block text-[11px] font-bold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
                     Course {mode === 'reminder' && <span className="lowercase font-normal opacity-70">(optional)</span>}
                   </label>
                 </div>
                 <button
                   type="button"
                   onClick={() => setPickerView('course')}
-                  className={`w-full px-5 py-3.5 rounded-2xl border transition flex items-center justify-between text-left shadow-xs cursor-pointer ${
+                  className={`w-full px-4 py-2.5 rounded-xl border transition flex items-center justify-between text-left shadow-xs cursor-pointer ${
                     isDark
                       ? 'border-slate-700/80 bg-slate-800/50 hover:bg-slate-800 text-white'
                       : 'border-gray-200/80 bg-gray-50/60 hover:bg-gray-100/80 text-gray-900'
                   }`}
                 >
-                  <div className="flex items-center gap-3.5 min-w-0">
-                    <div className={`w-8 h-8 rounded-xl ${isDark ? 'bg-slate-700 text-emerald-400' : `${theme.bgClass} text-white`} font-extrabold text-xs flex items-center justify-center shrink-0 shadow-xs`}>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className={`w-7 h-7 rounded-lg ${isDark ? 'bg-slate-700 text-emerald-400' : `${theme.bgClass} text-white`} font-extrabold text-[11px] flex items-center justify-center shrink-0 shadow-xs`}>
                       HAC
                     </div>
                     <div className="min-w-0">
                       <span className={`text-sm font-bold block truncate ${!selectedCourse ? (isDark ? 'text-slate-400' : 'text-gray-400') : (isDark ? 'text-white' : 'text-gray-800')}`}>
                         {selectedCourse ? selectedCourse.name : (mode === 'reminder' ? 'General (No course)' : 'Select Course...')}
                       </span>
-                      <span className={`text-xs block truncate ${!selectedCourse ? (isDark ? 'text-slate-500' : 'text-gray-400') : (isDark ? 'text-slate-400' : 'text-gray-400')}`}>
+                      <span className={`text-[11px] block truncate ${!selectedCourse ? (isDark ? 'text-slate-500' : 'text-gray-400') : (isDark ? 'text-slate-400' : 'text-gray-400')}`}>
                         {selectedCourse ? `${selectedCourse.id} · Period ${selectedCourse.period || '1'}` : 'Assign to an enrolled HAC class'}
                       </span>
                     </div>
@@ -757,20 +782,20 @@ export default function TaskAdderModal({ onClose, initialTask = null }) {
 
               {/* ── MODE 1: REMINDER (Push notification + Week view is primary & open by default) ── */}
               {mode === 'reminder' ? (
-                <div className="space-y-4">
-                  <div className={`p-4 md:p-5 rounded-3xl border shadow-lg space-y-4 ${
+                <div className="space-y-3">
+                  <div className={`p-3.5 md:p-4 rounded-2xl border shadow-md space-y-3 ${
                     isDark ? 'bg-slate-850 border-slate-700' : 'bg-white border-gray-200'
                   }`}>
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
-                        <div className={`w-8 h-8 rounded-xl ${isDark ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-800/60' : `${theme.lightBgClass} ${theme.textClass}`} flex items-center justify-center font-bold shrink-0`}>
-                          <Bell size={18} />
+                      <div className="flex items-center gap-2">
+                        <div className={`w-7 h-7 rounded-lg ${isDark ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-800/60' : `${theme.lightBgClass} ${theme.textClass}`} flex items-center justify-center font-bold shrink-0`}>
+                          <Bell size={16} />
                         </div>
                         <div>
                           <span className={`text-xs font-bold block ${isDark ? 'text-white' : 'text-gray-900'}`}>
                             Reminder Schedule
                           </span>
-                          <span className={`text-[11px] block mt-0.5 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                          <span className={`text-[10px] block mt-0.5 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
                             {isRepeating
                               ? `Repeats weekly on ${selectedDays.map(d => d.toUpperCase()).join(', ')}`
                               : `Alerts this week on ${selectedDays.map(d => d.toUpperCase()).join(', ')}`}
@@ -801,25 +826,25 @@ export default function TaskAdderModal({ onClose, initialTask = null }) {
                 <>
                   {/* Assignment Type Drawer Selector */}
                   <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <label className={`block text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>Type</label>
+                    <div className="flex justify-between items-center mb-1.5">
+                      <label className={`block text-[11px] font-bold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>Type</label>
                     </div>
                     <button
                       type="button"
                       onClick={() => setPickerView('type')}
-                      className={`w-full px-5 py-3.5 rounded-2xl border transition flex items-center justify-between text-left shadow-xs cursor-pointer ${
+                      className={`w-full px-4 py-2.5 rounded-xl border transition flex items-center justify-between text-left shadow-xs cursor-pointer ${
                         isDark
                           ? 'border-slate-700/80 bg-slate-800/50 hover:bg-slate-800 text-white'
                           : 'border-gray-200/80 bg-gray-50/60 hover:bg-gray-100/80 text-gray-900'
                       }`}
                     >
-                      <div className="flex items-center gap-3.5 min-w-0">
-                        <div className={`w-8 h-8 rounded-xl ${isDark ? 'bg-slate-700 text-emerald-400' : `${theme.bgClass} text-white`} flex items-center justify-center font-bold shadow-xs shrink-0`}>
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className={`w-7 h-7 rounded-lg ${isDark ? 'bg-slate-700 text-emerald-400' : `${theme.bgClass} text-white`} flex items-center justify-center font-bold shadow-xs shrink-0`}>
                           {selectedType.icon}
                         </div>
                         <div className="min-w-0">
                           <span className={`text-sm font-bold block truncate ${isDark ? 'text-white' : 'text-gray-800'}`}>{selectedType.label}</span>
-                          <span className={`text-xs block truncate ${isDark ? 'text-slate-400' : 'text-gray-400'}`}>{selectedType.desc}</span>
+                          <span className={`text-[11px] block truncate ${isDark ? 'text-slate-400' : 'text-gray-400'}`}>{selectedType.desc}</span>
                         </div>
                       </div>
                       <ChevronRight size={18} className={isDark ? 'text-slate-500' : 'text-gray-400'} />
@@ -827,12 +852,12 @@ export default function TaskAdderModal({ onClose, initialTask = null }) {
                   </div>
 
                   {/* Date & Time Field Row */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
                     
                     {/* Date Button & Calendar Dropdown */}
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       <div className="flex justify-between items-center">
-                        <label className={`block text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>Due Date</label>
+                        <label className={`block text-[11px] font-bold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>Due Date</label>
                       </div>
                       <div className="flex flex-col">
                         <button
@@ -842,7 +867,7 @@ export default function TaskAdderModal({ onClose, initialTask = null }) {
                             setOpenTimeAccordion(false);
                             setOpenNotifyAccordion(false);
                           }}
-                          className={`w-full px-5 py-3.5 rounded-2xl border transition flex items-center justify-between text-left shadow-xs cursor-pointer ${
+                          className={`w-full px-4 py-2.5 rounded-xl border transition flex items-center justify-between text-left shadow-xs cursor-pointer ${
                             openDateAccordion
                               ? isDark
                                 ? 'border-emerald-500 bg-slate-800 ring-2 ring-emerald-500'
@@ -852,20 +877,20 @@ export default function TaskAdderModal({ onClose, initialTask = null }) {
                                 : 'border-gray-200/80 bg-gray-50/60 hover:bg-gray-100/80 text-gray-900'
                           }`}
                         >
-                          <div className="flex items-center gap-3">
-                            <div className={`w-8 h-8 rounded-xl ${isDark ? 'bg-slate-700 text-emerald-400' : `${theme.lightBgClass} ${theme.textClass}`} flex items-center justify-center font-bold shrink-0`}>
-                              <Calendar size={18} />
+                          <div className="flex items-center gap-2.5">
+                            <div className={`w-7 h-7 rounded-lg ${isDark ? 'bg-slate-700 text-emerald-400' : `${theme.lightBgClass} ${theme.textClass}`} flex items-center justify-center font-bold shrink-0`}>
+                              <Calendar size={16} />
                             </div>
                             <span className={`text-sm font-bold ${!dueDateObj ? (isDark ? 'text-slate-400' : 'text-gray-400') : (isDark ? 'text-white' : 'text-gray-800')}`}>
                               {formattedDateString}
                             </span>
                           </div>
-                          <ChevronDown size={18} className={`transition-transform duration-200 ${isDark ? 'text-slate-400' : 'text-gray-400'} ${openDateAccordion ? `rotate-180 ${isDark ? 'text-emerald-400' : theme.textClass}` : ''}`} />
+                          <ChevronDown size={16} className={`transition-transform duration-200 ${isDark ? 'text-slate-400' : 'text-gray-400'} ${openDateAccordion ? `rotate-180 ${isDark ? 'text-emerald-400' : theme.textClass}` : ''}`} />
                         </button>
 
                         {/* Calendar Dropdown */}
-                        {openDateAccordion && (
-                          <div ref={dateAccordionRef} className={`mt-2 ${isDark ? 'bg-slate-850 border-slate-700 text-white' : 'bg-white border-gray-200'} rounded-3xl p-4 md:p-5 shadow-lg border animate-in fade-in zoom-in duration-150 space-y-4`}>
+                        <SmoothAccordion isOpen={openDateAccordion}>
+                          <div ref={dateAccordionRef} className={`${isDark ? 'bg-slate-850 border-slate-700 text-white' : 'bg-white border-gray-200'} rounded-2xl p-3.5 md:p-4 shadow-md border space-y-3`}>
                             <div className="flex items-center justify-between">
                               <button
                                 type="button"
@@ -873,9 +898,9 @@ export default function TaskAdderModal({ onClose, initialTask = null }) {
                                   if (viewMonth === 0) { setViewMonth(11); setViewYear(viewYear - 1); }
                                   else { setViewMonth(viewMonth - 1); }
                                 }}
-                                className={`p-1.5 rounded-xl ${isDark ? 'bg-slate-700 hover:bg-slate-600 text-slate-200' : 'bg-white hover:bg-gray-100 text-gray-600'} shadow-sm cursor-pointer`}
+                                className={`p-1 rounded-lg ${isDark ? 'bg-slate-700 hover:bg-slate-600 text-slate-200' : 'bg-white hover:bg-gray-100 text-gray-600'} shadow-sm cursor-pointer`}
                               >
-                                <ChevronLeft size={18} />
+                                <ChevronLeft size={16} />
                               </button>
 
                               <span className={`font-extrabold text-sm ${isDark ? 'text-white' : 'text-gray-800'}`}>
@@ -888,14 +913,14 @@ export default function TaskAdderModal({ onClose, initialTask = null }) {
                                   if (viewMonth === 11) { setViewMonth(0); setViewYear(viewYear + 1); }
                                   else { setViewMonth(viewMonth + 1); }
                                 }}
-                                className={`p-1.5 rounded-xl ${isDark ? 'bg-slate-700 hover:bg-slate-600 text-slate-200' : 'bg-white hover:bg-gray-100 text-gray-600'} shadow-sm cursor-pointer`}
+                                className={`p-1 rounded-lg ${isDark ? 'bg-slate-700 hover:bg-slate-600 text-slate-200' : 'bg-white hover:bg-gray-100 text-gray-600'} shadow-sm cursor-pointer`}
                               >
-                                <ChevronRight size={18} />
+                                <ChevronRight size={16} />
                               </button>
                             </div>
 
                             {/* Day Names */}
-                            <div className="grid grid-cols-7 text-center text-[11px] font-bold text-gray-400 uppercase">
+                            <div className="grid grid-cols-7 text-center text-[10px] font-bold text-gray-400 uppercase">
                               {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((d, i) => (
                                 <span key={i}>{d}</span>
                               ))}
@@ -911,14 +936,14 @@ export default function TaskAdderModal({ onClose, initialTask = null }) {
                                     key={i}
                                     type="button"
                                     onClick={() => handleSelectDateDay(dayNum)}
-                                    className={`h-8 w-8 md:h-9 md:w-9 mx-auto rounded-xl flex items-center justify-center text-xs md:text-sm font-bold transition cursor-pointer ${
+                                    className={`h-8 rounded-lg font-bold text-xs flex items-center justify-center transition-all cursor-pointer ${
                                       isSel
                                         ? isDark
-                                          ? 'bg-emerald-600 text-white shadow-md font-extrabold ring-2 ring-emerald-400 scale-105'
-                                          : `${theme.bgClass} text-white shadow-md font-extrabold ring-2 ${theme.ringClass} scale-105`
+                                          ? 'bg-emerald-600 text-white shadow-sm ring-1 ring-emerald-400 font-extrabold'
+                                          : `${theme.bgClass} text-white shadow-sm ring-1 ${theme.ringClass} font-extrabold`
                                         : isDark
-                                          ? 'text-slate-200 hover:bg-slate-700 bg-slate-800/40'
-                                          : 'text-gray-700 hover:bg-gray-100 bg-gray-50/50'
+                                          ? 'hover:bg-slate-750 text-slate-200'
+                                          : 'hover:bg-gray-100 text-gray-800'
                                     }`}
                                   >
                                     {dayNum}
@@ -927,21 +952,45 @@ export default function TaskAdderModal({ onClose, initialTask = null }) {
                               })}
                             </div>
 
-                            {/* Quick Presets */}
-                            <div className={`flex gap-2 pt-3 pb-1 border-t ${isDark ? 'border-slate-700' : 'border-gray-100'}`}>
-                              <button type="button" onClick={() => handleQuickPresetDate(0)} className={`flex-1 py-2.5 text-xs font-bold rounded-xl ${isDark ? 'bg-slate-800 text-emerald-400 hover:bg-slate-750' : `${theme.lightBgClass} ${theme.textClass} hover:opacity-90`} transition shadow-xs cursor-pointer`}>Today</button>
-                              <button type="button" onClick={() => handleQuickPresetDate(1)} className={`flex-1 py-2.5 text-xs font-bold rounded-xl ${isDark ? 'bg-slate-800 text-emerald-400 hover:bg-slate-750' : `${theme.lightBgClass} ${theme.textClass} hover:opacity-90`} transition shadow-xs cursor-pointer`}>Tomorrow</button>
-                              <button type="button" onClick={() => handleQuickPresetDate(7)} className={`flex-1 py-2.5 text-xs font-bold rounded-xl ${isDark ? 'bg-slate-800 text-emerald-400 hover:bg-slate-750' : `${theme.lightBgClass} ${theme.textClass} hover:opacity-90`} transition shadow-xs cursor-pointer`}>Next Week</button>
+                            {/* Quick Shortcuts */}
+                            <div className="grid grid-cols-3 gap-1.5 pt-2 border-t border-slate-700/60 dark:border-slate-700">
+                              <button
+                                type="button"
+                                onClick={() => handleQuickPresetDate(0)}
+                                className={`py-1 rounded-lg text-[11px] font-bold border transition cursor-pointer ${
+                                  isDark ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-750' : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
+                                }`}
+                              >
+                                Today
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleQuickPresetDate(1)}
+                                className={`py-1 rounded-lg text-[11px] font-bold border transition cursor-pointer ${
+                                  isDark ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-750' : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
+                                }`}
+                              >
+                                Tomorrow
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleQuickPresetDate(7)}
+                                className={`py-1 rounded-lg text-[11px] font-bold border transition cursor-pointer ${
+                                  isDark ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-750' : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
+                                }`}
+                              >
+                                Next Week
+                              </button>
                             </div>
                           </div>
-                        )}
+                        </SmoothAccordion>
                       </div>
                     </div>
 
                     {/* Time Button & Time Dropdown */}
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       <div className="flex justify-between items-center">
-                        <label className={`block text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>Due Time</label>
+                        <label className={`block text-[11px] font-bold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>Due Time</label>
                       </div>
                       <div className="flex flex-col">
                         <button
@@ -951,7 +1000,7 @@ export default function TaskAdderModal({ onClose, initialTask = null }) {
                             setOpenDateAccordion(false);
                             setOpenNotifyAccordion(false);
                           }}
-                          className={`w-full px-5 py-3.5 rounded-2xl border transition flex items-center justify-between text-left shadow-xs cursor-pointer ${
+                          className={`w-full px-4 py-2.5 rounded-xl border transition flex items-center justify-between text-left shadow-xs cursor-pointer ${
                             openTimeAccordion
                               ? isDark
                                 ? 'border-emerald-500 bg-slate-800 ring-2 ring-emerald-500'
@@ -961,20 +1010,20 @@ export default function TaskAdderModal({ onClose, initialTask = null }) {
                                 : 'border-gray-200/80 bg-gray-50/60 hover:bg-gray-100/80 text-gray-900'
                           }`}
                         >
-                          <div className="flex items-center gap-3">
-                            <div className={`w-8 h-8 rounded-xl ${isDark ? 'bg-slate-700 text-emerald-400' : `${theme.lightBgClass} ${theme.textClass}`} flex items-center justify-center font-bold shrink-0`}>
-                              <Clock size={18} />
+                          <div className="flex items-center gap-2.5">
+                            <div className={`w-7 h-7 rounded-lg ${isDark ? 'bg-slate-700 text-emerald-400' : `${theme.lightBgClass} ${theme.textClass}`} flex items-center justify-center font-bold shrink-0`}>
+                              <Clock size={16} />
                             </div>
                             <span className={`text-sm font-bold ${!dueTime ? (isDark ? 'text-slate-400' : 'text-gray-400') : (isDark ? 'text-white' : 'text-gray-800')}`}>
                               {formatTime24to12(dueTime)}
                             </span>
                           </div>
-                          <ChevronDown size={18} className={`transition-transform duration-200 ${isDark ? 'text-slate-400' : 'text-gray-400'} ${openTimeAccordion ? `rotate-180 ${isDark ? 'text-emerald-400' : theme.textClass}` : ''}`} />
+                          <ChevronDown size={16} className={`transition-transform duration-200 ${isDark ? 'text-slate-400' : 'text-gray-400'} ${openTimeAccordion ? `rotate-180 ${isDark ? 'text-emerald-400' : theme.textClass}` : ''}`} />
                         </button>
 
                         {/* Custom Themed Time Picker Accordion */}
-                        {openTimeAccordion && (
-                          <div ref={timeAccordionRef} className={`${isDark ? 'bg-slate-850 border-slate-700 text-white' : 'bg-white border-gray-200'} rounded-3xl p-4 md:p-5 shadow-lg border animate-in fade-in zoom-in duration-150 space-y-4`}>
+                        <SmoothAccordion isOpen={openTimeAccordion}>
+                          <div ref={timeAccordionRef} className={`${isDark ? 'bg-slate-850 border-slate-700 text-white' : 'bg-white border-gray-200'} rounded-2xl p-3.5 md:p-4 shadow-md border space-y-3`}>
                             <CustomThemedTimePicker
                               value={dueTime || '17:00'}
                               onChange={(newTime) => setDueTime(newTime)}
@@ -985,28 +1034,28 @@ export default function TaskAdderModal({ onClose, initialTask = null }) {
                               <button
                                 type="button"
                                 onClick={() => { setDueTime(''); setOpenTimeAccordion(false); }}
-                                className="text-xs font-bold text-red-500 hover:text-red-400 transition cursor-pointer"
+                                className="text-[11px] font-bold text-red-500 hover:text-red-400 transition cursor-pointer"
                               >
                                 Clear Time
                               </button>
                               <button
                                 type="button"
                                 onClick={() => setOpenTimeAccordion(false)}
-                                className={`${isDark ? 'bg-emerald-600' : theme.bgClass} text-white px-5 py-2 rounded-xl text-xs font-bold shadow-sm hover:opacity-90 transition cursor-pointer`}
+                                className={`${isDark ? 'bg-emerald-600' : theme.bgClass} text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-sm hover:opacity-90 transition cursor-pointer`}
                               >
                                 Done
                               </button>
                             </div>
                           </div>
-                        )}
+                        </SmoothAccordion>
                       </div>
                     </div>
                   </div>
 
                   {/* Push Notification Section for Tasks */}
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <div className="flex justify-between items-center">
-                      <label className={`block text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>Push Notification</label>
+                      <label className={`block text-[11px] font-bold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>Push Notification</label>
                     </div>
                     <div className="flex flex-col">
                       <button
@@ -1016,7 +1065,7 @@ export default function TaskAdderModal({ onClose, initialTask = null }) {
                           setOpenDateAccordion(false);
                           setOpenTimeAccordion(false);
                         }}
-                        className={`w-full px-5 py-3.5 rounded-2xl border transition flex items-center justify-between text-left shadow-xs cursor-pointer ${
+                        className={`w-full px-4 py-2.5 rounded-xl border transition flex items-center justify-between text-left shadow-xs cursor-pointer ${
                           openNotifyAccordion
                             ? isDark
                               ? 'border-emerald-500 bg-slate-800 ring-2 ring-emerald-500'
@@ -1026,9 +1075,9 @@ export default function TaskAdderModal({ onClose, initialTask = null }) {
                               : 'border-gray-200/80 bg-gray-50/60 hover:bg-gray-100/80 text-gray-900'
                         }`}
                       >
-                        <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-xl ${isDark ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-800/60' : `${theme.lightBgClass} ${theme.textClass}`} flex items-center justify-center font-bold shrink-0`}>
-                            <Bell size={18} />
+                        <div className="flex items-center gap-2.5">
+                          <div className={`w-7 h-7 rounded-lg ${isDark ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-800/60' : `${theme.lightBgClass} ${theme.textClass}`} flex items-center justify-center font-bold shrink-0`}>
+                            <Bell size={16} />
                           </div>
                           <span className={`text-sm font-bold ${!notificationTime ? (isDark ? 'text-slate-400' : 'text-gray-400') : (isDark ? 'text-white' : 'text-gray-800')}`}>
                             {notificationTime
@@ -1036,16 +1085,16 @@ export default function TaskAdderModal({ onClose, initialTask = null }) {
                               : 'Select A Time'}
                           </span>
                         </div>
-                        <ChevronDown size={18} className={`transition-transform duration-200 ${isDark ? 'text-slate-400' : 'text-gray-400'} ${openNotifyAccordion ? `rotate-180 ${isDark ? 'text-emerald-400' : theme.textClass}` : ''}`} />
+                        <ChevronDown size={16} className={`transition-transform duration-200 ${isDark ? 'text-slate-400' : 'text-gray-400'} ${openNotifyAccordion ? `rotate-180 ${isDark ? 'text-emerald-400' : theme.textClass}` : ''}`} />
                       </button>
 
                       {/* Push Notification Custom Time Picker Accordion */}
-                      {openNotifyAccordion && (
-                        <div ref={notifyAccordionRef} className={`mt-2 ${isDark ? 'bg-slate-850 border-slate-700 text-white' : 'bg-white border-gray-200'} rounded-3xl p-4 md:p-5 shadow-xl border animate-in fade-in zoom-in duration-150 space-y-4 mb-2`}>
+                      <SmoothAccordion isOpen={openNotifyAccordion}>
+                        <div ref={notifyAccordionRef} className={`${isDark ? 'bg-slate-850 border-slate-700 text-white' : 'bg-white border-gray-200'} rounded-2xl p-3.5 md:p-4 shadow-md border space-y-3 mb-1`}>
                           {!notificationsEnabled ? (
-                            <div className={`${isDark ? 'bg-amber-950/40 border-amber-800/70 text-amber-200' : 'bg-amber-50 border-amber-200 text-amber-900'} border rounded-2xl p-4 text-center space-y-2.5`}>
-                              <div className="flex items-center justify-center gap-2 font-bold text-xs">
-                                <Bell size={16} className="text-amber-500" />
+                            <div className={`${isDark ? 'bg-amber-950/40 border-amber-800/70 text-amber-200' : 'bg-amber-50 border-amber-200 text-amber-900'} border rounded-xl p-3 text-center space-y-2`}>
+                              <div className="flex items-center justify-center gap-1.5 font-bold text-xs">
+                                <Bell size={14} className="text-amber-500" />
                                 <span>Push Notifications Disabled in Settings</span>
                               </div>
                               <p className={`text-[11px] font-medium leading-relaxed ${isDark ? 'text-amber-300/80' : 'text-amber-700'}`}>
@@ -1054,7 +1103,7 @@ export default function TaskAdderModal({ onClose, initialTask = null }) {
                               <button
                                 type="button"
                                 onClick={() => toggleSetting('notifications')}
-                                className={`${isDark ? 'bg-amber-600' : theme.bgClass} text-white text-xs font-bold px-4 py-2 rounded-xl shadow-sm hover:opacity-90 transition cursor-pointer`}
+                                className={`${isDark ? 'bg-amber-600' : theme.bgClass} text-white text-xs font-bold px-3.5 py-1.5 rounded-lg shadow-sm hover:opacity-90 transition cursor-pointer`}
                               >
                                 Enable in Settings
                               </button>
@@ -1081,14 +1130,14 @@ export default function TaskAdderModal({ onClose, initialTask = null }) {
                                 <button
                                   type="button"
                                   onClick={() => { setNotificationTime(''); setOpenNotifyAccordion(false); }}
-                                  className="text-xs font-bold text-red-500 hover:text-red-400 transition cursor-pointer"
+                                  className="text-[11px] font-bold text-red-500 hover:text-red-400 transition cursor-pointer"
                                 >
-                                  No Notification
+                                  Disable Alert
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => setOpenNotifyAccordion(false)}
-                                  className={`${isDark ? 'bg-emerald-600' : theme.bgClass} text-white px-5 py-2 rounded-xl text-xs font-bold shadow-sm hover:opacity-90 transition cursor-pointer`}
+                                  className={`${isDark ? 'bg-emerald-600' : theme.bgClass} text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-sm hover:opacity-90 transition cursor-pointer`}
                                 >
                                   Done
                                 </button>
@@ -1096,7 +1145,7 @@ export default function TaskAdderModal({ onClose, initialTask = null }) {
                             </>
                           )}
                         </div>
-                      )}
+                      </SmoothAccordion>
                     </div>
                   </div>
                 </>

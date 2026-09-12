@@ -81,13 +81,26 @@ function scrapeWeekView(html, dialogDetails = {}) {
   const $ = cheerio.load(html);
   const classes = [];
 
-  $('.sg-homeview-table tr, .sg-asp-table tr').each((rowIdx, row) => {
-    const courseLink = $(row).find('a[id^="courseName-"]');
-    if (courseLink.length === 0) return;
+  $('.sg-homeview-table tbody tr, .sg-homeview-table tr, .sg-asp-table tr').each((rowIdx, row) => {
+    if ($(row).hasClass('sg-asp-table-header-row') || $(row).find('th').length > 0) return;
 
-    const courseName = courseLink.text().trim();
-    const cell1 = courseLink.closest('td');
+    const tds = $(row).find('td');
+    if (tds.length < 2) return;
+
+    let courseLink = $(row).find('a[id^="courseName-"], a[onclick*="Class"], a[href*="Class"]');
+    let cell1 = $(tds[0]);
+    let courseName = courseLink.length > 0 ? courseLink.text().trim() : '';
+
     const cell1Text = cell1.text().replace(/\s+/g, ' ').trim();
+    if (!courseName) {
+      const nameMatch = cell1Text.match(/^([^(]+?)(?:\s*\([^)]+\)|\s*Per:|$)/i);
+      if (nameMatch && nameMatch[1].trim()) {
+        courseName = nameMatch[1].trim();
+      } else {
+        courseName = cell1Text.split('\n')[0].trim();
+      }
+    }
+    if (!courseName || /^class$/i.test(courseName)) return;
 
     // Extract Course ID, Period, Teacher
     const idMatch = cell1Text.match(/\(([^)]+)\)/);
@@ -99,11 +112,13 @@ function scrapeWeekView(html, dialogDetails = {}) {
     const period = perMatch ? perMatch[1].trim() : '';
     const teacher = teacherMatch ? teacherMatch[1].trim() : '';
 
-    // Average cell
-    const avgLink = $(row).find('a[id^="average-"]');
-    const avgText = avgLink.length > 0 ? avgLink.text().trim() : $(row).find('td:nth-child(2)').text().trim();
-    const rawAvg = parseFloat(avgText);
-    const classAvg = !isNaN(rawAvg) ? rawAvg : null;
+    // Average cell (column 2)
+    const avgCell = $(tds[1]);
+    const avgLink = avgCell.find('a[id^="average-"], a');
+    const avgText = avgLink.length > 0 ? avgLink.text().trim() : avgCell.text().trim();
+    const parsedAvgMatch = avgText.match(/(\d+\.?\d*)/);
+    const rawAvg = parsedAvgMatch ? parseFloat(parsedAvgMatch[1]) : null;
+    const classAvg = (rawAvg !== null && !isNaN(rawAvg)) ? rawAvg : null;
 
     const assignments = [];
 
@@ -195,7 +210,7 @@ function scrapeWeekView(html, dialogDetails = {}) {
       if (totalPossible > 0) {
         calculatedAverage = parseFloat(((totalEarned / totalPossible) * 100).toFixed(1));
       }
-    } else if (weightedGraded.length === 0 && graded.length > 0 && graded.every(a => a.weight === 0)) {
+    } else if (calculatedAverage === null && weightedGraded.length === 0 && graded.length > 0 && graded.every(a => a.weight === 0)) {
       // All graded assignments have 0 weight -> class has no graded assignments yet!
       calculatedAverage = null;
     }
@@ -222,95 +237,142 @@ function scrapeWeekView(html, dialogDetails = {}) {
  */
 function scrapeAssignments(html, classes) {
   const $ = cheerio.load(html);
-  const courseMap = {};
 
-  // Build map of course name → class object
-  classes.forEach(c => {
-    courseMap[c.name.toLowerCase()] = c;
-  });
+  // Strategy 1: Iterate over .AssignmentClass blocks
+  $('.AssignmentClass').each((_, card) => {
+    const headingEl = $(card).find('.sg-header-heading').first();
+    const heading = t(headingEl, $);
+    if (!heading) return;
 
-  // Each course section has a heading then a table
-  let currentCourse = null;
+    // Course ID and Name extraction e.g. "1115A - 6 TAG/Advanced English I"
+    const cleanHeading = heading.replace(/^\S+\s*-\s*\d+\s+/, '').replace(/\(.*?\)/g, '').trim();
+    const idMatch = heading.match(/^(\S+\s*-\s*\d+)/);
+    const baseCourseId = idMatch ? idMatch[1].replace(/[AB] -/, 'A -').trim() : null;
 
-  $('.sg-header-heading, table[id*="dgCourseAssignments"]').each((_, el) => {
-    if ($(el).hasClass('sg-header-heading')) {
-      const heading = t(el, $);
-      if (!heading) return;
-      const cleanHeading = heading.replace(/^\S+\s*-\s*\d+\s+/, '').replace(/\(.*?\)/g, '').trim();
-      currentCourse = classes.find(c => {
-        const cName = c.name.toLowerCase().trim();
-        const hName = cleanHeading.toLowerCase().trim();
-        const rawH = heading.toLowerCase().trim();
-        const baseId = (c.id || '').split(' ')[0].toLowerCase().trim();
-        return (
-          cName === hName ||
-          rawH.includes(cName) ||
-          cName.includes(hName) ||
-          (baseId && rawH.startsWith(baseId)) ||
-          (c.id && rawH.includes(c.id.toLowerCase()))
-        );
-      }) || null;
-    } else if (currentCourse) {
-      // This is an assignment table for currentCourse
-      const assignments = [];
-      $(el).find('.sg-asp-table-data-row').each((_, row) => {
-        const cols = $(row).find('td');
-        if (cols.length < 6) return;
-        const dateDue      = t(cols[0], $);
-        const dateAssigned = t(cols[1], $);
-        const assignName   = t(cols[2], $).replace(/\*/g, '').trim();
-        const category     = t(cols[3], $);
-        const score        = t(cols[4], $);
-        const totalPoints  = t(cols[5], $);
-        const rawWeight    = t(cols[6], $);
+    let currentCourse = classes.find(c => {
+      const cName = c.name.toLowerCase().trim();
+      const hName = cleanHeading.toLowerCase().trim();
+      const rawH = heading.toLowerCase().trim();
+      const baseId = (c.id || '').split(' ')[0].toLowerCase().trim();
+      return (
+        cName === hName ||
+        rawH.includes(cName) ||
+        cName.includes(hName) ||
+        (baseId && rawH.startsWith(baseId)) ||
+        (c.id && rawH.includes(c.id.toLowerCase()))
+      );
+    });
 
-        if (!assignName) return;
+    if (!currentCourse) {
+      currentCourse = {
+        id: baseCourseId || `C-${classes.length}`,
+        name: cleanHeading || heading,
+        period: '',
+        teacher: '',
+        room: '',
+        average: null,
+        letterGrade: null,
+        assignments: [],
+      };
+      classes.push(currentCourse);
+    }
 
-        const rowText = $(row).text();
-        if (/Course\s*Average|Overall\s*Average|Total\s*Average/i.test(rowText)) return;
-        if (/^(Course\s*Average|Average|Total)$/i.test(assignName)) return;
-        if (/^\d+(\.\d+)?$/.test(assignName) && !dateDue && (!score || score.trim() === '')) return;
-
-        const isMissing  = $(cols[4]).find('.sg-content-alert-container').length > 0 || score === 'M';
-        const isExempt   = score === 'X';
-        const numericScore = score && !isNaN(parseFloat(score)) ? parseFloat(score) : null;
-        const maxScore     = totalPoints && !isNaN(parseFloat(totalPoints)) ? parseFloat(totalPoints) : null;
-        const parsedWeight = rawWeight && !isNaN(parseFloat(rawWeight)) ? parseFloat(rawWeight) : 1;
-
-        assignments.push({
-          name: assignName,
-          dateDue: dateDue || null,
-          dateAssigned: dateAssigned || null,
-          category: category || 'General',
-          score: numericScore,
-          totalPoints: maxScore,
-          weight: parsedWeight,
-          missing: isMissing,
-          exempt: isExempt,
-        });
-      });
-
-      if (assignments.length > 0) {
-        currentCourse.assignments = assignments;
+    // Extract average directly from the course header
+    const avgHeader = $(card).find('span[id*="lblHdrAverage"], span[title="AVG"], .sg-header-heading.sg-right').text().trim();
+    const avgMatch = avgHeader.match(/(\d+\.?\d*)/);
+    if (avgMatch) {
+      const parsedAvg = parseFloat(avgMatch[1]);
+      if (!isNaN(parsedAvg)) {
+        currentCourse.average = parsedAvg;
+        currentCourse.letterGrade = gradeToLetter(parsedAvg);
       }
+    }
 
-      // Extract course average ONLY if explicitly labeled as Course Average in table
-      const avgRow = $(el).find('tr').filter((_, r) => {
+    // Scrape assignments from table
+    const assignments = [];
+    $(card).find('.sg-asp-table-data-row').each((_, row) => {
+      const cols = $(row).find('td');
+      if (cols.length < 6) return;
+      const dateDue      = t(cols[0], $);
+      const dateAssigned = t(cols[1], $);
+      const assignName   = t(cols[2], $).replace(/\*/g, '').trim();
+      const category     = t(cols[3], $);
+      const score        = t(cols[4], $);
+      const totalPoints  = t(cols[5], $);
+      const rawWeight    = t(cols[6], $);
+
+      if (!assignName) return;
+
+      const rowText = $(row).text();
+      if (/Course\s*Average|Overall\s*Average|Total\s*Average/i.test(rowText)) return;
+      if (/^(Course\s*Average|Average|Total)$/i.test(assignName)) return;
+      if (/^\d+(\.\d+)?$/.test(assignName) && !dateDue && (!score || score.trim() === '')) return;
+
+      const isMissing  = $(cols[4]).find('.sg-content-alert-container').length > 0 || score === 'M';
+      const isExempt   = score === 'X';
+      const numericScore = score && !isNaN(parseFloat(score)) ? parseFloat(score) : null;
+      const maxScore     = totalPoints && !isNaN(parseFloat(totalPoints)) ? parseFloat(totalPoints) : null;
+      const parsedWeight = rawWeight && !isNaN(parseFloat(rawWeight)) ? parseFloat(rawWeight) : 1;
+
+      assignments.push({
+        name: assignName,
+        dateDue: dateDue || null,
+        dateAssigned: dateAssigned || null,
+        category: category || 'General',
+        score: numericScore,
+        totalPoints: maxScore,
+        weight: parsedWeight,
+        missing: isMissing,
+        exempt: isExempt,
+      });
+    });
+
+    if (assignments.length > 0) {
+      currentCourse.assignments = assignments;
+    }
+
+    // Fallback average from table footer if not found in header
+    if (currentCourse.average === null) {
+      const avgRow = $(card).find('tr').filter((_, r) => {
         const text = $(r).text();
         return /Course\s*Average|Overall\s*Average/i.test(text);
       });
       if (avgRow.length > 0) {
         const avgText = t(avgRow.last(), $);
-        const avgMatch = avgText.match(/(?:Course|Overall)\s*Average:?\s*(\d+\.?\d*)/i);
-        if (avgMatch && currentCourse.average === null) {
-          currentCourse.average = parseFloat(avgMatch[1]);
+        const rowAvgMatch = avgText.match(/(?:Course|Overall)\s*Average:?\s*(\d+\.?\d*)/i);
+        if (rowAvgMatch) {
+          currentCourse.average = parseFloat(rowAvgMatch[1]);
           currentCourse.letterGrade = gradeToLetter(currentCourse.average);
         }
       }
     }
   });
 
-  // Second pass: compute averages from assignments with strict weight enforcement
+  // Strategy 2: If .AssignmentClass not present, check ddlClasses dropdown or table headers
+  if (classes.length === 0) {
+    $('#plnMain_ddlClasses option').each((_, opt) => {
+      const text = $(opt).text().trim();
+      const val = $(opt).attr('value');
+      if (!val || val === 'ALL' || !text) return;
+      const cleanName = text.replace(/^\S+\s*-\s*\d+\s+/, '').trim();
+      const idMatch = text.match(/^(\S+\s*-\s*\d+)/);
+      const baseId = idMatch ? idMatch[1].replace(/[AB] -/, 'A -').trim() : `C-${classes.length}`;
+      if (!classes.some(c => c.id === baseId || c.name.toLowerCase() === cleanName.toLowerCase())) {
+        classes.push({
+          id: baseId,
+          name: cleanName,
+          period: '',
+          teacher: '',
+          room: '',
+          average: null,
+          letterGrade: null,
+          assignments: [],
+        });
+      }
+    });
+  }
+
+  // Second pass: compute averages from assignments with strict weight enforcement if average still null
   classes.forEach(c => {
     if (c.average === null && Array.isArray(c.assignments) && c.assignments.length > 0) {
       const graded = c.assignments.filter(a => a.score !== null && a.totalPoints !== null && !isNaN(a.score) && !isNaN(a.totalPoints) && !a.exempt);
@@ -323,7 +385,6 @@ function scrapeAssignments(html, classes) {
           c.letterGrade = gradeToLetter(c.average);
         }
       } else if (graded.length > 0 && graded.every(a => a.weight === 0)) {
-        // Zero weighted graded items -> class average is null
         c.average = null;
         c.letterGrade = null;
       }
@@ -573,29 +634,28 @@ async function withRetry(fn, retries = 5, delay = 1000) {
   }
 }
 
-async function withGracefulRetry(fn, isZeroCheck, maxWaitMs = 6000, stepName = 'Step') {
-  const startTime = Date.now();
+async function withGracefulRetry(fn, isZeroCheck, maxAttempts = 5, stepName = 'Step', delayMs = 1200) {
   let lastResult = null;
-  while (true) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
+      if (attempt > 1) {
+        console.log(`    ⏳ ${stepName}: attempting to load... (Attempt ${attempt}/${maxAttempts})`);
+      }
       const result = await fn();
       lastResult = result;
       if (!isZeroCheck(result)) {
-        return { data: result, failed: false };
+        return { data: result, failed: false, attempts: attempt };
       }
     } catch (err) {
       if (err.message.includes('Invalid credentials')) throw err;
       // continue loop
     }
-    const elapsed = Date.now() - startTime;
-    if (elapsed >= maxWaitMs) {
-      console.warn(`    ⚠️ Failed to pull ${stepName}. Moving on.`);
-      return { data: lastResult, failed: true };
+    if (attempt < maxAttempts) {
+      await new Promise(r => setTimeout(r, delayMs));
     }
-    const remaining = Math.round((maxWaitMs - elapsed) / 1000);
-    console.log(`    ⏳ ${stepName}: attempting to load... (${remaining}s left)`);
-    await new Promise(r => setTimeout(r, 1200));
   }
+  console.warn(`    ⚠️ Failed to pull ${stepName} after ${maxAttempts} attempts. Moving on.`);
+  return { data: lastResult, failed: true, attempts: maxAttempts };
 }
 
 // ── Build Final Student Profile ──
@@ -761,7 +821,7 @@ export async function scrapeHac(username, password, customDistrictUrl = null) {
       await new Promise(r => setTimeout(r, 600));
       const regHtml = await page.content();
       return scrapeRegistration(regHtml);
-    }, res => !res || !res.studentId, 6000, 'Registration');
+    }, res => !res || !res.studentId, 5, 'Registration');
     const registration = regRes.data;
     if (!regRes.failed && registration?.studentId) {
       console.log(`    ✓ Registration: ${registration.studentName || username} (${registration.building || 'District'})`);
@@ -771,53 +831,96 @@ export async function scrapeHac(username, password, customDistrictUrl = null) {
 
     // ── 4. Classes (Schedule Table) ──────────────────────────────────────────
     console.log('[4/7] Scraping Classes...');
-    let classes = weekClasses.length > 0 ? weekClasses : [];
+    let classes = weekClasses.length > 0 ? [...weekClasses] : [];
     let classesHtml = '';
     const classRes = await withGracefulRetry(async () => {
-      await page.goto(`${BASE_URL}/Content/Student/Classes.aspx`, { waitUntil: 'domcontentloaded', timeout: 30000 });
-      await new Promise(r => setTimeout(r, 800));
-      classesHtml = await page.content();
-      const res = scrapeClasses(classesHtml);
-      return res;
-    }, res => !res || res.length === 0, 6000, 'Classes');
+      try {
+        await page.goto(`${BASE_URL}/Content/Student/Classes.aspx`, { waitUntil: 'domcontentloaded', timeout: 25000 });
+        await new Promise(r => setTimeout(r, 600));
+        classesHtml = await page.content();
+        const res = scrapeClasses(classesHtml);
+        if (res && res.length > 0) return res;
+      } catch (e) {}
+
+      try {
+        await page.goto(`${BASE_URL}/Classes/Schedule`, { waitUntil: 'domcontentloaded', timeout: 25000 });
+        await new Promise(r => setTimeout(r, 800));
+
+        const iframeSrc = await page.evaluate(() => {
+          const frame = document.querySelector('#sg-legacy-iframe, iframe[src*="Classes"], iframe[src*="Schedule"]');
+          return frame ? frame.src : null;
+        });
+
+        if (iframeSrc) {
+          const targetUrl = iframeSrc.startsWith('http') ? iframeSrc : `${BASE_URL}${iframeSrc.startsWith('/') ? '' : '/'}${iframeSrc}`;
+          await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 25000 });
+          await new Promise(r => setTimeout(r, 600));
+        }
+
+        classesHtml = await page.content();
+        return scrapeClasses(classesHtml);
+      } catch (e) {
+        return [];
+      }
+    }, res => !res || res.length === 0, 5, 'Classes');
 
     if (classRes.data && classRes.data.length > 0) {
-      if (classes.length === 0) {
-        classes = classRes.data;
-      } else {
-        // Merge schedule metadata (room, days, mps) into weekClasses
-        classRes.data.forEach(sc => {
-          const matched = classes.find(wc => wc.id === sc.id || wc.name.toLowerCase() === sc.name.toLowerCase());
-          if (matched) {
-            matched.room = sc.room || matched.room;
-            matched.days = sc.days || matched.days;
-            matched.markingPeriods = sc.markingPeriods || matched.markingPeriods;
-          }
-        });
-      }
+      classRes.data.forEach(sc => {
+        const matched = classes.find(wc => wc.id === sc.id || wc.name.toLowerCase() === sc.name.toLowerCase());
+        if (matched) {
+          matched.period = sc.period || matched.period;
+          matched.teacher = sc.teacher || matched.teacher;
+          matched.room = sc.room || matched.room;
+          matched.days = sc.days || matched.days;
+          matched.markingPeriods = sc.markingPeriods || matched.markingPeriods;
+        } else {
+          classes.push(sc);
+        }
+      });
       console.log(`    ✓ ${classes.length} active classes verified`);
     }
 
     // ── 5. Assignments ────────────────────────────────────────────────────────
-    console.log('[5/7] Scraping Assignments...');
+    console.log('[5/7] Scraping Assignments & Course Averages...');
     try {
-      await page.goto(`${BASE_URL}/Content/Student/Assignments.aspx`, { waitUntil: 'domcontentloaded', timeout: 30000 });
-      await new Promise(r => setTimeout(r, 800));
-
-      const iframeSrc = await page.evaluate(() => {
-        const frame = document.querySelector('#sg-legacy-iframe, iframe[src*="Assignments"], iframe[src*="Classwork"]');
-        return frame ? frame.src : null;
-      });
-      if (iframeSrc) {
-        await page.goto(iframeSrc, { waitUntil: 'domcontentloaded', timeout: 30000 });
+      let assignHtml = '';
+      try {
+        await page.goto(`${BASE_URL}/Content/Student/Assignments.aspx`, { waitUntil: 'domcontentloaded', timeout: 25000 });
         await new Promise(r => setTimeout(r, 800));
+        assignHtml = await page.content();
+      } catch (e) {}
+
+      if (!assignHtml || !assignHtml.includes('AssignmentClass')) {
+        await page.goto(`${BASE_URL}/Classes/Classwork`, { waitUntil: 'domcontentloaded', timeout: 25000 });
+        await new Promise(r => setTimeout(r, 800));
+
+        const iframeSrc = await page.evaluate(() => {
+          const frame = document.querySelector('#sg-legacy-iframe, iframe[src*="Assignments"], iframe[src*="Classwork"]');
+          return frame ? frame.src : null;
+        });
+        if (iframeSrc) {
+          const targetUrl = iframeSrc.startsWith('http') ? iframeSrc : `${BASE_URL}${iframeSrc.startsWith('/') ? '' : '/'}${iframeSrc}`;
+          await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 25000 });
+          await new Promise(r => setTimeout(r, 800));
+        }
+        assignHtml = await page.content();
       }
 
-      const assignHtml = await page.content();
+      // Attempt to toggle "Show All Averages" if present so header averages populate
+      try {
+        const showAvgBtn = await page.$('#plnMain_btnShowAverage, #btnShowAverage, button[title*="Show all"], button[title*="averages"]');
+        if (showAvgBtn) {
+          await showAvgBtn.click();
+          await new Promise(r => setTimeout(r, 800));
+          assignHtml = await page.content();
+        }
+      } catch (e) {}
+
       scrapeAssignments(assignHtml, classes);
-      console.log('    ✓ Assignments scraped');
+      const withGrades = classes.filter(c => c.average !== null);
+      console.log(`    ✓ Assignments & course averages scraped (${classes.length} classes total, ${withGrades.length} with live grades)`);
     } catch (e) {
-      console.warn('    ⚠️ Assignments.aspx scrape completed with fallback');
+      console.warn('    ⚠️ Assignments.aspx scrape completed with fallback:', e.message);
     }
 
     // ── 6. Transcript ─────────────────────────────────────────────────────────
@@ -827,7 +930,7 @@ export async function scrapeHac(username, password, customDistrictUrl = null) {
       await new Promise(r => setTimeout(r, 800));
       const transcriptHtml = await page.content();
       return scrapeTranscript(transcriptHtml);
-    }, res => !res || !res.years || res.years.length === 0, 6000, 'Transcript');
+    }, res => !res || !res.years || res.years.length === 0, 5, 'Transcript');
     
     const transcriptData = transRes.data;
     const years = transcriptData?.years || [];
@@ -838,34 +941,71 @@ export async function scrapeHac(username, password, customDistrictUrl = null) {
       console.log('    ⚠️ Failed to pull Transcript records');
     }
 
-    // ── 7. Attendance ─────────────────────────────────────────────────────────
-    console.log('[7/7] Scraping Attendance...');
+    // ── 7. Attendance (Multi-Month) ──────────────────────────────────────────
+    console.log('[7/7] Scraping Attendance (Multi-Month)...');
     const attRes = await withGracefulRetry(async () => {
-      await page.goto(`${BASE_URL}/Content/Attendance/MonthlyView.aspx`, { waitUntil: 'domcontentloaded', timeout: 30000 });
-      await new Promise(r => setTimeout(r, 600));
-      
-      const iframeSrc = await page.evaluate(() => {
-        const frame = document.querySelector('#sg-legacy-iframe, iframe[src*="MonthlyView"]');
-        return frame ? frame.src : null;
-      });
-      if (iframeSrc) {
-        await page.goto(iframeSrc, { waitUntil: 'domcontentloaded', timeout: 30000 });
+      let allRecords = [];
+      let currentMonthHtml = '';
+
+      try {
+        await page.goto(`${BASE_URL}/Content/Attendance/MonthlyView.aspx`, { waitUntil: 'domcontentloaded', timeout: 25000 });
         await new Promise(r => setTimeout(r, 600));
+        currentMonthHtml = await page.content();
+        allRecords = scrapeAttendance(currentMonthHtml);
+      } catch (e) {}
+
+      if (!allRecords || allRecords.length === 0) {
+        try {
+          await page.goto(`${BASE_URL}/Attendance/MonthView`, { waitUntil: 'domcontentloaded', timeout: 25000 });
+          await new Promise(r => setTimeout(r, 800));
+
+          const iframeSrc = await page.evaluate(() => {
+            const frame = document.querySelector('#sg-legacy-iframe, iframe[src*="MonthlyView"], iframe[src*="Attendance"]');
+            return frame ? frame.src : null;
+          });
+
+          if (iframeSrc) {
+            const targetUrl = iframeSrc.startsWith('http') ? iframeSrc : `${BASE_URL}${iframeSrc.startsWith('/') ? '' : '/'}${iframeSrc}`;
+            await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 25000 });
+            await new Promise(r => setTimeout(r, 600));
+          }
+
+          currentMonthHtml = await page.content();
+          allRecords = scrapeAttendance(currentMonthHtml);
+        } catch (e) {}
       }
-      
-      let attendanceHtml = await page.content();
-      let records = scrapeAttendance(attendanceHtml);
-      if (!records || records.length === 0) {
-        await page.goto(`${BASE_URL}/Attendance/MonthView`, { waitUntil: 'domcontentloaded', timeout: 30000 });
-        await new Promise(r => setTimeout(r, 600));
-        attendanceHtml = await page.content();
-        records = scrapeAttendance(attendanceHtml);
+
+      // Also scrape previous month (e.g. August)
+      try {
+        const prevLink = await page.$('#plnMain_cldAttendance a[title*="previous month"], #plnMain_cldAttendance a[title*="Previous"], a[title*="Go to the previous month"], a[title*="previous month"]');
+        if (prevLink) {
+          await Promise.all([
+            page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => {}),
+            prevLink.click(),
+          ]);
+          await new Promise(r => setTimeout(r, 600));
+          const prevHtml = await page.content();
+          const prevRecords = scrapeAttendance(prevHtml);
+          if (prevRecords && prevRecords.length > 0) {
+            const existingKeys = new Set(allRecords.map(r => `${r.year}-${r.month}-${r.day}`));
+            prevRecords.forEach(pr => {
+              const k = `${pr.year}-${pr.month}-${pr.day}`;
+              if (!existingKeys.has(k)) {
+                existingKeys.add(k);
+                allRecords.push(pr);
+              }
+            });
+          }
+        }
+      } catch (e) {
+        // Previous month navigation optional
       }
-      return records;
-    }, res => !res || res.length === 0, 6000, 'Attendance');
+
+      return allRecords;
+    }, res => !res || res.length === 0, 5, 'Attendance');
     const attendance = attRes.data || [];
     if (!attRes.failed && attendance.length > 0) {
-      console.log(`    ✓ ${attendance.length} attendance records found`);
+      console.log(`    ✓ ${attendance.length} total multi-month attendance records found`);
     } else {
       console.log('    ⚠️ Failed to pull Attendance records');
     }
@@ -878,7 +1018,7 @@ export async function scrapeHac(username, password, customDistrictUrl = null) {
     if (transRes.failed || years.length === 0) {
       warnings.push({ section: 'Transcript', message: 'Failed to pull transcript academic years.' });
     }
-    if (attRes.failed) {
+    if (attRes.failed || attendance.length === 0) {
       warnings.push({ section: 'Attendance', message: 'Failed to pull attendance records.' });
     }
 
@@ -899,5 +1039,5 @@ export async function scrapeHac(username, password, customDistrictUrl = null) {
 }
 
 // Exports for unit testing without live network
-export { scrapeWeekView, scrapeClasses, scrapeAssignments, scrapeTranscript, scrapeAttendance, scrapeRegistration, gradeToLetter, parseHacFromHar };
+export { scrapeWeekView, scrapeClasses, scrapeAssignments, scrapeTranscript, scrapeAttendance, scrapeRegistration, gradeToLetter, parseHacFromHar, withGracefulRetry };
 

@@ -82,13 +82,12 @@ export default function Layout() {
       {/* Desktop Sidebar */}
       <nav className={`hidden md:flex flex-col w-64 ${theme.sidebarBg} border-r ${theme.sidebarBorder} shrink-0 transition-colors duration-200`}>
         <div className="px-6 py-6 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-3">
             <div className={`w-9 h-9 rounded-2xl ${theme.bgClass} flex items-center justify-center text-white font-black shadow-md shadow-emerald-500/20`}>
               ▲
             </div>
             <div>
               <h1 className={`text-xl font-extrabold tracking-tight ${theme.isDark ? 'text-white' : theme.textClass}`}>Ascend</h1>
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block -mt-1">Academic Hub</span>
             </div>
           </div>
         </div>

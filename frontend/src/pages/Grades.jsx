@@ -9,6 +9,16 @@ import {
 import ClassDocsModal from '../components/docs/ClassDocsModal';
 import DocAdderModal from '../components/docs/DocAdderModal';
 
+function SmoothAccordion({ isOpen, children, className = '' }) {
+  return (
+    <div className={`accordion-rollout ${isOpen ? 'is-open' : ''} ${className}`}>
+      <div className="accordion-rollout-inner">
+        {children}
+      </div>
+    </div>
+  );
+}
+
 function gradeToLetter(avg) {
   if (avg === null || avg === undefined || isNaN(avg)) return null;
   if (avg >= 90) return 'A';
@@ -19,6 +29,12 @@ function gradeToLetter(avg) {
 }
 
 function getEffectiveClassGrade(cls) {
+  // 1. If HAC provided an official course average, ALWAYS prioritize HAC's true grade
+  if (cls.average !== null && cls.average !== undefined && !isNaN(cls.average) && cls.average >= 0) {
+    return { average: cls.average, letterGrade: cls.letterGrade || gradeToLetter(cls.average) };
+  }
+
+  // 2. Otherwise fallback to calculating from assignments if available
   const assignments = cls.assignments || [];
   const graded = assignments.filter(a => a.score !== null && a.totalPoints !== null && !isNaN(a.score) && !isNaN(a.totalPoints) && !a.exempt);
   
@@ -51,9 +67,6 @@ function getEffectiveClassGrade(cls) {
     return { average: null, letterGrade: null };
   }
   
-  if (cls.average !== null && cls.average !== undefined && !isNaN(cls.average) && cls.average > 0) {
-    return { average: cls.average, letterGrade: cls.letterGrade || gradeToLetter(cls.average) };
-  }
   return { average: null, letterGrade: null };
 }
 
@@ -320,7 +333,7 @@ export default function Grades() {
                 </button>
 
                 {/* Assignment Curtain & Action Bar */}
-                {isOpen && (
+                <SmoothAccordion isOpen={isOpen}>
                   <div className={`border-t ${theme.cardBorder} ${theme.isDark ? 'bg-slate-900/60' : 'bg-black/[0.02]'}`}>
                     
                     {/* Course Header Info */}
@@ -376,7 +389,7 @@ export default function Grades() {
                       </>
                     )}
                   </div>
-                )}
+                </SmoothAccordion>
               </div>
             );
           })}

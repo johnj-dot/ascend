@@ -18,7 +18,7 @@ export default function ScheduleModal({ classes, onClose }) {
 
   return (
     <div onClick={onClose} className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div onClick={e => e.stopPropagation()} className={`${theme.cardBg} rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl border ${theme.cardBorder} animate-in fade-in zoom-in duration-200`}>
+      <div onClick={e => e.stopPropagation()} className={`${theme.cardBg} rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl border ${theme.cardBorder} animate-slide-up`}>
         {/* Header */}
         <div className={`px-6 pt-6 pb-4 ${theme.bgClass} text-white flex justify-between items-center`}>
           <div>
