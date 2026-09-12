@@ -1,30 +1,179 @@
 {
-  "studentName": "Student",
-  "studentId": null,
-  "counselor": null,
-  "grade": null,
-  "building": null,
-  "school": "Home Access Center",
-  "registration": null,
-  "overallAverage": 100,
+  "studentName": "Joseph, John",
+  "studentId": "308772",
+  "counselor": "Velasco, Alejandra",
+  "grade": "09",
+  "building": "Round Rock High School",
+  "school": "Round Rock High School",
+  "registration": {
+    "studentId": "308772",
+    "studentName": "Joseph, John",
+    "birthDate": "2/20/2012",
+    "counselor": "Velasco, Alejandra",
+    "building": "Round Rock High School",
+    "gender": "Male",
+    "grade": "09",
+    "language": "English"
+  },
+  "overallAverage": 99.5,
   "classes": [
     {
       "id": "3929A - 3",
       "name": "AP Comp Sci Principles",
       "period": "01",
       "teacher": "Vudayagiri, Madhavi",
-      "average": null,
-      "letterGrade": null,
-      "assignments": []
+      "average": 100,
+      "letterGrade": "A",
+      "assignments": [
+        {
+          "name": "Unit 1A Stampsheet Packet",
+          "dateDue": "09/04/2026",
+          "dateAssigned": "08/24/2026",
+          "category": "Assessment",
+          "score": 100,
+          "totalPoints": 100,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "Unit 1A Assessment",
+          "dateDue": "09/04/2026",
+          "dateAssigned": "09/04/2026",
+          "category": "Assessment",
+          "score": null,
+          "totalPoints": 100,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "Unit 1A Quiz2",
+          "dateDue": "09/04/2026",
+          "dateAssigned": "09/04/2026",
+          "category": "Formative",
+          "score": null,
+          "totalPoints": 100,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "Unit 1A Quiz1",
+          "dateDue": "09/02/2026",
+          "dateAssigned": "09/02/2026",
+          "category": "Formative",
+          "score": 100,
+          "totalPoints": 100,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "100.00",
+          "dateDue": "Assessment",
+          "dateAssigned": "100.0000",
+          "category": "100.000%",
+          "score": 0.4,
+          "totalPoints": 0.4,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "100.00",
+          "dateDue": "Formative",
+          "dateAssigned": "100.0000",
+          "category": "100.000%",
+          "score": 0.6,
+          "totalPoints": 0.6,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        }
+      ],
+      "room": "706",
+      "days": "A",
+      "markingPeriods": "MP1, MP2"
     },
     {
       "id": "6026A - 9",
       "name": "Lifetime Fitness & Wellness",
       "period": "02",
       "teacher": "Steele, Levi",
-      "average": null,
-      "letterGrade": null,
-      "assignments": []
+      "average": 100,
+      "letterGrade": "A",
+      "assignments": [
+        {
+          "name": "Shoes",
+          "dateDue": "09/11/2026",
+          "dateAssigned": "09/11/2026",
+          "category": "Formative",
+          "score": 100,
+          "totalPoints": 100,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "Shoes",
+          "dateDue": "09/09/2026",
+          "dateAssigned": "09/09/2026",
+          "category": "Formative",
+          "score": 100,
+          "totalPoints": 100,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "Week 3",
+          "dateDue": "09/04/2026",
+          "dateAssigned": "09/04/2026",
+          "category": "Formative",
+          "score": 100,
+          "totalPoints": 100,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "Week 2",
+          "dateDue": "08/28/2026",
+          "dateAssigned": "08/24/2026",
+          "category": "Formative",
+          "score": 100,
+          "totalPoints": 100,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "Week 1",
+          "dateDue": "08/21/2026",
+          "dateAssigned": "08/19/2026",
+          "category": "Formative",
+          "score": 100,
+          "totalPoints": 100,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "500.00",
+          "dateDue": "Formative",
+          "dateAssigned": "500.0000",
+          "category": "100.000%",
+          "score": 0.6,
+          "totalPoints": 0.6,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        }
+      ],
+      "room": "AxGym",
+      "days": "A",
+      "markingPeriods": "MP1, MP2"
     },
     {
       "id": "3225A - 5",
@@ -35,88 +184,360 @@
       "letterGrade": "A",
       "assignments": [
         {
-          "name": "M1T1L1 Homework",
-          "category": "Formative",
-          "dateDue": "08/25/2026",
+          "name": "M1T1 Adv Ext Test",
+          "dateDue": "09/09/2026",
+          "dateAssigned": "09/09/2026",
+          "category": "Summative",
+          "score": 99,
+          "totalPoints": 100,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "M1T1 CBA",
+          "dateDue": "09/09/2026",
+          "dateAssigned": "09/09/2026",
+          "category": "Summative",
           "score": 100,
           "totalPoints": 100,
-          "weight": 0.2,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "M1T1 Skills Practice",
+          "dateDue": "09/09/2026",
+          "dateAssigned": "08/27/2026",
+          "category": "Formative",
+          "score": 100,
+          "totalPoints": 100,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "M1T1 Quiz 2",
+          "dateDue": "09/04/2026",
+          "dateAssigned": "09/04/2026",
+          "category": "Formative",
+          "score": 95,
+          "totalPoints": 100,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "M1T1 Quiz 1",
+          "dateDue": "08/27/2026",
+          "dateAssigned": "08/27/2026",
+          "category": "Formative",
+          "score": 98,
+          "totalPoints": 100,
+          "weight": 1,
           "missing": false,
           "exempt": false
         },
         {
           "name": "M1T1L2 Homework",
-          "category": "Formative",
           "dateDue": "08/27/2026",
+          "dateAssigned": "08/25/2026",
+          "category": "Formative",
           "score": 100,
           "totalPoints": 100,
-          "weight": 0.2,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "M1T1L1 Homework",
+          "dateDue": "08/25/2026",
+          "dateAssigned": "08/21/2026",
+          "category": "Formative",
+          "score": 100,
+          "totalPoints": 100,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "400.00",
+          "dateDue": "Formative",
+          "dateAssigned": "398.0000",
+          "category": "99.500%",
+          "score": 0.6,
+          "totalPoints": 0.597,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "200.00",
+          "dateDue": "Summative",
+          "dateAssigned": "199.0000",
+          "category": "99.500%",
+          "score": 0.4,
+          "totalPoints": 0.398,
+          "weight": 1,
           "missing": false,
           "exempt": false
         }
-      ]
+      ],
+      "room": "749",
+      "days": "A",
+      "markingPeriods": "MP1, MP2"
     },
     {
       "id": "4315A - 4",
       "name": "TAG/Advanced Biology",
       "period": "04",
       "teacher": "Ortega, Jacob",
-      "average": null,
-      "letterGrade": null,
-      "assignments": []
+      "average": 100,
+      "letterGrade": "A",
+      "assignments": [
+        {
+          "name": "Unit 1 Exam",
+          "dateDue": "09/03/2026",
+          "dateAssigned": "09/03/2026",
+          "category": "Summative",
+          "score": 100,
+          "totalPoints": 100,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "Enzyme Lab",
+          "dateDue": "09/01/2026",
+          "dateAssigned": "09/01/2026",
+          "category": "Formative",
+          "score": 100,
+          "totalPoints": 100,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "Unit 1 Quiz",
+          "dateDue": "09/01/2026",
+          "dateAssigned": "09/01/2026",
+          "category": "Formative",
+          "score": 100,
+          "totalPoints": 100,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "200.00",
+          "dateDue": "Formative",
+          "dateAssigned": "200.0000",
+          "category": "100.000%",
+          "score": 0.6,
+          "totalPoints": 0.6,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "100.00",
+          "dateDue": "Summative",
+          "dateAssigned": "100.0000",
+          "category": "100.000%",
+          "score": 0.4,
+          "totalPoints": 0.4,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        }
+      ],
+      "room": "735",
+      "days": "A",
+      "markingPeriods": "MP1, MP2"
     },
     {
       "id": "5839A - 1",
       "name": "Intro Engineering Design",
       "period": "05",
       "teacher": "Lowe, Michael",
-      "average": null,
-      "letterGrade": null,
-      "assignments": []
+      "average": 100,
+      "letterGrade": "A",
+      "assignments": [
+        {
+          "name": "MAJOR: Product Evolution Presentation",
+          "dateDue": "09/08/2026",
+          "dateAssigned": "09/03/2026",
+          "category": "Summative",
+          "score": 100,
+          "totalPoints": 100,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "Concept Sketching",
+          "dateDue": "09/03/2026",
+          "dateAssigned": "08/28/2026",
+          "category": "Formative",
+          "score": 100,
+          "totalPoints": 100,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "Engineering Notebook Check #1",
+          "dateDue": "09/03/2026",
+          "dateAssigned": "09/01/2026",
+          "category": "Formative",
+          "score": 100,
+          "totalPoints": 100,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "Design Process - Deep Dive Activity",
+          "dateDue": "08/25/2026",
+          "dateAssigned": "08/25/2026",
+          "category": "Formative",
+          "score": 100,
+          "totalPoints": 100,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "Drafting My Future Blueprint",
+          "dateDue": "08/24/2026",
+          "dateAssigned": "08/24/2026",
+          "category": "Formative",
+          "score": 100,
+          "totalPoints": 100,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "400.00",
+          "dateDue": "Formative",
+          "dateAssigned": "400.0000",
+          "category": "100.000%",
+          "score": 60,
+          "totalPoints": 60,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "100.00",
+          "dateDue": "Summative",
+          "dateAssigned": "100.0000",
+          "category": "100.000%",
+          "score": 40,
+          "totalPoints": 40,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        }
+      ],
+      "room": "604",
+      "days": "B",
+      "markingPeriods": "MP1, MP2"
     },
     {
       "id": "1115A - 6",
       "name": "TAG/Advanced English I",
       "period": "06",
       "teacher": "Sitran, Susan",
-      "average": null,
-      "letterGrade": null,
+      "average": 100,
+      "letterGrade": "A",
       "assignments": [
         {
           "name": "\"Fish Cheeks\" Analysis",
-          "category": "Formative",
           "dateDue": "08/25/2026",
-          "score": null,
+          "dateAssigned": null,
+          "category": "Formative",
+          "score": 100,
           "totalPoints": 100,
           "weight": 1,
           "missing": false,
           "exempt": false
+        },
+        {
+          "name": "100.00",
+          "dateDue": "Formative",
+          "dateAssigned": "100.0000",
+          "category": "100.000%",
+          "score": 0.6,
+          "totalPoints": 0.6,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
         }
-      ]
+      ],
+      "room": "124",
+      "days": "B",
+      "markingPeriods": "MP1, MP2"
     },
     {
       "id": "2212A - 6",
       "name": "TAG/AP Human Geography",
       "period": "07",
       "teacher": "Ferguson, Jennifer",
-      "average": null,
-      "letterGrade": null,
+      "average": 100,
+      "letterGrade": "A",
       "assignments": [
         {
-          "name": "Syllabus",
-          "category": "Formative",
-          "dateDue": "08/26/2026",
-          "score": 100,
+          "name": "Unit 1 Exam",
+          "dateDue": "09/10/2026",
+          "dateAssigned": "09/09/2026",
+          "category": "Summative",
+          "score": null,
           "totalPoints": 100,
-          "weight": 0,
+          "weight": 1,
           "missing": false,
           "exempt": false
         },
         {
-          "name": "Spatial Concepts Activity",
+          "name": "Unit 1 Notebook",
+          "dateDue": "09/10/2026",
+          "dateAssigned": "09/09/2026",
           "category": "Formative",
-          "dateDue": "08/26/2026",
-          "score": null,
+          "score": 100,
+          "totalPoints": 100,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "QWs Unit 1",
+          "dateDue": "09/10/2026",
+          "dateAssigned": "09/09/2026",
+          "category": "Formative",
+          "score": 100,
+          "totalPoints": 100,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "VC 1.2",
+          "dateDue": "09/08/2026",
+          "dateAssigned": "09/04/2026",
+          "category": "Formative",
+          "score": 100,
+          "totalPoints": 100,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "Essential Locations Exam",
+          "dateDue": "09/03/2026",
+          "dateAssigned": "09/02/2026",
+          "category": "Summative",
+          "score": 100,
           "totalPoints": 100,
           "weight": 1,
           "missing": false,
@@ -124,74 +545,626 @@
         },
         {
           "name": "Region's Map Quiz",
-          "category": "Formative",
           "dateDue": "08/28/2026",
-          "score": null,
+          "dateAssigned": "08/27/2026",
+          "category": "Formative",
+          "score": 100,
           "totalPoints": 100,
           "weight": 1,
           "missing": false,
           "exempt": false
+        },
+        {
+          "name": "Spatial Concepts Activity",
+          "dateDue": "08/26/2026",
+          "dateAssigned": "08/25/2026",
+          "category": "Formative",
+          "score": 100,
+          "totalPoints": 100,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "Syllabus",
+          "dateDue": "08/26/2026",
+          "dateAssigned": "08/19/2026",
+          "category": "Formative",
+          "score": 100,
+          "totalPoints": 100,
+          "weight": 0,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "500.00",
+          "dateDue": "Formative",
+          "dateAssigned": "500.0000",
+          "category": "100.000%",
+          "score": 0.6,
+          "totalPoints": 0.6,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "100.00",
+          "dateDue": "Summative",
+          "dateAssigned": "100.0000",
+          "category": "100.000%",
+          "score": 0.4,
+          "totalPoints": 0.4,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
         }
-      ]
+      ],
+      "room": "740",
+      "days": "B",
+      "markingPeriods": "MP1, MP2"
     },
     {
       "id": "8432A - 9",
       "name": "Advanced Spanish III",
       "period": "08",
       "teacher": "Tijerina, Yakeline",
-      "average": null,
-      "letterGrade": null,
-      "assignments": []
+      "average": 96,
+      "letterGrade": "A",
+      "assignments": [
+        {
+          "name": "El presente perfecto y vocab. LT",
+          "dateDue": "09/08/2026",
+          "dateAssigned": "09/08/2026",
+          "category": "Formative",
+          "score": 100,
+          "totalPoints": 100,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "Ser vs. estar worksheet",
+          "dateDue": "09/03/2026",
+          "dateAssigned": "09/03/2026",
+          "category": "Formative",
+          "score": 90,
+          "totalPoints": 100,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "Valeria - Audio y preguntas",
+          "dateDue": "09/03/2026",
+          "dateAssigned": "09/03/2026",
+          "category": "Formative",
+          "score": 95,
+          "totalPoints": 100,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "Knowledge check 1",
+          "dateDue": "09/01/2026",
+          "dateAssigned": "09/01/2026",
+          "category": "Formative",
+          "score": 95,
+          "totalPoints": 100,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "Homework - review for quiz",
+          "dateDue": "08/31/2026",
+          "dateAssigned": "08/27/2026",
+          "category": "Formative",
+          "score": 100,
+          "totalPoints": 100,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "Diagnostic test",
+          "dateDue": "08/26/2026",
+          "dateAssigned": "08/26/2026",
+          "category": "Proficiency",
+          "score": 75,
+          "totalPoints": 100,
+          "weight": 0,
+          "missing": false,
+          "exempt": false
+        },
+        {
+          "name": "500.00",
+          "dateDue": "Formative",
+          "dateAssigned": "480.0000",
+          "category": "96.000%",
+          "score": 0.6,
+          "totalPoints": 0.576,
+          "weight": 1,
+          "missing": false,
+          "exempt": false
+        }
+      ],
+      "room": "112",
+      "days": "B",
+      "markingPeriods": "MP1, MP2"
     }
   ],
   "upcoming": [
     {
-      "name": "\"Fish Cheeks\" Analysis",
-      "category": "Formative",
-      "dateDue": "08/25/2026",
+      "name": "Unit 1A Assessment",
+      "dateDue": "09/04/2026",
+      "dateAssigned": "09/04/2026",
+      "category": "Assessment",
       "score": null,
       "totalPoints": 100,
       "weight": 1,
       "missing": false,
       "exempt": false,
-      "class": "TAG/Advanced English I",
-      "courseId": "1115A - 6"
+      "class": "AP Comp Sci Principles",
+      "courseId": "3929A - 3"
     },
     {
-      "name": "Spatial Concepts Activity",
+      "name": "Unit 1A Quiz2",
+      "dateDue": "09/04/2026",
+      "dateAssigned": "09/04/2026",
       "category": "Formative",
-      "dateDue": "08/26/2026",
       "score": null,
       "totalPoints": 100,
       "weight": 1,
       "missing": false,
       "exempt": false,
-      "class": "TAG/AP Human Geography",
-      "courseId": "2212A - 6"
+      "class": "AP Comp Sci Principles",
+      "courseId": "3929A - 3"
     },
     {
-      "name": "Region's Map Quiz",
-      "category": "Formative",
-      "dateDue": "08/28/2026",
+      "name": "Unit 1 Exam",
+      "dateDue": "09/10/2026",
+      "dateAssigned": "09/09/2026",
+      "category": "Summative",
       "score": null,
       "totalPoints": 100,
       "weight": 1,
       "missing": false,
       "exempt": false,
-      "class": "TAG/AP Human Geography",
+      "class": "TAG/AP Human GeographyVC 1.2QWs Unit 1Unit 1 NotebookUnit 1 Exam",
       "courseId": "2212A - 6"
     }
   ],
   "missing": [],
   "transcript": {
-    "years": [],
+    "years": [
+      {
+        "year": "2024-25",
+        "grade": "07",
+        "building": "Cedar Valley Middle School",
+        "courses": [
+          {
+            "courseId": "13036200 - 1",
+            "description": "PRAPPENG",
+            "sem1": "100",
+            "sem2": "99",
+            "finalGrade": "100",
+            "credit": 1
+          },
+          {
+            "courseId": "03440100 - 1",
+            "description": "SPAN 1",
+            "sem1": "95",
+            "sem2": "97",
+            "finalGrade": "96",
+            "credit": 1
+          },
+          {
+            "courseId": "03100500 - 1",
+            "description": "ALG 1",
+            "sem1": "99",
+            "sem2": "100",
+            "finalGrade": "100",
+            "credit": 1
+          }
+        ],
+        "totalCredits": 3
+      },
+      {
+        "year": "2025-26",
+        "grade": "08",
+        "building": "Cedar Valley Middle School",
+        "courses": [
+          {
+            "courseId": "03100700 - 1",
+            "description": "GEOM",
+            "sem1": "100",
+            "sem2": "97",
+            "finalGrade": "99",
+            "credit": 1
+          },
+          {
+            "courseId": "03440200 - 1",
+            "description": "SPAN 2",
+            "sem1": "100",
+            "sem2": "97",
+            "finalGrade": "99",
+            "credit": 1
+          },
+          {
+            "courseId": "03500100 - 1",
+            "description": "ART 1",
+            "sem1": "100",
+            "sem2": "100",
+            "finalGrade": "100",
+            "credit": 1
+          },
+          {
+            "courseId": "03580140 - 1",
+            "description": "TAFCS",
+            "sem1": "99",
+            "sem2": "100",
+            "finalGrade": "100",
+            "credit": 1
+          }
+        ],
+        "totalCredits": 4
+      }
+    ],
     "gpa": {
       "weighted": null,
       "unweighted": null,
       "rank": null,
-      "classSize": null
+      "classSize": null,
+      "quartile": null,
+      "scale": null
     }
   },
-  "attendance": [],
+  "attendance": [
+    {
+      "day": 1,
+      "month": "September",
+      "year": "2026",
+      "status": "present",
+      "code": "period: 05\nAttendance: Present\nperiod: 06\nAttendance: Present\nperiod: 07\nAttendance: Present\nperiod: 08\nAttendance: Present",
+      "raw": "period: 05\nAttendance: Present\nperiod: 06\nAttendance: Present\nperiod: 07\nAttendance: Present\nperiod: 08\nAttendance: Present"
+    },
+    {
+      "day": 2,
+      "month": "September",
+      "year": "2026",
+      "status": "present",
+      "code": "period: 01\nAttendance: Present\nperiod: 02\nAttendance: Present\nperiod: 03\nAttendance: Present\nperiod: 04\nAttendance: Present",
+      "raw": "period: 01\nAttendance: Present\nperiod: 02\nAttendance: Present\nperiod: 03\nAttendance: Present\nperiod: 04\nAttendance: Present"
+    },
+    {
+      "day": 3,
+      "month": "September",
+      "year": "2026",
+      "status": "present",
+      "code": "period: 05\nAttendance: Present\nperiod: 06\nAttendance: Present\nperiod: 07\nAttendance: Present\nperiod: 08\nAttendance: Present",
+      "raw": "period: 05\nAttendance: Present\nperiod: 06\nAttendance: Present\nperiod: 07\nAttendance: Present\nperiod: 08\nAttendance: Present"
+    },
+    {
+      "day": 4,
+      "month": "September",
+      "year": "2026",
+      "status": "present",
+      "code": "period: 01\nAttendance: Present\nperiod: 02\nAttendance: Present\nperiod: 03\nAttendance: Present\nperiod: 04\nAttendance: Present",
+      "raw": "period: 01\nAttendance: Present\nperiod: 02\nAttendance: Present\nperiod: 03\nAttendance: Present\nperiod: 04\nAttendance: Present"
+    },
+    {
+      "day": 5,
+      "month": "September",
+      "year": "2026",
+      "status": "closed",
+      "code": "5, School Closed",
+      "raw": "5, School Closed"
+    },
+    {
+      "day": 6,
+      "month": "September",
+      "year": "2026",
+      "status": "closed",
+      "code": "6, School Closed",
+      "raw": "6, School Closed"
+    },
+    {
+      "day": 7,
+      "month": "September",
+      "year": "2026",
+      "status": "closed",
+      "code": "7, School Closed",
+      "raw": "7, School Closed"
+    },
+    {
+      "day": 8,
+      "month": "September",
+      "year": "2026",
+      "status": "present",
+      "code": "period: 05\nAttendance: Present\nperiod: 06\nAttendance: Present\nperiod: 07\nAttendance: Present\nperiod: 08\nAttendance: Present",
+      "raw": "period: 05\nAttendance: Present\nperiod: 06\nAttendance: Present\nperiod: 07\nAttendance: Present\nperiod: 08\nAttendance: Present"
+    },
+    {
+      "day": 9,
+      "month": "September",
+      "year": "2026",
+      "status": "present",
+      "code": "period: 01\nAttendance: Present\nperiod: 02\nAttendance: Present\nperiod: 03\nAttendance: Present\nperiod: 04\nAttendance: Present",
+      "raw": "period: 01\nAttendance: Present\nperiod: 02\nAttendance: Present\nperiod: 03\nAttendance: Present\nperiod: 04\nAttendance: Present"
+    },
+    {
+      "day": 10,
+      "month": "September",
+      "year": "2026",
+      "status": "present",
+      "code": "period: 05\nAttendance: Present\nperiod: 06\nAttendance: Present\nperiod: 07\nAttendance: Present\nperiod: 08\nAttendance: Present",
+      "raw": "period: 05\nAttendance: Present\nperiod: 06\nAttendance: Present\nperiod: 07\nAttendance: Present\nperiod: 08\nAttendance: Present"
+    },
+    {
+      "day": 11,
+      "month": "September",
+      "year": "2026",
+      "status": "present",
+      "code": "period: 01\nAttendance: Present\nperiod: 02\nAttendance: Present\nperiod: 03\nAttendance: Present\nperiod: 04\nAttendance: Present",
+      "raw": "period: 01\nAttendance: Present\nperiod: 02\nAttendance: Present\nperiod: 03\nAttendance: Present\nperiod: 04\nAttendance: Present"
+    },
+    {
+      "day": 12,
+      "month": "September",
+      "year": "2026",
+      "status": "closed",
+      "code": "12, School Closed",
+      "raw": "12, School Closed"
+    },
+    {
+      "day": 13,
+      "month": "September",
+      "year": "2026",
+      "status": "closed",
+      "code": "13, School Closed",
+      "raw": "13, School Closed"
+    },
+    {
+      "day": 14,
+      "month": "September",
+      "year": "2026",
+      "status": "info",
+      "code": "Regular Day",
+      "raw": ""
+    },
+    {
+      "day": 15,
+      "month": "September",
+      "year": "2026",
+      "status": "info",
+      "code": "Regular Day",
+      "raw": ""
+    },
+    {
+      "day": 16,
+      "month": "September",
+      "year": "2026",
+      "status": "info",
+      "code": "Regular Day",
+      "raw": ""
+    },
+    {
+      "day": 17,
+      "month": "September",
+      "year": "2026",
+      "status": "info",
+      "code": "Regular Day",
+      "raw": ""
+    },
+    {
+      "day": 18,
+      "month": "September",
+      "year": "2026",
+      "status": "info",
+      "code": "Regular Day",
+      "raw": ""
+    },
+    {
+      "day": 19,
+      "month": "September",
+      "year": "2026",
+      "status": "closed",
+      "code": "19, School Closed",
+      "raw": "19, School Closed"
+    },
+    {
+      "day": 20,
+      "month": "September",
+      "year": "2026",
+      "status": "closed",
+      "code": "20, School Closed",
+      "raw": "20, School Closed"
+    },
+    {
+      "day": 21,
+      "month": "September",
+      "year": "2026",
+      "status": "closed",
+      "code": "21, School Closed",
+      "raw": "21, School Closed"
+    },
+    {
+      "day": 22,
+      "month": "September",
+      "year": "2026",
+      "status": "info",
+      "code": "Regular Day",
+      "raw": ""
+    },
+    {
+      "day": 23,
+      "month": "September",
+      "year": "2026",
+      "status": "info",
+      "code": "Regular Day",
+      "raw": ""
+    },
+    {
+      "day": 24,
+      "month": "September",
+      "year": "2026",
+      "status": "info",
+      "code": "Regular Day",
+      "raw": ""
+    },
+    {
+      "day": 25,
+      "month": "September",
+      "year": "2026",
+      "status": "info",
+      "code": "Regular Day",
+      "raw": ""
+    },
+    {
+      "day": 26,
+      "month": "September",
+      "year": "2026",
+      "status": "closed",
+      "code": "26, School Closed",
+      "raw": "26, School Closed"
+    },
+    {
+      "day": 27,
+      "month": "September",
+      "year": "2026",
+      "status": "closed",
+      "code": "27, School Closed",
+      "raw": "27, School Closed"
+    },
+    {
+      "day": 28,
+      "month": "September",
+      "year": "2026",
+      "status": "info",
+      "code": "Regular Day",
+      "raw": ""
+    },
+    {
+      "day": 29,
+      "month": "September",
+      "year": "2026",
+      "status": "info",
+      "code": "Regular Day",
+      "raw": ""
+    },
+    {
+      "day": 30,
+      "month": "September",
+      "year": "2026",
+      "status": "info",
+      "code": "Regular Day",
+      "raw": ""
+    },
+    {
+      "day": 19,
+      "month": "August",
+      "year": "2026",
+      "status": "present",
+      "code": "period: 01\nAttendance: Present\nperiod: 02\nAttendance: Present\nperiod: 03\nAttendance: Present\nperiod: 04\nAttendance: Present",
+      "raw": "period: 01\nAttendance: Present\nperiod: 02\nAttendance: Present\nperiod: 03\nAttendance: Present\nperiod: 04\nAttendance: Present"
+    },
+    {
+      "day": 20,
+      "month": "August",
+      "year": "2026",
+      "status": "present",
+      "code": "period: 05\nAttendance: Present\nperiod: 06\nAttendance: Present\nperiod: 07\nAttendance: Present\nperiod: 08\nAttendance: Present",
+      "raw": "period: 05\nAttendance: Present\nperiod: 06\nAttendance: Present\nperiod: 07\nAttendance: Present\nperiod: 08\nAttendance: Present"
+    },
+    {
+      "day": 21,
+      "month": "August",
+      "year": "2026",
+      "status": "present",
+      "code": "period: 01\nAttendance: Present\nperiod: 02\nAttendance: Present\nperiod: 03\nAttendance: Present",
+      "raw": "period: 01\nAttendance: Present\nperiod: 02\nAttendance: Present\nperiod: 03\nAttendance: Present"
+    },
+    {
+      "day": 22,
+      "month": "August",
+      "year": "2026",
+      "status": "closed",
+      "code": "22, School Closed",
+      "raw": "22, School Closed"
+    },
+    {
+      "day": 23,
+      "month": "August",
+      "year": "2026",
+      "status": "closed",
+      "code": "23, School Closed",
+      "raw": "23, School Closed"
+    },
+    {
+      "day": 24,
+      "month": "August",
+      "year": "2026",
+      "status": "present",
+      "code": "period: 05\nAttendance: Present\nperiod: 06\nAttendance: Present\nperiod: 07\nAttendance: Present\nperiod: 08\nAttendance: Present",
+      "raw": "period: 05\nAttendance: Present\nperiod: 06\nAttendance: Present\nperiod: 07\nAttendance: Present\nperiod: 08\nAttendance: Present"
+    },
+    {
+      "day": 25,
+      "month": "August",
+      "year": "2026",
+      "status": "present",
+      "code": "period: 01\nAttendance: Present\nperiod: 02\nAttendance: Present\nperiod: 03\nAttendance: Present\nperiod: 04\nAttendance: Present",
+      "raw": "period: 01\nAttendance: Present\nperiod: 02\nAttendance: Present\nperiod: 03\nAttendance: Present\nperiod: 04\nAttendance: Present"
+    },
+    {
+      "day": 26,
+      "month": "August",
+      "year": "2026",
+      "status": "present",
+      "code": "period: 05\nAttendance: Present\nperiod: 06\nAttendance: Present\nperiod: 07\nAttendance: Present\nperiod: 08\nAttendance: Present",
+      "raw": "period: 05\nAttendance: Present\nperiod: 06\nAttendance: Present\nperiod: 07\nAttendance: Present\nperiod: 08\nAttendance: Present"
+    },
+    {
+      "day": 27,
+      "month": "August",
+      "year": "2026",
+      "status": "present",
+      "code": "period: 01\nAttendance: Present\nperiod: 02\nAttendance: Present\nperiod: 03\nAttendance: Present\nperiod: 04\nAttendance: Present",
+      "raw": "period: 01\nAttendance: Present\nperiod: 02\nAttendance: Present\nperiod: 03\nAttendance: Present\nperiod: 04\nAttendance: Present"
+    },
+    {
+      "day": 28,
+      "month": "August",
+      "year": "2026",
+      "status": "present",
+      "code": "period: 05\nAttendance: Present\nperiod: 06\nAttendance: Present\nperiod: 07\nAttendance: Present\nperiod: 08\nAttendance: Present",
+      "raw": "period: 05\nAttendance: Present\nperiod: 06\nAttendance: Present\nperiod: 07\nAttendance: Present\nperiod: 08\nAttendance: Present"
+    },
+    {
+      "day": 29,
+      "month": "August",
+      "year": "2026",
+      "status": "closed",
+      "code": "29, School Closed",
+      "raw": "29, School Closed"
+    },
+    {
+      "day": 30,
+      "month": "August",
+      "year": "2026",
+      "status": "closed",
+      "code": "30, School Closed",
+      "raw": "30, School Closed"
+    },
+    {
+      "day": 31,
+      "month": "August",
+      "year": "2026",
+      "status": "present",
+      "code": "period: 01\nAttendance: Present\nperiod: 02\nAttendance: Present\nperiod: 03\nAttendance: Present\nperiod: 04\nAttendance: Present",
+      "raw": "period: 01\nAttendance: Present\nperiod: 02\nAttendance: Present\nperiod: 03\nAttendance: Present\nperiod: 04\nAttendance: Present"
+    }
+  ],
   "warnings": []
 }

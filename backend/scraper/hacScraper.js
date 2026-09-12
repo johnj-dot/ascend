@@ -87,8 +87,8 @@ function scrapeWeekView(html, dialogDetails = {}) {
     const tds = $(row).find('td');
     if (tds.length < 2) return;
 
-    let courseLink = $(row).find('a[id^="courseName-"], a[onclick*="Class"], a[href*="Class"]');
     let cell1 = $(tds[0]);
+    let courseLink = cell1.find('a[id^="courseName-"], a[onclick*="Class"], a[href*="Class"]').first();
     let courseName = courseLink.length > 0 ? courseLink.text().trim() : '';
 
     const cell1Text = cell1.text().replace(/\s+/g, ' ').trim();
@@ -100,6 +100,7 @@ function scrapeWeekView(html, dialogDetails = {}) {
         courseName = cell1Text.split('\n')[0].trim();
       }
     }
+    courseName = courseName.replace(/\s*\([^)]+\).*$/, '').replace(/Per:\s*.*$/, '').trim();
     if (!courseName || /^class$/i.test(courseName)) return;
 
     // Extract Course ID, Period, Teacher

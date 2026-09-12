@@ -17,9 +17,11 @@ assert.strictEqual(classifyCourse('TAG/Advanced Biology').tier, 'ap_advanced');
 assert.strictEqual(classifyCourse('TAG/Advanced English I').tier, 'ap_advanced');
 assert.strictEqual(classifyCourse('TAG/AP Human Geography').tier, 'ap_advanced');
 assert.strictEqual(classifyCourse('Advanced Spanish III').tier, 'ap_advanced');
+assert.strictEqual(classifyCourse('Advanced Spanish IIIEl presente perfecto').tier, 'ap_advanced');
 assert.strictEqual(classifyCourse('Spanish 1').tier, 'on_level_weighted');
 assert.strictEqual(classifyCourse('Intro Engineering Design').tier, 'unweighted_only');
 assert.strictEqual(classifyCourse('Lifetime Fitness & Wellness').tier, 'unweighted_only');
+assert.strictEqual(classifyCourse('Lifetime Fitness & WellnessShoes Shoes').tier, 'unweighted_only');
 console.log('  ✓ Course classification verified');
 
 // 2. Unweighted Points (4.0 Scale: 90-100 = 4.0)
@@ -77,7 +79,7 @@ assert.strictEqual(gpaEng90.weighted, 6.0, 'Elective grade does not affect 6.0 w
 studentClasses[0].grade = 90; // AP CS
 const gpaAp90 = calculateGPA(studentClasses);
 assert.strictEqual(gpaAp90.unweighted, 4.0, '90 in AP course remains 4.0 unweighted');
-assert.strictEqual(gpaAp90.weighted, 5.833, 'Weighted drops to 35/6 = 5.833');
+assert.strictEqual(gpaAp90.weighted, 5.8333, 'Weighted drops to 35/6 = 5.8333');
 console.log('  ✓ GPA calculation engine verified');
 
 // 5. Rank Estimation

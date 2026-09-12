@@ -3,10 +3,12 @@ import { useStore } from '../store/useStore';
 import { getTheme } from '../utils/themeConfig';
 import {
   classifyCourse,
+  cleanCourseName,
   getUnweightedPoints,
   getWeightedPoints,
   calculateGPA,
   estimateClassRank,
+  getExactCourseDetails,
   WEIGHT_TIERS,
 } from '../utils/gpaEngine';
 import {
@@ -54,16 +56,18 @@ export default function GPA() {
   const activeCourses = useMemo(() => {
     return rawClasses.map(c => {
       const courseId = c.id || c.name;
-      const initialTier = classifyCourse(c.name).id;
+      const cleanName = cleanCourseName(c.name);
+      const initialTier = classifyCourse(cleanName).id;
       const tier = tierOverrides[courseId] || initialTier;
       
-      // Default to live HAC average, or 100 if class is active without assignments yet
-      const liveGrade = c.average !== null && c.average !== undefined ? c.average : 100;
+      // Calculate exact 4-decimal course details from category weights
+      const details = getExactCourseDetails(c);
+      const liveGrade = details.exactAverage !== null && details.exactAverage !== undefined ? details.exactAverage : (c.average !== null && c.average !== undefined ? c.average : 100);
       const currentGrade = editedGrades[courseId] !== undefined ? editedGrades[courseId] : liveGrade;
 
       return {
         id: courseId,
-        name: c.name,
+        name: cleanName,
         period: c.period || '',
         teacher: c.teacher || '',
         grade: currentGrade,
@@ -75,6 +79,14 @@ export default function GPA() {
       };
     });
   }, [rawClasses, editedGrades, tierOverrides]);
+
+  // Only show Include Prior Years if student has high school credits (9th grade or above)
+  const hasHighSchoolPriorYears = useMemo(() => {
+    return (rawTranscript?.years || []).some(yr => {
+      const g = parseInt(yr.grade, 10);
+      return !isNaN(g) && g >= 9;
+    });
+  }, [rawTranscript]);
 
   // Format historical transcript courses if student enables cumulative calculation
   const historicalCourses = useMemo(() => {
@@ -161,18 +173,20 @@ export default function GPA() {
 
             {/* Quick Action Controls */}
             <div className="flex items-center gap-2.5">
-              <button
-                type="button"
-                onClick={() => setIncludeTranscript(prev => !prev)}
-                className={`px-3.5 py-2 rounded-2xl text-xs font-bold transition flex items-center gap-2 border cursor-pointer ${
-                  includeTranscript
-                    ? `${theme.bgClass} text-white shadow-md border-transparent`
-                    : `${theme.cardBg} ${theme.cardBorder} ${theme.textSecondary} hover:${theme.textPrimary}`
-                }`}
-              >
-                <BookOpen size={14} />
-                <span>Include Prior Years ({rawTranscript.years?.length || 0})</span>
-              </button>
+              {hasHighSchoolPriorYears && (
+                <button
+                  type="button"
+                  onClick={() => setIncludeTranscript(prev => !prev)}
+                  className={`px-3.5 py-2 rounded-2xl text-xs font-bold transition flex items-center gap-2 border cursor-pointer ${
+                    includeTranscript
+                      ? `${theme.bgClass} text-white shadow-md border-transparent`
+                      : `${theme.cardBg} ${theme.cardBorder} ${theme.textSecondary} hover:${theme.textPrimary}`
+                  }`}
+                >
+                  <BookOpen size={14} />
+                  <span>Include Prior Years ({rawTranscript.years?.length || 0})</span>
+                </button>
+              )}
 
               {hasAnyEdits && (
                 <button
@@ -199,9 +213,9 @@ export default function GPA() {
                   </span>
                   <div className="flex items-baseline gap-2 mt-1">
                     <span className="text-4xl sm:text-5xl font-black tracking-tight text-emerald-500">
-                      {gpaResult.unweighted !== null ? gpaResult.unweighted.toFixed(3) : '—'}
+                      {gpaResult.unweighted !== null ? gpaResult.unweighted.toFixed(4) : '—'}
                     </span>
-                    <span className="text-xs font-bold text-slate-400">/ 4.000</span>
+                    <span className="text-xs font-bold text-slate-400">/ 4.0000</span>
                   </div>
                 </div>
                 <div className="w-11 h-11 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center font-black text-sm">
@@ -220,7 +234,7 @@ export default function GPA() {
                   />
                 </div>
                 <div className="flex justify-between items-center text-[11px] text-slate-400 font-medium">
-                  <span>90–100 Bracket = 4.00 Max</span>
+                  <span>90–100 Bracket = 4.0000 Max</span>
                   <span>{gpaResult.totalCredits.toFixed(1)} Total Credits</span>
                 </div>
               </div>
@@ -240,9 +254,9 @@ export default function GPA() {
                   </div>
                   <div className="flex items-baseline gap-2 mt-1">
                     <span className="text-4xl sm:text-5xl font-black tracking-tight text-emerald-400 drop-shadow-sm">
-                      {gpaResult.weighted !== null ? gpaResult.weighted.toFixed(3) : '—'}
+                      {gpaResult.weighted !== null ? gpaResult.weighted.toFixed(4) : '—'}
                     </span>
-                    <span className="text-xs font-bold text-slate-400">/ 6.000</span>
+                    <span className="text-xs font-bold text-slate-400">/ 6.0000</span>
                   </div>
                 </div>
                 <div className={`w-11 h-11 rounded-2xl ${theme.bgClass} text-white flex items-center justify-center font-black text-sm shadow-md shadow-emerald-500/20`}>
@@ -263,7 +277,7 @@ export default function GPA() {
                 <div className="flex justify-between items-center text-[11px] text-slate-400 font-medium">
                   <span>
                     {gpaResult.weighted && gpaResult.unweighted
-                      ? `+${(gpaResult.weighted - gpaResult.unweighted).toFixed(3)} Weight Boost`
+                      ? `+${(gpaResult.weighted - gpaResult.unweighted).toFixed(4)} Weight Boost`
                       : 'AP / Advanced Weighted'}
                   </span>
                   <span>{gpaResult.weightedCredits.toFixed(1)} Weighted Credits</span>
@@ -418,7 +432,7 @@ export default function GPA() {
                       type="range"
                       min="50"
                       max="100"
-                      step="1"
+                      step="0.1"
                       value={c.grade || 100}
                       onChange={(e) => {
                         const val = parseFloat(e.target.value);
@@ -431,12 +445,13 @@ export default function GPA() {
                         type="number"
                         min="0"
                         max="105"
-                        value={c.grade !== null ? c.grade : ''}
+                        step="0.01"
+                        value={c.grade !== null && c.grade !== undefined ? (typeof c.grade === 'number' ? Math.round(c.grade * 10000) / 10000 : c.grade) : ''}
                         onChange={(e) => {
                           const val = e.target.value === '' ? null : parseFloat(e.target.value);
                           setEditedGrades(prev => ({ ...prev, [c.id]: val }));
                         }}
-                        className={`w-14 px-2 py-1 rounded-xl ${theme.isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'} border text-center font-black text-sm focus:border-emerald-500 focus:outline-none`}
+                        className={`w-16 px-2 py-1 rounded-xl ${theme.isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'} border text-center font-black text-xs sm:text-sm focus:border-emerald-500 focus:outline-none`}
                       />
                       <span className="text-xs font-bold text-slate-400">%</span>
                     </div>
@@ -445,12 +460,12 @@ export default function GPA() {
                   {/* Point Breakdown Pill */}
                   <div className="flex items-center gap-2 text-xs shrink-0 self-end sm:self-auto">
                     <div className={`px-3 py-1.5 rounded-xl ${theme.isDark ? 'bg-slate-900/80 border-slate-800 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'} border flex items-center gap-2`}>
-                      <span>UW: <strong className="text-emerald-500 font-bold">{uwPoint !== null ? uwPoint.toFixed(1) : '—'}</strong> pts</span>
+                      <span>UW: <strong className="text-emerald-500 font-bold">{uwPoint !== null ? uwPoint.toFixed(4) : '—'}</strong> pts</span>
                       <span className="opacity-30">|</span>
                       <span>
                         W:{' '}
                         {wPoint !== null ? (
-                          <strong className="text-teal-500 font-bold">{wPoint.toFixed(2)} pts</strong>
+                          <strong className="text-teal-500 font-bold">{wPoint.toFixed(4)} pts</strong>
                         ) : (
                           <span className="text-slate-400 text-[11px]">Excluded (Unweighted)</span>
                         )}

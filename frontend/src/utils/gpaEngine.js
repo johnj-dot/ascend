@@ -58,19 +58,30 @@ export const WEIGHT_TIERS = {
 };
 
 /**
+ * Cleans any concatenated assignment text or trailing artifact from course names.
+ */
+export function cleanCourseName(name = '') {
+  if (!name || typeof name !== 'string') return '';
+  // If there's parenthetical info like (100) or period info at end
+  let cleaned = name.replace(/\s*\(.*?\)\s*$/, '').trim();
+  // Strip common concatenated assignment text if scraped together
+  cleaned = cleaned.replace(/(Skills Practice|CBAM|Adv Ext Test|Shoes Shoes|El presente|Quiz|Test|Exam|Assignment).*$/i, '').trim();
+  return cleaned || name;
+}
+
+/**
  * Automatically classifies a course by its name based on Round Rock ISD catalog.
  */
 export function classifyCourse(courseName = '') {
-  const norm = courseName.toLowerCase().trim();
+  const norm = cleanCourseName(courseName).toLowerCase().trim();
 
   // 1. Unweighted Only: Lifetime Fitness, PE, Intro Engineering Design, Athletics
+  const isPE = /\bp\.?e\.?\b/i.test(norm) || norm.startsWith('pe ') || norm.endsWith(' pe');
   if (
     norm.includes('fitness') ||
     norm.includes('wellness') ||
     norm.includes('lifetime') ||
-    norm.includes('p.e.') ||
-    norm.includes(' pe') ||
-    norm.startsWith('pe ') ||
+    isPE ||
     norm.includes('athletics') ||
     norm.includes('engineering design') ||
     norm.includes('intro engineering') ||
@@ -150,12 +161,12 @@ export function getWeightedPoints(grade, tierId) {
 
   if (tierId === 'ap_advanced') {
     if (num < 70) return 0.0;
-    return parseFloat(((num - 40) / 10).toFixed(3));
+    return parseFloat(((num - 40) / 10).toFixed(4));
   }
 
   if (tierId === 'on_level_weighted') {
     if (num < 70) return 0.0;
-    return parseFloat(((num - 50) / 10).toFixed(3));
+    return parseFloat(((num - 50) / 10).toFixed(4));
   }
 
   return null;
@@ -228,11 +239,11 @@ export function calculateGPA(courses = [], options = {}) {
   });
 
   const unweightedGPA = unweightedCreditsTotal > 0
-    ? parseFloat((unweightedPointsTotal / unweightedCreditsTotal).toFixed(3))
+    ? parseFloat((unweightedPointsTotal / unweightedCreditsTotal).toFixed(4))
     : null;
 
   const weightedGPA = weightedCreditsTotal > 0
-    ? parseFloat((weightedPointsTotal / weightedCreditsTotal).toFixed(3))
+    ? parseFloat((weightedPointsTotal / weightedCreditsTotal).toFixed(4))
     : null;
 
   return {
@@ -241,6 +252,105 @@ export function calculateGPA(courses = [], options = {}) {
     totalCredits: parseFloat(unweightedCreditsTotal.toFixed(2)),
     weightedCredits: parseFloat(weightedCreditsTotal.toFixed(2)),
     breakdown,
+  };
+}
+
+/**
+ * Calculates exact 4-decimal course average and category point breakdown.
+ */
+export function getExactCourseDetails(course) {
+  if (!course) return { exactAverage: null, categories: [] };
+
+  // 1. Check for category summary rows (stored by HAC with '%' in category)
+  const categoryRows = (course.assignments || []).filter(a => a.category && typeof a.category === 'string' && a.category.includes('%'));
+  if (categoryRows.length > 0) {
+    let totalWeightedPoints = 0;
+    let totalWeight = 0;
+    const categories = [];
+
+    categoryRows.forEach(r => {
+      const catName = r.dateDue || 'Category';
+      const earned = parseFloat(r.dateAssigned) || 0;
+      const possible = parseFloat(r.name) || 0;
+      let weight = parseFloat(r.score) || 0;
+      let weightedPts = parseFloat(r.totalPoints) || 0;
+
+      if (weight > 1) {
+        weight = weight / 100;
+        weightedPts = weightedPts / 100;
+      }
+
+      const pct = possible > 0 ? (earned / possible) * 100 : 100;
+      totalWeightedPoints += weightedPts;
+      totalWeight += weight;
+
+      categories.push({
+        name: catName,
+        earned,
+        possible,
+        pct: parseFloat(pct.toFixed(4)),
+        weight: parseFloat((weight * 100).toFixed(1)),
+        weightedPts: parseFloat((weightedPts * 100).toFixed(4)),
+      });
+    });
+
+    if (totalWeight > 0) {
+      const exactAvg = (totalWeightedPoints / totalWeight) * 100;
+      return {
+        exactAverage: parseFloat(exactAvg.toFixed(4)),
+        categories,
+      };
+    }
+  }
+
+  // 2. Fallback: calculate from standard graded assignments
+  const regularAssignments = (course.assignments || []).filter(
+    a => !isNaN(parseFloat(a.score)) && !isNaN(parseFloat(a.totalPoints)) && !a.exempt && (!a.category || !a.category.includes('%'))
+  );
+
+  if (regularAssignments.length > 0) {
+    const catMap = {};
+    regularAssignments.forEach(a => {
+      const cat = a.category || 'General';
+      if (!catMap[cat]) catMap[cat] = { earned: 0, possible: 0, count: 0 };
+      const w = a.weight !== null && a.weight !== undefined && !isNaN(a.weight) ? parseFloat(a.weight) : 1;
+      catMap[cat].earned += parseFloat(a.score) * w;
+      catMap[cat].possible += parseFloat(a.totalPoints) * w;
+      catMap[cat].count++;
+    });
+
+    const categories = Object.keys(catMap).map(k => {
+      const c = catMap[k];
+      const pct = c.possible > 0 ? (c.earned / c.possible) * 100 : 100;
+      return {
+        name: k,
+        earned: c.earned,
+        possible: c.possible,
+        pct: parseFloat(pct.toFixed(4)),
+        weight: null,
+      };
+    });
+
+    const totalEarned = regularAssignments.reduce((s, a) => {
+      const w = a.weight !== null && a.weight !== undefined && !isNaN(a.weight) ? parseFloat(a.weight) : 1;
+      return s + (parseFloat(a.score) * w);
+    }, 0);
+    const totalPossible = regularAssignments.reduce((s, a) => {
+      const w = a.weight !== null && a.weight !== undefined && !isNaN(a.weight) ? parseFloat(a.weight) : 1;
+      return s + (parseFloat(a.totalPoints) * w);
+    }, 0);
+
+    const exactAvg = totalPossible > 0 ? (totalEarned / totalPossible) * 100 : (course.average ?? 100);
+    return {
+      exactAverage: parseFloat(exactAvg.toFixed(4)),
+      categories,
+    };
+  }
+
+  const fallbackAvg = course.average !== null && course.average !== undefined ? parseFloat(course.average) : 100;
+  return {
+    exactAverage: parseFloat(fallbackAvg.toFixed(4)),
+    categories: [],
   };
 }
 

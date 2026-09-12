@@ -4,10 +4,12 @@ import { useDocStore } from '../store/useDocStore';
 import { getTheme } from '../utils/themeConfig';
 import { 
   ChevronDown, ChevronUp, CheckCircle2, AlertCircle, 
-  Clock, BookOpen, Plus, FileText, Send
+  Clock, BookOpen, Plus, FileText, Send, Sparkles
 } from 'lucide-react';
 import ClassDocsModal from '../components/docs/ClassDocsModal';
 import DocAdderModal from '../components/docs/DocAdderModal';
+import ExactGradeModal from '../components/ExactGradeModal';
+import { cleanCourseName, getExactCourseDetails } from '../utils/gpaEngine';
 
 function SmoothAccordion({ isOpen, children, className = '' }) {
   return (
@@ -169,6 +171,7 @@ export default function Grades() {
   const [expandedId, setExpandedId] = useState(null);
   const [showAddDocModal, setShowAddDocModal] = useState(false);
   const [showViewDocsModal, setShowViewDocsModal] = useState(false);
+  const [selectedGradeModalClass, setSelectedGradeModalClass] = useState(null);
   const tabs = ['MP1', 'MP2', 'MP3', 'MP4'];
 
   const classes = hacData?.classes || [];
@@ -176,6 +179,14 @@ export default function Grades() {
   return (
     <div className={`${theme.appBg} min-h-screen flex flex-col transition-colors duration-200`}>
       
+      {/* Exact Grade & GPA Impact Modal */}
+      {selectedGradeModalClass && (
+        <ExactGradeModal
+          course={selectedGradeModalClass}
+          onClose={() => setSelectedGradeModalClass(null)}
+        />
+      )}
+
       {/* Add Document Modal */}
       {showAddDocModal && (
         <DocAdderModal onClose={() => setShowAddDocModal(false)} />
@@ -282,6 +293,12 @@ export default function Grades() {
               });
             }
 
+            const cleanedTitle = cleanCourseName(cls.name);
+            const exactDetails = getExactCourseDetails(cls);
+            const displayAvg = exactDetails.exactAverage !== null && exactDetails.exactAverage !== undefined
+              ? exactDetails.exactAverage
+              : classAvg;
+
             const classDocCount = documents.filter(d => d.classId === cls.id).length;
 
             return (
@@ -290,16 +307,42 @@ export default function Grades() {
                 className={`${theme.cardBg} rounded-2xl shadow-sm border ${theme.cardBorder} overflow-hidden transition-colors duration-200`}
               >
                 {/* Class Header Row */}
-                <button
-                  type="button"
+                <div
+                  role="button"
+                  tabIndex={0}
                   onClick={() => setExpandedId(isOpen ? null : cls.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setExpandedId(isOpen ? null : cls.id);
+                    }
+                  }}
                   className={`w-full flex items-center justify-between p-4 text-left transition cursor-pointer ${
                     theme.isDark ? 'hover:bg-slate-800/50' : 'hover:bg-gray-50/80'
                   }`}
                 >
                   <div className="flex-1 pr-3 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h3 className={`font-bold ${theme.textPrimary} leading-tight truncate`}>{cls.name}</h3>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className={`font-bold ${theme.textPrimary} leading-tight truncate`}>{cleanedTitle}</h3>
+                      
+                      {/* Exact Grade & GPA Badge Trigger */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedGradeModalClass(cls);
+                        }}
+                        className={`text-[10px] px-2.5 py-0.5 rounded-full font-extrabold transition cursor-pointer flex items-center gap-1 shrink-0 ${
+                          theme.isDark
+                            ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25'
+                            : 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
+                        }`}
+                        title="Click to view exact unrounded grade & GPA breakdown"
+                      >
+                        <Sparkles size={11} />
+                        <span>Exact: {displayAvg !== null ? `${displayAvg.toFixed(2)}%` : '—'}</span>
+                      </button>
+
                       {classDocCount > 0 && (
                         <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
                           theme.isDark ? 'bg-slate-800 text-emerald-400 border border-slate-700' : `${theme.lightBgClass} ${theme.textClass} border ${theme.borderClass}`
@@ -314,13 +357,18 @@ export default function Grades() {
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
-                    {/* Average pill */}
-                    <div
-                      className={`w-14 h-10 flex items-center justify-center rounded-xl font-bold text-base shadow-xs ${gradeColor(classAvg, theme.isDark)}`}
-                      title={classAvg !== null ? `${activeTab} Average: ${classAvg}%` : `${activeTab}: Not Graded Yet`}
+                    {/* Average pill: clickable to open exact grade modal */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedGradeModalClass(cls);
+                      }}
+                      className={`px-2.5 h-10 min-w-14 flex items-center justify-center rounded-xl font-black text-sm shadow-xs transition transform hover:scale-105 cursor-pointer ${gradeColor(classAvg, theme.isDark)}`}
+                      title="Click to view exact 4-decimal grade & GPA breakdown"
                     >
-                      {classAvg !== null ? `${Math.round(classAvg)}` : '—'}
-                    </div>
+                      {displayAvg !== null ? `${displayAvg.toFixed(2)}%` : '—'}
+                    </button>
                     {/* Letter grade */}
                     <span className={`text-xs font-bold ${theme.textMuted} w-4`}>
                       {classLetter ?? ''}
@@ -330,7 +378,7 @@ export default function Grades() {
                       {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                     </div>
                   </div>
-                </button>
+                </div>
 
                 {/* Assignment Curtain & Action Bar */}
                 <SmoothAccordion isOpen={isOpen}>
@@ -343,6 +391,19 @@ export default function Grades() {
                       <span className="text-[11px] font-semibold">
                         {isFutureMP ? `${activeTab} Not Started` : `${assignments.length} total assignment${assignments.length !== 1 ? 's' : ''}`}
                       </span>
+
+                      <button
+                        type="button"
+                        onClick={() => setSelectedGradeModalClass(cls)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border ${
+                          theme.isDark
+                            ? 'bg-slate-800 text-emerald-400 border-slate-700 hover:bg-slate-700'
+                            : 'bg-white text-emerald-700 border-gray-200 shadow-xs hover:bg-emerald-50'
+                        }`}
+                      >
+                        <Sparkles size={12} />
+                        <span>Exact 4-Decimal & GPA</span>
+                      </button>
                     </div>
 
                     {isFutureMP ? (
