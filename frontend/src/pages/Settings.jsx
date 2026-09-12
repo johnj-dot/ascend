@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, User, Bell, BellRing, Smartphone, Palette, Check, RefreshCw, Wifi, WifiOff, Database } from 'lucide-react';
+import { LogOut, User, Bell, Smartphone, Palette, Check, RefreshCw, Wifi, WifiOff } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { useNavigate } from 'react-router-dom';
 import { THEMES, getTheme } from '../utils/themeConfig';
-import { requestAndSendTestNotification, fireNotification, playNotificationSound } from '../utils/notifications';
+import { fireNotification, playNotificationSound } from '../utils/notifications';
 
 function Switch({ active, onToggle, theme }) {
   const activeTrack = theme.id === 'midnight'
@@ -120,16 +120,6 @@ export default function Settings() {
     setTimeout(() => setFeedbackMsg(null), 3000);
   };
 
-  const handleTestNotification = async () => {
-    const res = await requestAndSendTestNotification();
-    if (res.permission === 'granted') {
-      setFeedbackMsg('Test notification delivered to system & audio chime played!');
-    } else {
-      setFeedbackMsg(res.message || 'In-app notification chime played successfully!');
-    }
-    setTimeout(() => setFeedbackMsg(null), 3500);
-  };
-
   const handleToggleOffline = () => {
     const nextVal = !settings.offline;
     if (nextVal) {
@@ -139,30 +129,6 @@ export default function Settings() {
     }
     setTimeout(() => setFeedbackMsg(null), 3000);
     toggleSetting('offline');
-  };
-
-  const handleVerifyOfflineCache = () => {
-    try {
-      const raw = localStorage.getItem('ascend-storage');
-      if (!raw) {
-        setFeedbackMsg('No cache in local storage.');
-        setTimeout(() => setFeedbackMsg(null), 3500);
-        return;
-      }
-      const parsed = JSON.parse(raw);
-      const studentName = parsed.state?.hacData?.studentName || hacData?.studentName || 'Student';
-      const classesCount = parsed.state?.hacData?.classes?.length ?? (hacData?.classes?.length || 0);
-      if (settings.offline && classesCount > 0) {
-        setFeedbackMsg(`Offline Cache OK: ${classesCount} classes & ${studentName}'s profile cached locally.`);
-      } else if (!settings.offline) {
-        setFeedbackMsg('Offline caching disabled: local academic cache cleared.');
-      } else {
-        setFeedbackMsg('Cache is initialized. Sync to populate full offline profile.');
-      }
-    } catch {
-      setFeedbackMsg('Error reading offline storage.');
-    }
-    setTimeout(() => setFeedbackMsg(null), 3500);
   };
 
   const handleSync = async () => {
@@ -268,33 +234,16 @@ export default function Settings() {
               </div>
 
               {settings.notifications && (
-                <div className="pt-1 flex flex-col gap-2">
-                  <div className="flex items-center justify-between">
-                    <span className={`text-[11px] ${theme.textMuted}`}>
-                      Status: Active (System & Audio)
-                    </span>
-                    <button
-                      type="button"
-                      onClick={handleTestNotification}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
-                        theme.isDark
-                          ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
-                          : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200'
-                      }`}
-                    >
-                      <BellRing size={13} />
-                      <span>Send Test Alert</span>
-                    </button>
-                  </div>
-                  <p className={`text-[10px] ${theme.textMuted} leading-tight`}>
-                    Tip: On iPhone/iPad, tap Share ➔ "Add to Home Screen" to receive background push notifications.
+                <div className="pt-0.5">
+                  <p className={`text-[11px] ${theme.textMuted} leading-normal`}>
+                    System alerts and pleasant audio chimes are active for new grades and schedule updates.
                   </p>
                 </div>
               )}
             </div>
 
             {/* Offline Access */}
-            <div className="px-4 py-4 space-y-2.5">
+            <div className="px-4 py-4 space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Smartphone size={20} className={theme.isDark ? 'text-slate-400' : 'text-gray-400'} />
@@ -306,32 +255,20 @@ export default function Settings() {
                 <Switch active={!!settings.offline} onToggle={handleToggleOffline} theme={theme} />
               </div>
 
-              <div className="pt-1 flex items-center justify-between">
+              <div className="pt-0.5 flex items-center justify-between">
                 <span className={`text-[11px] flex items-center gap-1.5 ${theme.textMuted}`}>
                   {isOnline ? (
                     <>
                       <Wifi size={13} className="text-emerald-500" />
-                      <span>{settings.offline ? 'Online • Ready for offline use' : 'Online • Offline caching disabled'}</span>
+                      <span>{settings.offline ? 'Profile cached locally for instant offline loading' : 'Offline caching disabled'}</span>
                     </>
                   ) : (
                     <>
                       <WifiOff size={13} className="text-amber-500" />
-                      <span>Offline • Serving local cache</span>
+                      <span>Offline mode • Serving cached profile</span>
                     </>
                   )}
                 </span>
-                <button
-                  type="button"
-                  onClick={handleVerifyOfflineCache}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
-                    theme.isDark
-                      ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
-                      : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200'
-                  }`}
-                >
-                  <Database size={13} />
-                  <span>Verify Offline Cache</span>
-                </button>
               </div>
             </div>
           </div>
