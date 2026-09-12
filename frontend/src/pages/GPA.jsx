@@ -9,6 +9,8 @@ import {
   calculateGPA,
   estimateClassRank,
   getExactCourseDetails,
+  calculateCourseAverageFromAssignments,
+  filterValidAssignments,
   WEIGHT_TIERS,
 } from '../utils/gpaEngine';
 import {
@@ -33,15 +35,18 @@ export default function GPA() {
   const rawTranscript = hacData?.transcript || { years: [], gpa: {} };
   const officialGpa = rawTranscript.gpa || {};
 
-  // Interactive state for courses: allows "What-If" grade edits and tier overrides
+  // Interactive state for courses: allows "What-If" grade edits, individual assignment changes, and tier overrides
   const [editedGrades, setEditedGrades] = useState({});
+  const [editedAssignments, setEditedAssignments] = useState({}); // { [courseId]: { [assignmentIndex]: number } }
   const [tierOverrides, setTierOverrides] = useState({});
+  const [expandedCourseId, setExpandedCourseId] = useState(null);
   const [includeTranscript, setIncludeTranscript] = useState(false);
   const [activeTierDropdown, setActiveTierDropdown] = useState(null);
 
   // Reset interactive overrides back to live HAC values
   const handleReset = () => {
     setEditedGrades({});
+    setEditedAssignments({});
     setTierOverrides({});
   };
 
@@ -51,6 +56,27 @@ export default function GPA() {
     window.addEventListener('click', handleGlobalClick);
     return () => window.removeEventListener('click', handleGlobalClick);
   }, []);
+
+  // Update a single assignment score and recalculate that course's GPA contribution
+  const handleAssignmentScoreChange = (courseId, assignmentIndex, newScore, courseObj) => {
+    setEditedAssignments(prev => {
+      const courseEdits = { ...(prev[courseId] || {}) };
+      if (newScore === '' || newScore === null || isNaN(parseFloat(newScore))) {
+        delete courseEdits[assignmentIndex];
+      } else {
+        courseEdits[assignmentIndex] = parseFloat(newScore);
+      }
+
+      // Automatically compute updated course average from assignment scores
+      const updatedAvg = calculateCourseAverageFromAssignments(courseObj, courseEdits);
+      setEditedGrades(prevG => ({ ...prevG, [courseId]: updatedAvg }));
+
+      return {
+        ...prev,
+        [courseId]: courseEdits,
+      };
+    });
+  };
 
   // Format current classes with overrides and auto-classification
   const activeCourses = useMemo(() => {
@@ -72,13 +98,17 @@ export default function GPA() {
         teacher: c.teacher || '',
         grade: currentGrade,
         liveGrade,
-        isEdited: editedGrades[courseId] !== undefined && editedGrades[courseId] !== liveGrade,
+        isEdited: (editedGrades[courseId] !== undefined && editedGrades[courseId] !== liveGrade) ||
+                  (editedAssignments[courseId] && Object.keys(editedAssignments[courseId]).length > 0),
         tier,
         credits: 1.0,
         enabled: true,
+        assignments: filterValidAssignments(c.assignments || []),
+        categories: c.categories || [],
+        rawCourse: c,
       };
     });
-  }, [rawClasses, editedGrades, tierOverrides]);
+  }, [rawClasses, editedGrades, editedAssignments, tierOverrides]);
 
   // Only show Include Prior Years if student has high school credits (9th grade or above)
   const hasHighSchoolPriorYears = useMemo(() => {
@@ -146,7 +176,9 @@ export default function GPA() {
     };
   }, [officialGpa, gpaResult.weighted]);
 
-  const hasAnyEdits = Object.keys(editedGrades).length > 0 || Object.keys(tierOverrides).length > 0;
+  const hasAnyEdits = Object.keys(editedGrades).length > 0 ||
+    Object.keys(editedAssignments).length > 0 ||
+    Object.keys(tierOverrides).length > 0;
 
   return (
     <div className={`min-h-screen ${theme.appBg} flex flex-col transition-colors duration-200`}>
@@ -345,7 +377,10 @@ export default function GPA() {
               >
                 {/* Course Header Row */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex items-start gap-3">
+                  <div
+                    className="flex items-start gap-3 flex-1 cursor-pointer select-none"
+                    onClick={() => setExpandedCourseId(expandedCourseId === c.id ? null : c.id)}
+                  >
                     {c.period && (
                       <span className="px-2.5 py-1 rounded-xl text-xs font-black bg-slate-800 text-slate-300 border border-slate-700 shrink-0">
                         {c.period}
@@ -356,6 +391,9 @@ export default function GPA() {
                         <h3 className={`font-bold text-sm sm:text-base ${theme.isDark ? 'text-white' : 'text-slate-900'}`}>
                           {c.name}
                         </h3>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-extrabold ${theme.isDark ? 'bg-slate-800 text-slate-300 border border-slate-700' : 'bg-slate-100 text-slate-700'}`}>
+                          Avg: {Math.round(c.grade)}%
+                        </span>
                         {c.isEdited && (
                           <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
                             Simulated
@@ -366,12 +404,17 @@ export default function GPA() {
                             Prior Credit
                           </span>
                         )}
+                        <ChevronDown size={14} className={`transition-transform duration-200 ${expandedCourseId === c.id ? 'rotate-180 text-emerald-500' : 'text-slate-500'}`} />
                       </div>
-                      {c.teacher && (
-                        <p className="text-xs text-slate-400 mt-0.5">
-                          {c.teacher}
-                        </p>
-                      )}
+                      <div className="flex items-center gap-2 text-xs text-slate-400 mt-0.5 flex-wrap">
+                        {c.teacher && <span>{c.teacher} ·</span>}
+                        <span>Exact: <strong className="text-emerald-500 font-mono font-bold">{c.grade.toFixed(4)}%</strong></span>
+                        {c.assignments?.length > 0 && (
+                          <span className="text-[11px] text-slate-500 hover:text-emerald-400 underline cursor-pointer">
+                            ({c.assignments.length} assignments · click to edit)
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -481,6 +524,11 @@ export default function GPA() {
                             delete next[c.id];
                             return next;
                           });
+                          setEditedAssignments(prev => {
+                            const next = { ...prev };
+                            delete next[c.id];
+                            return next;
+                          });
                         }}
                         className="p-1.5 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition cursor-pointer"
                         title="Revert to live grade"
@@ -491,6 +539,87 @@ export default function GPA() {
                   </div>
 
                 </div>
+
+                {/* Individual Assignments What-If Section */}
+                {expandedCourseId === c.id && (
+                  <div className="pt-3 border-t border-slate-800/60 space-y-2 animate-in fade-in duration-200">
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <span className="font-bold text-slate-300 flex items-center gap-1.5">
+                        <span>Individual Assignments ({c.assignments?.length || 0})</span>
+                      </span>
+                      <span className="text-[11px] text-slate-400">
+                        Change individual grades to simulate exact GPA
+                      </span>
+                    </div>
+
+                    {c.assignments && c.assignments.length > 0 ? (
+                      <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
+                        {c.assignments.map((a, aIdx) => {
+                          const editedScore = editedAssignments[c.id]?.[aIdx];
+                          const currentScore = editedScore !== undefined ? editedScore : (a.score !== null && a.score !== undefined ? a.score : '');
+                          const isScoreEdited = editedScore !== undefined && editedScore !== a.score;
+
+                          return (
+                            <div
+                              key={aIdx}
+                              className={`px-3 py-2 rounded-xl border flex items-center justify-between gap-2 text-xs transition ${
+                                isScoreEdited
+                                  ? 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+                                  : theme.isDark ? 'bg-slate-900/50 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2 min-w-0 flex-1">
+                                <span className="truncate font-semibold text-xs text-slate-200" title={a.name}>
+                                  {a.name}
+                                </span>
+                                {a.category && (
+                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-slate-800 text-slate-400 shrink-0 border border-slate-700">
+                                    {a.category}
+                                  </span>
+                                )}
+                              </div>
+
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max="150"
+                                  step="0.5"
+                                  value={currentScore}
+                                  placeholder="—"
+                                  onChange={(e) => handleAssignmentScoreChange(c.id, aIdx, e.target.value, c.rawCourse)}
+                                  className={`w-14 px-1.5 py-0.5 rounded-lg border text-center font-bold text-xs focus:border-emerald-500 focus:outline-none ${
+                                    isScoreEdited
+                                      ? 'border-amber-500 text-amber-400 bg-amber-950/20'
+                                      : theme.isDark ? 'border-slate-700 bg-slate-800 text-white' : 'border-slate-300 bg-white text-slate-900'
+                                  }`}
+                                />
+                                <span className="text-slate-400 text-[11px] font-medium">
+                                  / {a.totalPoints ?? 100}
+                                </span>
+
+                                {isScoreEdited && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleAssignmentScoreChange(c.id, aIdx, null, c.rawCourse)}
+                                    className="p-1 text-slate-400 hover:text-white transition cursor-pointer"
+                                    title="Revert assignment score"
+                                  >
+                                    <RotateCcw size={10} />
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-slate-400 text-center py-2">
+                        No individual assignments recorded for this course. Use the grade slider above to simulate.
+                      </p>
+                    )}
+                  </div>
+                )}
 
               </div>
             );

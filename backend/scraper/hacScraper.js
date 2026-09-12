@@ -309,6 +309,28 @@ function scrapeAssignments(html, classes) {
       if (/^(Course\s*Average|Average|Total)$/i.test(assignName)) return;
       if (/^\d+(\.\d+)?$/.test(assignName) && !dateDue && (!score || score.trim() === '')) return;
 
+      // Filter out HAC category summary rows (e.g. "100.00", "500.00" with category "100.000%" and weights like 0.6)
+      const isCategorySummaryRow = (category && category.includes('%')) ||
+        (/^\d+(\.\d+)?$/.test(assignName) && (/Formative|Summative|Assessment/i.test(dateDue) || /%/i.test(category)));
+
+      if (isCategorySummaryRow) {
+        if (!currentCourse.categories) currentCourse.categories = [];
+        const catName = dateDue || 'Category';
+        const earned = parseFloat(dateAssigned) || 0;
+        const possible = parseFloat(assignName) || 0;
+        const w = parseFloat(score) || 0;
+        const wPts = parseFloat(totalPoints) || 0;
+        currentCourse.categories.push({
+          name: catName,
+          earned,
+          possible,
+          pct: parseFloat((category || '').replace('%', '')) || (possible > 0 ? (earned / possible) * 100 : 100),
+          weight: w > 1 ? w : w * 100,
+          weightedPts: wPts > 1 ? wPts : wPts * 100,
+        });
+        return;
+      }
+
       const isMissing  = $(cols[4]).find('.sg-content-alert-container').length > 0 || score === 'M';
       const isExempt   = score === 'X';
       const numericScore = score && !isNaN(parseFloat(score)) ? parseFloat(score) : null;

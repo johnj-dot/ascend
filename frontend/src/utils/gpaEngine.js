@@ -261,7 +261,48 @@ export function calculateGPA(courses = [], options = {}) {
 export function getExactCourseDetails(course) {
   if (!course) return { exactAverage: null, categories: [] };
 
-  // 1. Check for category summary rows (stored by HAC with '%' in category)
+  // 1. Check for explicit course.categories array
+  if (Array.isArray(course.categories) && course.categories.length > 0) {
+    let totalWeightedPoints = 0;
+    let totalWeight = 0;
+    const categories = [];
+
+    course.categories.forEach(r => {
+      const catName = r.name || 'Category';
+      const earned = parseFloat(r.earned) || 0;
+      const possible = parseFloat(r.possible) || 0;
+      let weight = parseFloat(r.weight) || 0;
+      let weightedPts = parseFloat(r.weightedPts) || 0;
+
+      if (weight > 1) {
+        weight = weight / 100;
+        weightedPts = weightedPts / 100;
+      }
+
+      const pct = possible > 0 ? (earned / possible) * 100 : 100;
+      totalWeightedPoints += weightedPts;
+      totalWeight += weight;
+
+      categories.push({
+        name: catName,
+        earned,
+        possible,
+        pct: parseFloat(pct.toFixed(4)),
+        weight: parseFloat((weight * 100).toFixed(1)),
+        weightedPts: parseFloat((weightedPts * 100).toFixed(4)),
+      });
+    });
+
+    if (totalWeight > 0) {
+      const exactAvg = (totalWeightedPoints / totalWeight) * 100;
+      return {
+        exactAverage: parseFloat(exactAvg.toFixed(4)),
+        categories,
+      };
+    }
+  }
+
+  // 2. Check for category summary rows (legacy stored in assignments with '%' in category)
   const categoryRows = (course.assignments || []).filter(a => a.category && typeof a.category === 'string' && a.category.includes('%'));
   if (categoryRows.length > 0) {
     let totalWeightedPoints = 0;
@@ -352,6 +393,102 @@ export function getExactCourseDetails(course) {
     exactAverage: parseFloat(fallbackAvg.toFixed(4)),
     categories: [],
   };
+}
+
+/**
+ * Filters out HAC category summary rows mistakenly present in assignments.
+ */
+export function filterValidAssignments(assignments) {
+  if (!Array.isArray(assignments)) return [];
+  return assignments.filter(a => {
+    if (!a || !a.name) return false;
+    const nameStr = a.name.trim();
+    const catStr = (a.category || '').trim();
+
+    // Standard overall summary names
+    if (/^(Course\s*Average|Overall\s*Average|Average|Total)$/i.test(nameStr)) return false;
+    
+    // HAC category summary rows: name is numeric point total (e.g. "100.00", "500.00", "400.00", "200.00")
+    if (/^\d+(\.\d+)?$/.test(nameStr)) return false;
+
+    // Category contains % or is formatted like weight percentage (e.g. "100.000%", "99.500%")
+    if (catStr.includes('%') || /^\d+(\.\d+)?%$/.test(catStr)) return false;
+
+    // Category summary text
+    if (catStr.toLowerCase().includes('total') || catStr.toLowerCase().includes('average')) return false;
+
+    return true;
+  });
+}
+
+/**
+ * Calculates updated course average when individual assignment scores are edited.
+ */
+export function calculateCourseAverageFromAssignments(course, customScores = {}) {
+  if (!course) return 100;
+  const rawList = filterValidAssignments(course.assignments || []);
+  const assignments = rawList.map((a, idx) => ({
+    ...a,
+    score: customScores[idx] !== undefined && customScores[idx] !== null && customScores[idx] !== ''
+      ? parseFloat(customScores[idx])
+      : a.score,
+  }));
+
+  const regularAssignments = assignments.filter(
+    a => a.score !== null && !isNaN(parseFloat(a.score)) && !isNaN(parseFloat(a.totalPoints)) && !a.exempt
+  );
+
+  if (regularAssignments.length === 0) {
+    return course.average !== null && course.average !== undefined ? parseFloat(course.average) : 100;
+  }
+
+  // If course has category weights, compute weighted category average
+  if (Array.isArray(course.categories) && course.categories.length > 0) {
+    const catScores = {};
+    regularAssignments.forEach(a => {
+      const cat = (a.category || 'General').toLowerCase().trim();
+      if (!catScores[cat]) catScores[cat] = { earned: 0, possible: 0 };
+      const w = a.weight !== null && a.weight !== undefined && !isNaN(a.weight) ? parseFloat(a.weight) : 1;
+      catScores[cat].earned += parseFloat(a.score) * w;
+      catScores[cat].possible += parseFloat(a.totalPoints) * w;
+    });
+
+    let totalWeightedPoints = 0;
+    let totalWeight = 0;
+
+    course.categories.forEach(cat => {
+      const cName = (cat.name || '').toLowerCase().trim();
+      const match = Object.keys(catScores).find(k => k.includes(cName) || cName.includes(k));
+      let weight = parseFloat(cat.weight) || 0;
+      if (weight > 1) weight = weight / 100;
+
+      if (match && catScores[match].possible > 0) {
+        const catPct = catScores[match].earned / catScores[match].possible;
+        totalWeightedPoints += catPct * weight;
+        totalWeight += weight;
+      } else if (cat.earned !== undefined && cat.possible > 0) {
+        const catPct = parseFloat(cat.earned) / parseFloat(cat.possible);
+        totalWeightedPoints += catPct * weight;
+        totalWeight += weight;
+      }
+    });
+
+    if (totalWeight > 0) {
+      return parseFloat(((totalWeightedPoints / totalWeight) * 100).toFixed(4));
+    }
+  }
+
+  // Fallback: direct assignment point calculation
+  const totalEarned = regularAssignments.reduce((s, a) => {
+    const w = a.weight !== null && a.weight !== undefined && !isNaN(a.weight) ? parseFloat(a.weight) : 1;
+    return s + (parseFloat(a.score) * w);
+  }, 0);
+  const totalPossible = regularAssignments.reduce((s, a) => {
+    const w = a.weight !== null && a.weight !== undefined && !isNaN(a.weight) ? parseFloat(a.weight) : 1;
+    return s + (parseFloat(a.totalPoints) * w);
+  }, 0);
+
+  return totalPossible > 0 ? parseFloat(((totalEarned / totalPossible) * 100).toFixed(4)) : (course.average ?? 100);
 }
 
 /**

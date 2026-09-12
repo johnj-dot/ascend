@@ -8,8 +8,7 @@ import {
 } from 'lucide-react';
 import ClassDocsModal from '../components/docs/ClassDocsModal';
 import DocAdderModal from '../components/docs/DocAdderModal';
-import ExactGradeModal from '../components/ExactGradeModal';
-import { cleanCourseName, getExactCourseDetails } from '../utils/gpaEngine';
+import { cleanCourseName, getExactCourseDetails, filterValidAssignments } from '../utils/gpaEngine';
 
 function SmoothAccordion({ isOpen, children, className = '' }) {
   return (
@@ -37,7 +36,7 @@ function getEffectiveClassGrade(cls) {
   }
 
   // 2. Otherwise fallback to calculating from assignments if available
-  const assignments = cls.assignments || [];
+  const assignments = filterValidAssignments(cls.assignments || []);
   const graded = assignments.filter(a => a.score !== null && a.totalPoints !== null && !isNaN(a.score) && !isNaN(a.totalPoints) && !a.exempt);
   
   if (assignments.length > 0 && graded.length === 0) {
@@ -171,21 +170,12 @@ export default function Grades() {
   const [expandedId, setExpandedId] = useState(null);
   const [showAddDocModal, setShowAddDocModal] = useState(false);
   const [showViewDocsModal, setShowViewDocsModal] = useState(false);
-  const [selectedGradeModalClass, setSelectedGradeModalClass] = useState(null);
   const tabs = ['MP1', 'MP2', 'MP3', 'MP4'];
 
   const classes = hacData?.classes || [];
 
   return (
     <div className={`${theme.appBg} min-h-screen flex flex-col transition-colors duration-200`}>
-      
-      {/* Exact Grade & GPA Impact Modal */}
-      {selectedGradeModalClass && (
-        <ExactGradeModal
-          course={selectedGradeModalClass}
-          onClose={() => setSelectedGradeModalClass(null)}
-        />
-      )}
 
       {/* Add Document Modal */}
       {showAddDocModal && (
@@ -271,26 +261,14 @@ export default function Grades() {
               classAvg = historical?.average ?? null;
               classLetter = historical?.letterGrade ?? gradeToLetter(classAvg);
               const rawHistorical = historical?.assignments || [];
-              assignments = rawHistorical.filter(a => {
-                if (!a.name) return false;
-                const nameStr = a.name.trim();
-                if (/^(Course\s*Average|Overall\s*Average|Average|Total)$/i.test(nameStr)) return false;
-                if (/^\d+(\.\d+)?$/.test(nameStr) && !a.dateDue && (a.score === null || a.score === undefined)) return false;
-                return true;
-              });
+              assignments = filterValidAssignments(rawHistorical);
             } else {
               // Current Active Marking Period: Live effective grades & assignments
               const effective = getEffectiveClassGrade(cls);
               classAvg = effective.average;
               classLetter = effective.letterGrade;
               const rawAssignments = cls.assignments || [];
-              assignments = rawAssignments.filter(a => {
-                if (!a.name) return false;
-                const nameStr = a.name.trim();
-                if (/^(Course\s*Average|Overall\s*Average|Average|Total)$/i.test(nameStr)) return false;
-                if (/^\d+(\.\d+)?$/.test(nameStr) && !a.dateDue && (a.score === null || a.score === undefined)) return false;
-                return true;
-              });
+              assignments = filterValidAssignments(rawAssignments);
             }
 
             const cleanedTitle = cleanCourseName(cls.name);
@@ -325,24 +303,6 @@ export default function Grades() {
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className={`font-bold ${theme.textPrimary} leading-tight truncate`}>{cleanedTitle}</h3>
                       
-                      {/* Exact Grade & GPA Badge Trigger */}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedGradeModalClass(cls);
-                        }}
-                        className={`text-[10px] px-2.5 py-0.5 rounded-full font-extrabold transition cursor-pointer flex items-center gap-1 shrink-0 ${
-                          theme.isDark
-                            ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25'
-                            : 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
-                        }`}
-                        title="Click to view exact unrounded grade & GPA breakdown"
-                      >
-                        <Sparkles size={11} />
-                        <span>Exact: {displayAvg !== null ? `${displayAvg.toFixed(2)}%` : '—'}</span>
-                      </button>
-
                       {classDocCount > 0 && (
                         <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
                           theme.isDark ? 'bg-slate-800 text-emerald-400 border border-slate-700' : `${theme.lightBgClass} ${theme.textClass} border ${theme.borderClass}`
@@ -357,18 +317,20 @@ export default function Grades() {
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
-                    {/* Average pill: clickable to open exact grade modal */}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedGradeModalClass(cls);
-                      }}
-                      className={`px-2.5 h-10 min-w-14 flex items-center justify-center rounded-xl font-black text-sm shadow-xs transition transform hover:scale-105 cursor-pointer ${gradeColor(classAvg, theme.isDark)}`}
-                      title="Click to view exact 4-decimal grade & GPA breakdown"
-                    >
-                      {displayAvg !== null ? `${displayAvg.toFixed(2)}%` : '—'}
-                    </button>
+                    {/* Average pill: rounded average, with exact 4-decimal grade shown below when class is clicked */}
+                    <div className="flex flex-col items-center">
+                      <div
+                        className={`w-14 h-10 flex items-center justify-center rounded-xl font-black text-base shadow-xs ${gradeColor(classAvg, theme.isDark)}`}
+                        title={classAvg !== null ? `${activeTab} Average: ${classAvg}%` : `${activeTab}: Not Graded Yet`}
+                      >
+                        {classAvg !== null ? `${Math.round(classAvg)}` : '—'}
+                      </div>
+                      {isOpen && exactDetails.exactAverage !== null && (
+                        <span className="text-[10px] font-black text-emerald-500 font-mono mt-1 animate-in fade-in">
+                          {exactDetails.exactAverage.toFixed(4)}%
+                        </span>
+                      )}
+                    </div>
                     {/* Letter grade */}
                     <span className={`text-xs font-bold ${theme.textMuted} w-4`}>
                       {classLetter ?? ''}
@@ -385,25 +347,21 @@ export default function Grades() {
                   <div className={`border-t ${theme.cardBorder} ${theme.isDark ? 'bg-slate-900/60' : 'bg-black/[0.02]'}`}>
                     
                     {/* Course Header Info */}
-                    <div className={`px-4 py-2 border-b flex items-center justify-between ${
+                    <div className={`px-4 py-2.5 border-b flex items-center justify-between ${
                       theme.isDark ? 'bg-slate-800/40 border-slate-800 text-slate-400' : 'bg-gray-50/60 border-gray-100 text-gray-500'
                     }`}>
                       <span className="text-[11px] font-semibold">
                         {isFutureMP ? `${activeTab} Not Started` : `${assignments.length} total assignment${assignments.length !== 1 ? 's' : ''}`}
                       </span>
 
-                      <button
-                        type="button"
-                        onClick={() => setSelectedGradeModalClass(cls)}
-                        className={`px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border ${
-                          theme.isDark
-                            ? 'bg-slate-800 text-emerald-400 border-slate-700 hover:bg-slate-700'
-                            : 'bg-white text-emerald-700 border-gray-200 shadow-xs hover:bg-emerald-50'
-                        }`}
-                      >
-                        <Sparkles size={12} />
-                        <span>Exact 4-Decimal & GPA</span>
-                      </button>
+                      {exactDetails.exactAverage !== null && (
+                        <div className="flex items-center gap-1.5 text-xs">
+                          <span className="text-[11px] font-medium text-slate-400">Exact Average:</span>
+                          <span className="font-mono font-black text-emerald-500 text-xs sm:text-sm">
+                            {exactDetails.exactAverage.toFixed(4)}%
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     {isFutureMP ? (

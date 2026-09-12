@@ -68,33 +68,29 @@
           "weight": 1,
           "missing": false,
           "exempt": false
-        },
-        {
-          "name": "100.00",
-          "dateDue": "Assessment",
-          "dateAssigned": "100.0000",
-          "category": "100.000%",
-          "score": 0.4,
-          "totalPoints": 0.4,
-          "weight": 1,
-          "missing": false,
-          "exempt": false
-        },
-        {
-          "name": "100.00",
-          "dateDue": "Formative",
-          "dateAssigned": "100.0000",
-          "category": "100.000%",
-          "score": 0.6,
-          "totalPoints": 0.6,
-          "weight": 1,
-          "missing": false,
-          "exempt": false
         }
       ],
       "room": "706",
       "days": "A",
-      "markingPeriods": "MP1, MP2"
+      "markingPeriods": "MP1, MP2",
+      "categories": [
+        {
+          "name": "Assessment",
+          "earned": 100,
+          "possible": 100,
+          "pct": 100,
+          "weight": 40,
+          "weightedPts": 40
+        },
+        {
+          "name": "Formative",
+          "earned": 100,
+          "possible": 100,
+          "pct": 100,
+          "weight": 60,
+          "weightedPts": 60
+        }
+      ]
     },
     {
       "id": "6026A - 9",
@@ -158,22 +154,21 @@
           "weight": 1,
           "missing": false,
           "exempt": false
-        },
-        {
-          "name": "500.00",
-          "dateDue": "Formative",
-          "dateAssigned": "500.0000",
-          "category": "100.000%",
-          "score": 0.6,
-          "totalPoints": 0.6,
-          "weight": 1,
-          "missing": false,
-          "exempt": false
         }
       ],
       "room": "AxGym",
       "days": "A",
-      "markingPeriods": "MP1, MP2"
+      "markingPeriods": "MP1, MP2",
+      "categories": [
+        {
+          "name": "Formative",
+          "earned": 500,
+          "possible": 500,
+          "pct": 100,
+          "weight": 60,
+          "weightedPts": 60
+        }
+      ]
     },
     {
       "id": "3225A - 5",
@@ -259,33 +254,29 @@
           "weight": 1,
           "missing": false,
           "exempt": false
-        },
-        {
-          "name": "400.00",
-          "dateDue": "Formative",
-          "dateAssigned": "398.0000",
-          "category": "99.500%",
-          "score": 0.6,
-          "totalPoints": 0.597,
-          "weight": 1,
-          "missing": false,
-          "exempt": false
-        },
-        {
-          "name": "200.00",
-          "dateDue": "Summative",
-          "dateAssigned": "199.0000",
-          "category": "99.500%",
-          "score": 0.4,
-          "totalPoints": 0.398,
-          "weight": 1,
-          "missing": false,
-          "exempt": false
         }
       ],
       "room": "749",
       "days": "A",
-      "markingPeriods": "MP1, MP2"
+      "markingPeriods": "MP1, MP2",
+      "categories": [
+        {
+          "name": "Formative",
+          "earned": 398,
+          "possible": 400,
+          "pct": 99.5,
+          "weight": 60,
+          "weightedPts": 59.699999999999996
+        },
+        {
+          "name": "Summative",
+          "earned": 199,
+          "possible": 200,
+          "pct": 99.5,
+          "weight": 40,
+          "weightedPts": 39.800000000000004
+        }
+      ]
     },
     {
       "id": "4315A - 4",
@@ -327,33 +318,29 @@
           "weight": 1,
           "missing": false,
           "exempt": false
-        },
-        {
-          "name": "200.00",
-          "dateDue": "Formative",
-          "dateAssigned": "200.0000",
-          "category": "100.000%",
-          "score": 0.6,
-          "totalPoints": 0.6,
-          "weight": 1,
-          "missing": false,
-          "exempt": false
-        },
-        {
-          "name": "100.00",
-          "dateDue": "Summative",
-          "dateAssigned": "100.0000",
-          "category": "100.000%",
-          "score": 0.4,
-          "totalPoints": 0.4,
-          "weight": 1,
-          "missing": false,
-          "exempt": false
         }
       ],
       "room": "735",
       "days": "A",
-      "markingPeriods": "MP1, MP2"
+      "markingPeriods": "MP1, MP2",
+      "categories": [
+        {
+          "name": "Formative",
+          "earned": 200,
+          "possible": 200,
+          "pct": 100,
+          "weight": 60,
+          "weightedPts": 60
+        },
+        {
+          "name": "Summative",
+          "earned": 100,
+          "possible": 100,
+          "pct": 100,
+          "weight": 40,
+          "weightedPts": 40
+        }
+      ]
     },
     {
       "id": "5839A - 1",
@@ -417,33 +404,29 @@
           "weight": 1,
           "missing": false,
           "exempt": false
-        },
-        {
-          "name": "400.00",
-          "dateDue": "Formative",
-          "dateAssigned": "400.0000",
-          "category": "100.000%",
-          "score": 60,
-          "totalPoints": 60,
-          "weight": 1,
-          "missing": false,
-          "exempt": false
-        },
-        {
-          "name": "100.00",
-          "dateDue": "Summative",
-          "dateAssigned": "100.0000",
-          "category": "100.000%",
-          "score": 40,
-          "totalPoints": 40,
-          "weight": 1,
-          "missing": false,
-          "exempt": false
         }
       ],
       "room": "604",
       "days": "B",
-      "markingPeriods": "MP1, MP2"
+      "markingPeriods": "MP1, MP2",
+      "categories": [
+        {
+          "name": "Formative",
+          "earned": 400,
+          "possible": 400,
+          "pct": 100,
+          "weight": 60,
+          "weightedPts": 60
+        },
+        {
+          "name": "Summative",
+          "earned": 100,
+          "possible": 100,
+          "pct": 100,
+          "weight": 40,
+          "weightedPts": 40
+        }
+      ]
     },
     {
       "id": "1115A - 6",
@@ -463,22 +446,21 @@
           "weight": 1,
           "missing": false,
           "exempt": false
-        },
-        {
-          "name": "100.00",
-          "dateDue": "Formative",
-          "dateAssigned": "100.0000",
-          "category": "100.000%",
-          "score": 0.6,
-          "totalPoints": 0.6,
-          "weight": 1,
-          "missing": false,
-          "exempt": false
         }
       ],
       "room": "124",
       "days": "B",
-      "markingPeriods": "MP1, MP2"
+      "markingPeriods": "MP1, MP2",
+      "categories": [
+        {
+          "name": "Formative",
+          "earned": 100,
+          "possible": 100,
+          "pct": 100,
+          "weight": 60,
+          "weightedPts": 60
+        }
+      ]
     },
     {
       "id": "2212A - 6",
@@ -575,33 +557,29 @@
           "weight": 0,
           "missing": false,
           "exempt": false
-        },
-        {
-          "name": "500.00",
-          "dateDue": "Formative",
-          "dateAssigned": "500.0000",
-          "category": "100.000%",
-          "score": 0.6,
-          "totalPoints": 0.6,
-          "weight": 1,
-          "missing": false,
-          "exempt": false
-        },
-        {
-          "name": "100.00",
-          "dateDue": "Summative",
-          "dateAssigned": "100.0000",
-          "category": "100.000%",
-          "score": 0.4,
-          "totalPoints": 0.4,
-          "weight": 1,
-          "missing": false,
-          "exempt": false
         }
       ],
       "room": "740",
       "days": "B",
-      "markingPeriods": "MP1, MP2"
+      "markingPeriods": "MP1, MP2",
+      "categories": [
+        {
+          "name": "Formative",
+          "earned": 500,
+          "possible": 500,
+          "pct": 100,
+          "weight": 60,
+          "weightedPts": 60
+        },
+        {
+          "name": "Summative",
+          "earned": 100,
+          "possible": 100,
+          "pct": 100,
+          "weight": 40,
+          "weightedPts": 40
+        }
+      ]
     },
     {
       "id": "8432A - 9",
@@ -676,22 +654,21 @@
           "weight": 0,
           "missing": false,
           "exempt": false
-        },
-        {
-          "name": "500.00",
-          "dateDue": "Formative",
-          "dateAssigned": "480.0000",
-          "category": "96.000%",
-          "score": 0.6,
-          "totalPoints": 0.576,
-          "weight": 1,
-          "missing": false,
-          "exempt": false
         }
       ],
       "room": "112",
       "days": "B",
-      "markingPeriods": "MP1, MP2"
+      "markingPeriods": "MP1, MP2",
+      "categories": [
+        {
+          "name": "Formative",
+          "earned": 480,
+          "possible": 500,
+          "pct": 96,
+          "weight": 60,
+          "weightedPts": 57.599999999999994
+        }
+      ]
     }
   ],
   "upcoming": [
