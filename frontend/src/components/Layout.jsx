@@ -266,7 +266,7 @@ export default function Layout() {
           </div>
         </header>
 
-        <div className="w-full h-full">
+        <div className="w-full pb-36 md:pb-10">
           <Outlet />
         </div>
       </main>
