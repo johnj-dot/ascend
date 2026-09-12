@@ -262,7 +262,7 @@ export default function Planner() {
   };
 
   return (
-    <div className={`${theme.appBg} min-h-screen flex flex-col relative transition-colors duration-200`}>
+    <div className={`${theme.appBg} w-full flex flex-col relative transition-colors duration-200`}>
       {/* Task Creation & Editing Modal */}
       {showModal && (
         <TaskAdderModal

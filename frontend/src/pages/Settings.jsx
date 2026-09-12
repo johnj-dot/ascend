@@ -136,7 +136,7 @@ export default function Settings() {
   };
 
   return (
-    <div className={`${theme.appBg} min-h-screen flex flex-col transition-colors duration-200`}>
+    <div className={`${theme.appBg} w-full flex flex-col transition-colors duration-200`}>
       <div className={`${theme.bgClass} px-6 pt-12 pb-6 text-white w-full`}>
         <div className="max-w-5xl mx-auto">
           <h1 className="text-4xl font-bold">Settings</h1>

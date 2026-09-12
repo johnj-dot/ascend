@@ -183,7 +183,7 @@ export default function GPA() {
     Object.keys(tierOverrides).length > 0;
 
   return (
-    <div className={`min-h-screen ${theme.appBg} flex flex-col transition-colors duration-200`}>
+    <div className={`w-full ${theme.appBg} flex flex-col transition-colors duration-200`}>
       {/* Top Header Section */}
       <header className="px-4 sm:px-8 pt-8 pb-6 border-b border-black/[0.05] dark:border-white/[0.05]">
         <div className="max-w-5xl mx-auto">

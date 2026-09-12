@@ -444,7 +444,7 @@ export default function Overview() {
   });
 
   return (
-    <div className={`${theme.appBg} min-h-screen flex flex-col transition-colors duration-200`}>
+    <div className={`${theme.appBg} w-full flex flex-col transition-colors duration-200`}>
       {/* Schedule Modal */}
       {showSchedule && <ScheduleModal classes={hacData?.classes} onClose={() => setShowSchedule(false)} />}
 

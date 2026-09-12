@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { Home, BookOpen, Calculator, Calendar, Settings, RefreshCw, LogOut, AlertTriangle, AlertCircle, CheckCircle2, X, Sparkles, Target } from 'lucide-react';
 import { useStore } from '../store/useStore';
@@ -15,6 +15,15 @@ export default function Layout() {
   const theme = getTheme(activeTheme);
   const navigate = useNavigate();
   const location = useLocation();
+  const mainRef = useRef(null);
+
+  // Auto-scroll to top on every route change
+  useEffect(() => {
+    if (mainRef.current) {
+      mainRef.current.scrollTop = 0;
+    }
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
 
   // Auto-dismiss successful sync notifications: stay for ~1.2s then slide upwards out of screen
   useEffect(() => {
@@ -143,7 +152,7 @@ export default function Layout() {
       </nav>
 
       {/* Main Content Area */}
-      <main className={`flex-1 overflow-y-auto pb-20 md:pb-0 relative ${theme.appBg}`}>
+      <main ref={mainRef} className={`flex-1 overflow-y-auto relative ${theme.appBg}`}>
         
         {/* Top-Center Sync Notification Pop-up with slide-up exit */}
         {syncNotification && (
@@ -266,7 +275,7 @@ export default function Layout() {
           </div>
         </header>
 
-        <div className="w-full pb-36 md:pb-10">
+        <div className="w-full pb-20 md:pb-6">
           <Outlet />
         </div>
       </main>
