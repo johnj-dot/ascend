@@ -133,6 +133,21 @@ html, body, #root {
   animation: slideInLeft 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+@keyframes modalGlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(48px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-modal-glide-up {
+  animation: modalGlideUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 /* ── Smooth Accordion Rollout & Rollup (Slow start, zero-shake fluid descent) ── */
 .accordion-rollout {
   display: grid;

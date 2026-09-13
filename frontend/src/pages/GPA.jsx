@@ -88,13 +88,11 @@ export default function GPA() {
       const initialTier = classifyCourse(cleanName).id;
       const tier = tierOverrides[courseId] || initialTier;
       
-      // Calculate exact 4-decimal course details from category weights
-      const details = getExactCourseDetails(c);
-      // Trust gpaEngine as single source of truth; fall back to c.average then 100 only if engine returns null
+      // Trust gpaEngine as single source of truth; fall back to c.average only if valid, otherwise null (never fake 100)
       const hasOfficialHacAvg = c.average !== null && c.average !== undefined && !isNaN(c.average);
       const liveGrade = details.exactAverage !== null && details.exactAverage !== undefined
         ? details.exactAverage
-        : (hasOfficialHacAvg ? parseFloat(c.average) : 100);
+        : (hasOfficialHacAvg ? parseFloat(c.average) : null);
       const currentGrade = editedGrades[courseId] !== undefined ? editedGrades[courseId] : liveGrade;
 
       return {
@@ -407,7 +405,7 @@ export default function GPA() {
                           {c.name}
                         </h3>
                         <span className={`text-[10px] px-2 py-0.5 rounded-full font-extrabold ${theme.isDark ? 'bg-slate-800 text-slate-300 border border-slate-700' : 'bg-slate-100 text-slate-700'}`}>
-                          Avg: {Math.round(c.grade)}%
+                          {c.grade !== null && !isNaN(c.grade) ? `Avg: ${Math.round(c.grade)}%` : 'No Grade'}
                         </span>
                         {c.isEdited && (
                           <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
@@ -423,7 +421,7 @@ export default function GPA() {
                       </div>
                       <div className="flex items-center gap-2 text-xs text-slate-400 mt-0.5 flex-wrap">
                         {c.teacher && <span>{c.teacher} ·</span>}
-                        <span>Exact: <strong className="text-emerald-500 font-mono font-bold">{c.grade.toFixed(4)}%</strong></span>
+                        <span>Exact: <strong className="text-emerald-500 font-mono font-bold">{c.grade !== null && !isNaN(c.grade) ? `${c.grade.toFixed(4)}%` : '—'}</strong></span>
                       </div>
                     </div>
                   </div>

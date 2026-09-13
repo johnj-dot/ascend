@@ -7,13 +7,13 @@ function OnboardingThemeSwatch({ themeData, isSelected, isDark = false }) {
   const clipId = `onboarding-clip-${themeData.id}`;
   return (
     <div
-      className={`w-13 h-13 rounded-full flex items-center justify-center relative transition-all duration-150 transform group-hover:scale-105 ${
+      className={`w-11 h-11 sm:w-13 sm:h-13 rounded-full flex items-center justify-center relative transition-all duration-150 transform group-hover:scale-105 ${
         isSelected
           ? `ring-3 ${themeData.ringClass} ring-offset-2 ${isDark ? 'ring-offset-slate-900' : 'ring-offset-white'} scale-105`
           : isDark ? 'border border-white/20' : 'border border-black/15'
       }`}
     >
-      <svg width="52" height="52" viewBox="0 0 52 52" className="rounded-full overflow-hidden block">
+      <svg width="100%" height="100%" viewBox="0 0 52 52" className="rounded-full overflow-hidden block">
         <defs>
           <clipPath id={clipId}>
             <circle cx="26" cy="26" r="26" />
@@ -26,8 +26,9 @@ function OnboardingThemeSwatch({ themeData, isSelected, isDark = false }) {
       </svg>
 
       {isSelected && (
-        <div className={`absolute inset-0 m-auto w-6 h-6 ${themeData.id === 'midnight' ? 'bg-emerald-500' : themeData.bgClass} text-white rounded-full shadow-md flex items-center justify-center pointer-events-none`}>
-          <Check size={14} strokeWidth={3.5} />
+        <div className={`absolute inset-0 m-auto w-5 h-5 sm:w-6 sm:h-6 ${themeData.id === 'midnight' ? 'bg-emerald-500' : themeData.bgClass} text-white rounded-full shadow-md flex items-center justify-center pointer-events-none`}>
+          <Check size={12} className="sm:hidden" strokeWidth={3.5} />
+          <Check size={14} className="hidden sm:block" strokeWidth={3.5} />
         </div>
       )}
     </div>
@@ -82,18 +83,18 @@ export default function OnboardingModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/65 backdrop-blur-md flex items-center justify-center p-4">
-      <div className={`${containerBg} rounded-3xl w-full max-w-4xl overflow-hidden shadow-2xl animate-slide-up border flex flex-col md:flex-row min-h-[500px]`}>
+      <div className={`${containerBg} rounded-3xl w-full max-w-lg md:max-w-4xl overflow-hidden shadow-2xl animate-modal-glide-up border flex flex-col md:flex-row min-h-[420px] md:min-h-[500px]`}>
 
         {/* ── Mode 1: Theme Selection ── */}
         {mode === 'theme' && (
           <>
             {/* Left Column: Theme Questionnaire */}
-            <div className={`flex-1 p-8 flex flex-col justify-between border-b md:border-b-0 md:border-r ${borderColor}`}>
+            <div className={`flex-1 p-6 sm:p-8 flex flex-col justify-between border-b md:border-b-0 md:border-r ${borderColor} animate-modal-glide-up`}>
               <div>
                 <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full ${chipBg} text-xs font-bold uppercase tracking-wider mb-4`}>
                   <Sparkles size={14} className="text-amber-500" /> Account Setup · Step 1
                 </div>
-                <h2 className={`text-3xl font-extrabold ${textPrimary} leading-tight`}>
+                <h2 className={`text-2xl sm:text-3xl font-extrabold ${textPrimary} leading-tight`}>
                   Choose Your App Theme
                 </h2>
                 <p className={`text-sm ${textSecondary} mt-2`}>
@@ -101,9 +102,9 @@ export default function OnboardingModal({
                 </p>
 
                 {/* Theme Circles */}
-                <div className="mt-8 space-y-4">
+                <div className="mt-6 sm:mt-8 space-y-4">
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">Available Color Styles</label>
-                  <div className="flex flex-wrap gap-4">
+                  <div className="grid grid-cols-5 gap-2 sm:gap-4 max-w-md">
                     {THEMES.map(t => {
                       const isSelected = selectedThemeId === t.id;
                       return (
@@ -115,7 +116,7 @@ export default function OnboardingModal({
                           title={t.name}
                         >
                           <OnboardingThemeSwatch themeData={t} isSelected={isSelected} isDark={isDark} />
-                          <span className={`text-xs font-bold transition-colors ${
+                          <span className={`text-[11px] sm:text-xs font-bold transition-colors text-center truncate w-full ${
                             isSelected ? (isDark ? 'text-white' : 'text-gray-900') : (isDark ? 'text-slate-400' : 'text-gray-500')
                           }`}>
                             {t.name.split(' ')[0]}
@@ -130,15 +131,15 @@ export default function OnboardingModal({
               {/* Continue Button */}
               <button
                 onClick={handleFinishTheme}
-                className={`w-full ${currentTheme.bgClass} text-white font-bold py-4 rounded-2xl transition shadow-lg flex items-center justify-center gap-2 text-base mt-8 hover:opacity-90 cursor-pointer`}
+                className={`w-full ${currentTheme.bgClass} text-white font-bold py-3.5 sm:py-4 rounded-2xl transition shadow-lg flex items-center justify-center gap-2 text-base mt-6 sm:mt-8 hover:opacity-90 cursor-pointer`}
               >
                 <span>Continue Setup</span>
                 <ChevronRight size={20} />
               </button>
             </div>
 
-            {/* Right Column: Live Sample UI Preview */}
-            <div className={`w-full md:w-[400px] ${previewColBg} p-6 flex flex-col justify-center items-center relative overflow-hidden border-t md:border-t-0`}>
+            {/* Right Column: Live Sample UI Preview (Desktop Only) */}
+            <div className={`hidden md:flex md:w-[400px] ${previewColBg} p-6 flex-col justify-center items-center relative overflow-hidden border-t md:border-t-0`}>
               <div className={`w-full max-w-[320px] rounded-2xl shadow-xl overflow-hidden border ${isDark ? 'border-slate-700/80' : 'border-gray-200/80'} ${currentTheme.previewBg} transform transition-all duration-300`}>
                 <div className={`${currentTheme.bgClass} p-4 text-white`}>
                   <div className="flex justify-between items-center mb-2">

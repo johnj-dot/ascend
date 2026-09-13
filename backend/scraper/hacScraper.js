@@ -45,11 +45,21 @@ function scrapeClasses(html) {
     const period   = t(cols[2], $);
     const teacher  = t(cols[3], $);
     const room     = t(cols[4], $);
-    const days     = t(cols[5], $);
+    const rawDays  = t(cols[5], $);
     const mps      = t(cols[6], $);
     const status   = t(cols[8], $);
 
     if (!courseId || !name || status !== 'Active') return;
+
+    let days = rawDays.trim();
+    if (days.toUpperCase() === 'A') days = 'A Day';
+    else if (days.toUpperCase() === 'B') days = 'B Day';
+    else {
+      const perNum = parseInt(period, 10);
+      if (!isNaN(perNum)) {
+        days = (perNum >= 1 && perNum <= 4) ? 'A Day' : (perNum >= 5 && perNum <= 8) ? 'B Day' : (days || null);
+      }
+    }
 
     // Deduplicate: strip semester suffix (e.g. "3929A - 3" and "3929B - 3" → same class)
     const baseId = courseId.replace(/[AB] -/, 'A -');
@@ -183,7 +193,7 @@ function scrapeWeekView(html, dialogDetails = {}) {
         if (d.totalPoints !== undefined && d.totalPoints !== null) totalPoints = d.totalPoints;
         if (d.dateDue) dateDue = d.dateDue;
         if (d.category) category = d.category;
-      } else if (/syllabus|safety contract|parent signature/i.test(name) && /human geography/i.test(courseName)) {
+      } else if (/syllabus|safety contract|parent signature/i.test(name)) {
         weight = 0;
       }
 
@@ -215,11 +225,15 @@ function scrapeWeekView(html, dialogDetails = {}) {
       calculatedAverage = null;
     }
 
+    const perNum = parseInt(period, 10);
+    const resolvedDay = (!isNaN(perNum) && perNum >= 1 && perNum <= 4) ? 'A Day' : (!isNaN(perNum) && perNum >= 5 && perNum <= 8) ? 'B Day' : null;
+
     classes.push({
       id: baseId,
       name: courseName,
       period,
       teacher,
+      days: resolvedDay,
       average: calculatedAverage,
       letterGrade: gradeToLetter(calculatedAverage),
       assignments,
@@ -946,30 +960,69 @@ export async function scrapeHac(username, password, customDistrictUrl = null) {
 
   console.log(`[HAC Scraper] Login verified. Fetching academic records...`);
 
-  const fetchHacPage = async (pageSubpath) => {
+  const fetchHacPage = async (pageSubpath, maxAttempts = 3, initialDelayMs = 800) => {
     const targetUrl = `${BASE_URL}/${pageSubpath.replace(/^\//, '')}`;
-    try {
-      const res = await fetch(targetUrl, {
-        headers: {
-          'User-Agent': userAgent,
-          'Cookie': jar.getCookieHeader(),
-          'Referer': `${BASE_URL}/Home/WeekView`
-        },
-        redirect: 'follow'
-      });
-      if (!res.ok) return '';
-      return await res.text();
-    } catch (e) {
-      console.warn(`[HAC Scraper] Warning fetching ${pageSubpath}:`, e.message);
-      return '';
+    
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        console.log(`[HAC Scraper] Fetching ${pageSubpath} (attempt ${attempt}/${maxAttempts})...`);
+        const res = await fetch(targetUrl, {
+          headers: {
+            'User-Agent': userAgent,
+            'Cookie': jar.getCookieHeader(),
+            'Referer': `${BASE_URL}/Home/WeekView`
+          },
+          redirect: 'follow'
+        });
+
+        if (res.headers) {
+          jar.setFromHeaders(res.headers);
+        }
+
+        if (res.ok) {
+          const text = await res.text();
+          // Check if session timed out or bounced to logon
+          const isLogOnBounced = text.includes('LogOnDetails.UserName') || 
+                                 text.includes('id="tempUN"') || 
+                                 text.includes('id="tempPW"') ||
+                                 (res.url && res.url.includes('/Account/LogOn'));
+
+          if (!isLogOnBounced && text.trim().length > 100) {
+            return text;
+          }
+
+          console.warn(`[HAC Scraper] ${pageSubpath} returned logon bounce or empty body (attempt ${attempt}/${maxAttempts}).`);
+        } else {
+          console.warn(`[HAC Scraper] ${pageSubpath} returned HTTP status ${res.status} (attempt ${attempt}/${maxAttempts}).`);
+        }
+      } catch (e) {
+        console.warn(`[HAC Scraper] Error fetching ${pageSubpath} (attempt ${attempt}/${maxAttempts}):`, e.message);
+      }
+
+      if (attempt < maxAttempts) {
+        const backoffMs = Math.round(initialDelayMs * Math.pow(1.5, attempt - 1));
+        console.log(`[HAC Scraper] Waiting ${backoffMs}ms before retrying ${pageSubpath}...`);
+        await new Promise(r => setTimeout(r, backoffMs));
+      }
     }
+
+    console.warn(`[HAC Scraper] ⚠️ Failed to fetch ${pageSubpath} after ${maxAttempts} attempts.`);
+    return '';
   };
 
-  const [regHtml, weekHtml, classesHtml, assignHtml, transHtml, attHtml] = await Promise.all([
-    fetchHacPage('Content/Student/Registration.aspx'),
+  // Staggered batches to avoid ASP.NET session state locking collisions
+  console.log('[HAC Scraper] Fetching Core Academics...');
+  const [weekHtml, classesHtml, assignHtml] = await Promise.all([
     fetchHacPage('Home/WeekView'),
     fetchHacPage('Content/Student/Classes.aspx'),
-    fetchHacPage('Content/Student/Assignments.aspx'),
+    fetchHacPage('Content/Student/Assignments.aspx')
+  ]);
+
+  await new Promise(r => setTimeout(r, 350));
+
+  console.log('[HAC Scraper] Fetching Student Records & History...');
+  const [regHtml, transHtml, attHtml] = await Promise.all([
+    fetchHacPage('Content/Student/Registration.aspx'),
     fetchHacPage('Content/Student/Transcript.aspx'),
     fetchHacPage('Content/Attendance/MonthlyView.aspx')
   ]);

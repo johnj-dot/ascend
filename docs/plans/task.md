@@ -35,4 +35,8 @@
 | 31. Audit & Purge Hardcoded Student Data | Done | Verified 0 hardcoded student IDs/names in production; empty states hardened |
 | 32. Fix GPA Grade Discrepancy & Empty Fallbacks | Done | Prioritized official HAC course averages and added empty course fallbacks |
 | 33. Responsive Testing via Chrome DevTools MCP | Done | Verified Desktop (1280x800) and Mobile (390x844) layouts with 0 errors |
-| 34. Cloud Health Audit via Render MCP | Done | Verified live deploy c284d44, 119MB RAM, 0.0001 CPU, healthy container logs |
+| 35. Persistent Top Sync Button (Mobile & Desktop) | Done | Make mobile header sticky at top and add quick sync trigger to Overview banner |
+| 36. Scraper Multi-Page Fetch with Retry & Session Persistence | Done | Add graceful retry, backoff, and sequential batching to eliminate 0.5s timeout/failures |
+| 37. Intelligent A/B Day Schedule Assignment | Done | Resolve A-Day vs B-Day by period (P1-4 A-Day, P5-8 B-Day) and scraper days extraction |
+| 38. Theme Modal Responsive Layout & Smooth Slide-Up Animation | Done | Fix mobile theme layout cutoff and add fluid slide-up entrance animation with fade-in |
+| 39. Fix Ungraded Course 100% GPA Fallback (Spanish III) | Done | Prevent unrecorded course grades from forcing 100% GPA and display No Grade state |

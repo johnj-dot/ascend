@@ -116,10 +116,10 @@ const courseWithSyllabusOnly = {
 const detailsSyllabusOnly = getExactCourseDetails(courseWithSyllabusOnly);
 assert.strictEqual(detailsSyllabusOnly.exactAverage, 96.0, 'Should fall back to course.average when no scoreable assignments');
 
-// 6c. Course with no assignments and no average: should default to 100
+// 6c. Course with no assignments and no average: must return null, never fake 100
 const courseEmpty = { average: null, assignments: [] };
 const detailsEmpty = getExactCourseDetails(courseEmpty);
-assert.strictEqual(detailsEmpty.exactAverage, 100.0, 'Empty course should default to 100');
+assert.strictEqual(detailsEmpty.exactAverage, null, 'Empty course must return null, never fake 100');
 
 console.log('  ✓ getExactCourseDetails branch 3 verified (4-decimal from assignments, fallback to official avg)');
 

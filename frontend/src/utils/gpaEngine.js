@@ -385,17 +385,17 @@ export function getExactCourseDetails(course) {
     const hasOfficialAvg = course.average !== null && course.average !== undefined && !isNaN(course.average);
     const exactAvg = totalPossible > 0
       ? (totalEarned / totalPossible) * 100
-      : (hasOfficialAvg ? parseFloat(course.average) : 100);
+      : (hasOfficialAvg ? parseFloat(course.average) : null);
 
     return {
-      exactAverage: parseFloat(exactAvg.toFixed(4)),
+      exactAverage: exactAvg !== null ? parseFloat(exactAvg.toFixed(4)) : null,
       categories,
     };
   }
 
-  const fallbackAvg = course.average !== null && course.average !== undefined ? parseFloat(course.average) : 100;
+  const hasOfficialAvg = course.average !== null && course.average !== undefined && !isNaN(course.average);
   return {
-    exactAverage: parseFloat(fallbackAvg.toFixed(4)),
+    exactAverage: hasOfficialAvg ? parseFloat(parseFloat(course.average).toFixed(4)) : null,
     categories: [],
   };
 }

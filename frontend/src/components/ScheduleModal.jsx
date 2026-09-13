@@ -12,6 +12,23 @@ function getTeacherEmail(teacherName) {
   return `${parts[0]}@roundrockisd.org`;
 }
 
+function resolveScheduleDay(cls, idx) {
+  if (cls?.days && typeof cls.days === 'string' && cls.days.trim()) {
+    const d = cls.days.trim().toUpperCase();
+    if (d === 'A' || d.includes('A DAY')) return 'A Day';
+    if (d === 'B' || d.includes('B DAY')) return 'B Day';
+    if (d !== 'A/B' && d !== 'A, B' && d !== 'A,B') return cls.days.trim();
+  }
+  // Determine from period number: RRISD block schedule P01-P04 = A Day, P05-P08 = B Day
+  const perStr = String(cls?.period || idx + 1).replace(/^P/i, '').trim();
+  const perNum = parseInt(perStr, 10);
+  if (!isNaN(perNum)) {
+    if (perNum >= 1 && perNum <= 4) return 'A Day';
+    if (perNum >= 5 && perNum <= 8) return 'B Day';
+  }
+  return 'A/B';
+}
+
 export default function ScheduleModal({ classes, onClose }) {
   const activeThemeId = useStore(state => state.activeTheme);
   const theme = getTheme(activeThemeId);
@@ -34,6 +51,7 @@ export default function ScheduleModal({ classes, onClose }) {
         <div className={`p-6 max-h-[70vh] overflow-y-auto divide-y ${theme.divideColor}`}>
           {(classes || []).map((cls, idx) => {
             const email = getTeacherEmail(cls.teacher);
+            const resolvedDay = resolveScheduleDay(cls, idx);
             return (
               <div key={idx} className="py-4 first:pt-0 last:pb-0 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3.5 min-w-0">
@@ -67,8 +85,14 @@ export default function ScheduleModal({ classes, onClose }) {
                     </a>
                   )}
 
-                  <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg ${theme.isDark ? 'bg-slate-800 text-slate-300' : 'bg-gray-100 text-gray-600'}`}>
-                    {cls.days || 'A/B'}
+                  <span className={`text-[11px] font-bold px-2.5 py-1 rounded-xl border ${
+                    resolvedDay === 'A Day'
+                      ? theme.isDark ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      : resolvedDay === 'B Day'
+                      ? theme.isDark ? 'bg-blue-500/15 text-blue-400 border-blue-500/30' : 'bg-blue-50 text-blue-700 border-blue-200'
+                      : theme.isDark ? 'bg-slate-800 text-slate-300 border-slate-700' : 'bg-gray-100 text-gray-600 border-gray-200'
+                  }`}>
+                    {resolvedDay}
                   </span>
                 </div>
               </div>

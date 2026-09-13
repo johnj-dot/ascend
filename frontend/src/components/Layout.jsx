@@ -237,8 +237,8 @@ export default function Layout() {
           </div>
         )}
 
-        {/* Mobile Slim App Header - In-flow, never floating over content */}
-        <header className={`md:hidden px-4 py-2.5 flex items-center justify-between border-b ${theme.cardBorder} ${theme.sidebarBg} shrink-0`}>
+        {/* Mobile Slim App Header - Sticky top, always visible with quick actions */}
+        <header className={`md:hidden sticky top-0 z-40 px-4 py-2.5 flex items-center justify-between border-b ${theme.cardBorder} ${theme.sidebarBg} shrink-0 backdrop-blur-md shadow-xs`}>
           <div className="flex items-center gap-2">
             <div className={`w-7 h-7 rounded-xl ${theme.bgClass} flex items-center justify-center text-white text-xs font-black shadow-xs`}>
               ▲
@@ -257,10 +257,10 @@ export default function Layout() {
                   ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-750'
                   : 'bg-white border-gray-200 text-gray-700 shadow-2xs hover:bg-gray-50'
               }`}
-              title="Sync data from HAC"
+              title="Sync data from Home Access Center"
             >
               <RefreshCw size={12} className={isSyncing ? 'animate-spin text-emerald-500' : ''} />
-              <span>{isSyncing ? 'Syncing...' : 'Sync'}</span>
+              <span>{isSyncing ? 'Syncing...' : 'Sync Data'}</span>
             </button>
             <button
               type="button"

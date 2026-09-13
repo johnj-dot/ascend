@@ -3,7 +3,7 @@ import { useStore } from '../store/useStore';
 import { getTheme } from '../utils/themeConfig';
 import { 
   ChevronRight, AlertCircle, Calendar, BookOpen, 
-  ChevronLeft, X, CheckCircle2, MapPin, User
+  ChevronLeft, X, CheckCircle2, MapPin, User, RefreshCw
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ScheduleModal from '../components/ScheduleModal';
@@ -349,9 +349,25 @@ function AttendanceOverviewCalendar({ attendance = [], classes = [], theme }) {
 
 export default function Overview() {
   const { hacData, activeTheme, localOverrides, completedItemIds, toggleItemCompleted } = useStore();
+  const syncHacData = useStore(state => state.syncHacData);
+  const syncNotification = useStore(state => state.syncNotification);
+  const isSyncing = syncNotification?.type === 'syncing';
   const theme = getTheme(activeTheme);
   const navigate = useNavigate();
   const [showSchedule, setShowSchedule] = useState(false);
+
+  const handleSync = async (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (isSyncing) return;
+    try {
+      await syncHacData();
+    } catch (err) {
+      console.warn('Overview sync failed:', err);
+    }
+  };
 
   // Helper to filter out ASP.NET summary footer rows like "99", "Course Average", etc.
   const isInvalidOrSummaryRow = (a) => {
@@ -450,12 +466,23 @@ export default function Overview() {
 
       {/* Header */}
       <div className={`${theme.bgClass} px-6 pt-12 pb-6 text-white w-full shadow-md`}>
-        <div className="max-w-5xl mx-auto flex justify-between items-end">
+        <div className="max-w-5xl mx-auto flex justify-between items-end gap-4">
           <div>
             <h1 className="text-3xl font-black tracking-tight">Overview</h1>
             <p className="text-xs font-medium opacity-90 mt-1">
               {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
             </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleSync}
+              disabled={isSyncing}
+              className="px-4 py-2.5 rounded-2xl bg-white/20 hover:bg-white/30 backdrop-blur-md text-white font-bold text-xs flex items-center gap-2 border border-white/20 transition cursor-pointer shadow-sm active:scale-95 shrink-0"
+              title="Sync latest data from Home Access Center"
+            >
+              <RefreshCw size={14} className={isSyncing ? 'animate-spin' : ''} />
+              <span>{isSyncing ? 'Syncing...' : 'Sync Data'}</span>
+            </button>
           </div>
         </div>
       </div>
