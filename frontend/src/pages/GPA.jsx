@@ -90,12 +90,11 @@ export default function GPA() {
       
       // Calculate exact 4-decimal course details from category weights
       const details = getExactCourseDetails(c);
+      // Trust gpaEngine as single source of truth; fall back to c.average then 100 only if engine returns null
       const hasOfficialHacAvg = c.average !== null && c.average !== undefined && !isNaN(c.average);
-      const hasRealCategoryWeights = Array.isArray(details.categories) && details.categories.length > 0 && details.categories.some(cat => cat.weight > 0);
-
-      const liveGrade = hasOfficialHacAvg && !hasRealCategoryWeights
-        ? parseFloat(c.average)
-        : (details.exactAverage !== null && details.exactAverage !== undefined ? details.exactAverage : (hasOfficialHacAvg ? parseFloat(c.average) : 100));
+      const liveGrade = details.exactAverage !== null && details.exactAverage !== undefined
+        ? details.exactAverage
+        : (hasOfficialHacAvg ? parseFloat(c.average) : 100);
       const currentGrade = editedGrades[courseId] !== undefined ? editedGrades[courseId] : liveGrade;
 
       return {

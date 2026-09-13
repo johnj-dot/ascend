@@ -344,7 +344,7 @@ export function getExactCourseDetails(course) {
     }
   }
 
-  // 2. Fallback: calculate from standard graded assignments
+  // 3. Fallback: calculate from standard graded assignments
   const regularAssignments = (course.assignments || []).filter(
     a => !isNaN(parseFloat(a.score)) && !isNaN(parseFloat(a.totalPoints)) && !a.exempt && (!a.category || !a.category.includes('%'))
   );
@@ -381,11 +381,11 @@ export function getExactCourseDetails(course) {
       return s + (parseFloat(a.totalPoints) * w);
     }, 0);
 
-    // Prioritize official HAC course average if provided when categories are unweighted/empty
+    // Use computed assignment average for 4-decimal precision; fall back to official HAC average only when no scoreable points exist
     const hasOfficialAvg = course.average !== null && course.average !== undefined && !isNaN(course.average);
-    const exactAvg = hasOfficialAvg
-      ? parseFloat(course.average)
-      : (totalPossible > 0 ? (totalEarned / totalPossible) * 100 : 100);
+    const exactAvg = totalPossible > 0
+      ? (totalEarned / totalPossible) * 100
+      : (hasOfficialAvg ? parseFloat(course.average) : 100);
 
     return {
       exactAverage: parseFloat(exactAvg.toFixed(4)),

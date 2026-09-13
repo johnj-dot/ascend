@@ -5,6 +5,7 @@ import {
   getWeightedPoints,
   calculateGPA,
   estimateClassRank,
+  getExactCourseDetails,
 } from './gpaEngine.js';
 
 console.log('--- Running GPA Engine Unit Tests ---');
@@ -89,4 +90,38 @@ assert.strictEqual(rankTop.estimatedRank, 1);
 assert.strictEqual(rankTop.percentile, 'Top 1%');
 console.log('  ✓ Rank estimation verified');
 
-console.log('\nAll 5 GPA Engine tests passed successfully!');
+// 6. getExactCourseDetails — branch 3 precision and fallback
+console.log('[6] getExactCourseDetails Branch 3 (assignment fallback)');
+
+// 6a. Course with real assignments: should compute 4-decimal from points (ignoring course.average)
+const courseWithAssignments = {
+  average: 96,
+  assignments: [
+    { score: '67', totalPoints: '70', exempt: false },   // 95.7143
+    { score: '100', totalPoints: '100', exempt: false },  // 100
+  ],
+};
+const detailsWithAssignments = getExactCourseDetails(courseWithAssignments);
+// total earned=167, total possible=170 → 98.2353
+assert.ok(detailsWithAssignments.exactAverage !== 96, 'Must not blindly use course.average when assignments exist');
+assert.ok(detailsWithAssignments.exactAverage > 95 && detailsWithAssignments.exactAverage < 100, `Expected ~98.2353 got ${detailsWithAssignments.exactAverage}`);
+
+// 6b. Course with no scoreable assignments (Syllabus only): should fall back to course.average
+const courseWithSyllabusOnly = {
+  average: 96,
+  assignments: [
+    { score: 'Syllabus', totalPoints: '0', exempt: false },
+  ],
+};
+const detailsSyllabusOnly = getExactCourseDetails(courseWithSyllabusOnly);
+assert.strictEqual(detailsSyllabusOnly.exactAverage, 96.0, 'Should fall back to course.average when no scoreable assignments');
+
+// 6c. Course with no assignments and no average: should default to 100
+const courseEmpty = { average: null, assignments: [] };
+const detailsEmpty = getExactCourseDetails(courseEmpty);
+assert.strictEqual(detailsEmpty.exactAverage, 100.0, 'Empty course should default to 100');
+
+console.log('  ✓ getExactCourseDetails branch 3 verified (4-decimal from assignments, fallback to official avg)');
+
+console.log('\nAll 6 GPA Engine tests passed successfully!');
+
