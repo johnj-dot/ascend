@@ -90,7 +90,12 @@ export default function GPA() {
       
       // Calculate exact 4-decimal course details from category weights
       const details = getExactCourseDetails(c);
-      const liveGrade = details.exactAverage !== null && details.exactAverage !== undefined ? details.exactAverage : (c.average !== null && c.average !== undefined ? c.average : 100);
+      const hasOfficialHacAvg = c.average !== null && c.average !== undefined && !isNaN(c.average);
+      const hasRealCategoryWeights = Array.isArray(details.categories) && details.categories.length > 0 && details.categories.some(cat => cat.weight > 0);
+
+      const liveGrade = hasOfficialHacAvg && !hasRealCategoryWeights
+        ? parseFloat(c.average)
+        : (details.exactAverage !== null && details.exactAverage !== undefined ? details.exactAverage : (hasOfficialHacAvg ? parseFloat(c.average) : 100));
       const currentGrade = editedGrades[courseId] !== undefined ? editedGrades[courseId] : liveGrade;
 
       return {
@@ -367,7 +372,16 @@ export default function GPA() {
 
         {/* Course Cards List */}
         <div className="space-y-3">
-          {allSelectedCourses.map((c) => {
+          {allSelectedCourses.length === 0 ? (
+            <div className={`${theme.cardBg} rounded-3xl p-12 border ${theme.cardBorder} text-center space-y-3`}>
+              <Award size={36} className="mx-auto text-slate-500 opacity-50" />
+              <h3 className={`text-base font-bold ${theme.isDark ? 'text-white' : theme.textClass}`}>No Courses Available</h3>
+              <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                No active courses found for GPA calculation. Once you sign in with your student account, your course weights and grades will populate here.
+              </p>
+            </div>
+          ) : (
+            allSelectedCourses.map((c) => {
             const currentTier = WEIGHT_TIERS[c.tier] || WEIGHT_TIERS.unweighted_only;
             const uwPoint = getUnweightedPoints(c.grade);
             const wPoint = getWeightedPoints(c.grade, c.tier);
@@ -671,7 +685,8 @@ export default function GPA() {
 
               </div>
             );
-          })}
+          })
+          )}
         </div>
 
       </main>

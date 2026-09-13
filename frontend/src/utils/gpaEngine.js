@@ -381,7 +381,12 @@ export function getExactCourseDetails(course) {
       return s + (parseFloat(a.totalPoints) * w);
     }, 0);
 
-    const exactAvg = totalPossible > 0 ? (totalEarned / totalPossible) * 100 : (course.average ?? 100);
+    // Prioritize official HAC course average if provided when categories are unweighted/empty
+    const hasOfficialAvg = course.average !== null && course.average !== undefined && !isNaN(course.average);
+    const exactAvg = hasOfficialAvg
+      ? parseFloat(course.average)
+      : (totalPossible > 0 ? (totalEarned / totalPossible) * 100 : 100);
+
     return {
       exactAverage: parseFloat(exactAvg.toFixed(4)),
       categories,

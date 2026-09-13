@@ -236,7 +236,16 @@ export default function Grades() {
       {/* Class List */}
       <div className={`${theme.appBg} flex-1 px-4 py-6 w-full shadow-inner transition-colors duration-200`}>
         <div className="max-w-5xl mx-auto space-y-3">
-          {classes.map(cls => {
+          {classes.length === 0 ? (
+            <div className={`${theme.cardBg} rounded-2xl shadow-sm border ${theme.cardBorder} p-12 text-center space-y-3`}>
+              <BookOpen size={36} className={`mx-auto ${theme.textSecondary} opacity-50`} />
+              <h3 className={`text-base font-bold ${theme.textPrimary}`}>No Classes Found</h3>
+              <p className={`text-xs ${theme.textSecondary} max-w-sm mx-auto`}>
+                Your enrolled courses will appear here once synced from Home Access Center.
+              </p>
+            </div>
+          ) : (
+            classes.map(cls => {
             const isOpen = expandedId === cls.id;
             const activeMP = getActiveMP();
             const MP_ORDER = ['MP1', 'MP2', 'MP3', 'MP4'];
@@ -406,7 +415,8 @@ export default function Grades() {
                 </SmoothAccordion>
               </div>
             );
-          })}
+          })
+          )}
         </div>
       </div>
     </div>

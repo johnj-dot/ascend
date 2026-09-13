@@ -32,3 +32,7 @@
 | 28. Individual Assignment GPA What-If & Summary Row Fix | Done | Filtered HAC category summaries, removed modal button, added inline 4-decimal exact grades and live assignment scoring |
 | 29. 4-Decimal Grade & GPA Customize Inputs | Done | Removed assignment count subtitle, added 4-decimal precision to grade and weighted GPA customize inputs |
 | 30. Mobile Bottom Navbar Clipping Fix | Done | Added pb-36 scroll buffer so bottom cards on Overview, Grades, and GPA never clip behind navbar |
+| 31. Audit & Purge Hardcoded Student Data | Done | Verified 0 hardcoded student IDs/names in production; empty states hardened |
+| 32. Fix GPA Grade Discrepancy & Empty Fallbacks | Done | Prioritized official HAC course averages and added empty course fallbacks |
+| 33. Responsive Testing via Chrome DevTools MCP | In Progress | Test Desktop (1280x800) and Mobile (390x844) layouts with zero console errors |
+| 34. Cloud Health Audit via Render MCP | Not Started | Inspect live Render deployment, metrics, and logs |
