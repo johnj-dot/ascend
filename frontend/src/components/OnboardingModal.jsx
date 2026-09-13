@@ -82,8 +82,8 @@ export default function OnboardingModal({
   const chipBg = isDark ? 'bg-slate-800 text-slate-300' : 'bg-gray-100 text-gray-600';
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/65 backdrop-blur-md flex items-center justify-center p-4">
-      <div className={`${containerBg} rounded-3xl w-full max-w-lg md:max-w-4xl overflow-hidden shadow-2xl animate-modal-glide-up border flex flex-col md:flex-row min-h-[420px] md:min-h-[500px]`}>
+    <div className="fixed inset-0 z-50 bg-black/65 backdrop-blur-md flex items-center justify-center p-4 animate-backdrop-fade">
+      <div className={`${containerBg} rounded-3xl w-full max-w-lg md:max-w-4xl overflow-hidden shadow-2xl animate-modal-glide-up border flex flex-col md:flex-row min-h-[420px] md:min-h-[500px] transition-colors duration-500`}>
 
         {/* ── Mode 1: Theme Selection ── */}
         {mode === 'theme' && (

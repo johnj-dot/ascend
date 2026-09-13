@@ -133,10 +133,27 @@ html, body, #root {
   animation: slideInLeft 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+@keyframes backdropFadeIn {
+  0% {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
+  }
+  100% {
+    opacity: 1;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+}
+
+.animate-backdrop-fade {
+  animation: backdropFadeIn 1.15s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 @keyframes modalGlideUp {
   0% {
     opacity: 0;
-    transform: translateY(48px) scale(0.96);
+    transform: translateY(64px) scale(0.96);
   }
   100% {
     opacity: 1;
@@ -145,7 +162,7 @@ html, body, #root {
 }
 
 .animate-modal-glide-up {
-  animation: modalGlideUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: modalGlideUp 1.25s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* ── Smooth Accordion Rollout & Rollup (Slow start, zero-shake fluid descent) ── */
